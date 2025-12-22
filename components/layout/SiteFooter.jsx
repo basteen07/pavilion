@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { Phone, Mail, MapPin, Instagram, Facebook, Twitter, Youtube, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,13 +19,14 @@ export function SiteFooter({ categories = [] }) {
 
                     {/* Brand Column */}
                     <div className="lg:col-span-4 space-y-8">
-                        <Link href="/" className="flex items-center gap-2 group min-w-max">
-                            <div className="bg-red-600 p-2 rounded-xl transform group-hover:rotate-12 transition-transform duration-300">
-                                <div className="w-8 h-8 border-2 border-white rounded-md flex items-center justify-center font-black text-white text-sm">PS</div>
-                            </div>
-                            <span className="text-2xl font-black tracking-tighter text-white">
-                                PAVILION<span className="text-red-500">SPORTS</span>
-                            </span>
+                        <Link href="/" className="flex items-center group min-w-max">
+                            <Image
+                                src="/pavilion-sports.png"
+                                alt="Pavilion Sports"
+                                width={160}
+                                height={48}
+                                className="brightness-0 invert object-contain"
+                            />
                         </Link>
 
                         <p className="text-gray-400 max-w-sm leading-relaxed text-sm">

@@ -28,6 +28,37 @@ export function FeaturedProductsHome() {
         )
     }
 
+    const getProductImage = (product) => {
+        try {
+            if (!product.images) return null;
+            let images = product.images;
+
+            // Handle stringified JSON
+            if (typeof images === 'string') {
+                try {
+                    images = JSON.parse(images);
+                } catch (e) {
+                    console.error('Failed to parse image string', e);
+                    return null;
+                }
+            }
+
+            if (Array.isArray(images) && images.length > 0) {
+                const firstImage = images[0];
+                // Check if it's a direct string URL or an object with image_url
+                if (typeof firstImage === 'string') {
+                    return firstImage;
+                } else if (typeof firstImage === 'object' && firstImage.image_url) {
+                    return firstImage.image_url;
+                }
+            }
+            return null;
+        } catch (e) {
+            console.error('Error parsing product images:', e);
+            return null;
+        }
+    }
+
     return (
         <section className="py-24 bg-white">
             <div className="container">
@@ -50,7 +81,7 @@ export function FeaturedProductsHome() {
                         >
                             <div className="relative aspect-[4/5] overflow-hidden rounded-[2.5rem] bg-gray-100 shadow-xl group-hover:shadow-2xl transition-all duration-500 mb-6">
                                 <img
-                                    src={product.images?.[0]?.image_url || "https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=600"}
+                                    src={getProductImage(product) || "https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=600"}
                                     alt={product.name}
                                     className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
                                 />

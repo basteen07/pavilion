@@ -1,5 +1,5 @@
 'use client'
-
+import Image from 'next/image';
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -56,13 +56,15 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                 <div className="container">
                     <div className="flex items-center justify-between">
                         {/* Logo */}
-                        <Link href="/" className="flex items-center gap-2 group">
-                            <div className="bg-red-600 p-1.5 rounded-lg transform group-hover:rotate-12 transition-transform duration-300">
-                                <div className="w-6 h-6 border-2 border-white rounded-sm flex items-center justify-center font-black text-white text-xs">PS</div>
-                            </div>
-                            <span className="text-xl font-black tracking-tighter text-gray-900">
-                                PAVILION<span className="text-red-600">SPORTS</span>
-                            </span>
+                        <Link href="/" className="flex items-center">
+                            <Image
+                                src="/pavilion-sports.png"
+                                alt="Pavilion Sports"
+                                width={100}
+                                height={25}
+                                priority
+                                className="object-contain"
+                            />
                         </Link>
 
                         {/* Desktop Navigation */}
