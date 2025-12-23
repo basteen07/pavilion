@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { toast } from 'sonner'
 import { Home, Package, ShoppingCart, LogOut, User } from 'lucide-react'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { useB2BCart } from '@/components/providers/B2BCartProvider'
 
 const API_BASE = '/api'
 
@@ -27,33 +29,38 @@ async function apiCall(endpoint, options = {}) {
   })
 
   const data = await response.json()
-  
+
   if (!response.ok) {
     throw new Error(data.error || 'API request failed')
   }
-  
+
   return data
 }
 
 export default function B2BPortal() {
   const router = useRouter()
-  const [user, setUser] = useState(null)
+  const { user, logout } = useAuth()
+  const { cart, addToCart, removeFromCart, cartTotal, placeOrder: placeOrderContext, clearCart } = useB2BCart()
+
   const [profile, setProfile] = useState(null)
   const [orders, setOrders] = useState([])
   const [products, setProducts] = useState([])
-  const [cart, setCart] = useState([])
+  // const [cart, setCart] = useState([]) // Removed local cart
   const [currentView, setCurrentView] = useState('dashboard')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const userData = localStorage.getItem('user')
-    if (!userData) {
+    if (!user) {
+      // AuthProvider handles redirect in SiteLayout (maybe?) or we handle it here
+      // If user is null but loading is false (which AuthProvider handles), we redirect.
+      // But AuthProvider sets loading=false after check.
+      // Let's rely on user check in render or effect.
+      if (loading) return; // Wait for loading
       router.push('/login')
       return
     }
-    setUser(JSON.parse(userData))
     loadData()
-  }, [])
+  }, [user, loading])
 
   async function loadData() {
     try {
@@ -72,47 +79,19 @@ export default function B2BPortal() {
     }
   }
 
-  async function placeOrder() {
+  async function handlePlaceOrder() {
     try {
-      await apiCall('/b2b/orders', {
-        method: 'POST',
-        body: JSON.stringify({
-          products: cart.map(item => ({
-            product_id: item.id,
-            name: item.name,
-            price: item.discount_price || item.mrp_price,
-            quantity: item.quantity
-          })),
-          notes: 'Order from B2B portal'
-        })
-      })
+      await placeOrderContext('Order from B2B Dashboard')
       toast.success('Order placed successfully!')
-      setCart([])
-      loadData()
+      loadData() // Refresh orders
     } catch (error) {
       toast.error(error.message)
     }
   }
 
-  function addToCart(product) {
-    const existing = cart.find(item => item.id === product.id)
-    if (existing) {
-      setCart(cart.map(item => 
-        item.id === product.id 
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      ))
-    } else {
-      setCart([...cart, { ...product, quantity: 1 }])
-    }
-    toast.success('Added to cart')
-  }
+  // addToCart is now from context
 
-  function handleLogout() {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    router.push('/login')
-  }
+  // handleLogout is now logout from context
 
   if (loading) {
     return (
@@ -135,12 +114,12 @@ export default function B2BPortal() {
           </CardHeader>
           <CardContent>
             <p className="text-gray-600">
-              Your business account is currently being reviewed by our team. 
+              Your business account is currently being reviewed by our team.
               You will receive an email once your account is approved.
             </p>
           </CardContent>
           <CardFooter>
-            <Button variant="outline" onClick={handleLogout}>Logout</Button>
+            <Button variant="outline" onClick={logout}>Logout</Button>
           </CardFooter>
         </Card>
       </div>
@@ -165,11 +144,11 @@ export default function B2BPortal() {
             <Badge variant="outline" className="text-green-600 border-green-600">
               Discount: {profile.discount_percentage}%
             </Badge>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" onClick={() => setCurrentView('cart')}>
               <ShoppingCart className="w-4 h-4 mr-2" />
               Cart ({cart.length})
             </Button>
-            <Button variant="ghost" size="sm" onClick={handleLogout}>
+            <Button variant="ghost" size="sm" onClick={logout}>
               <LogOut className="w-4 h-4 mr-2" />
               Logout
             </Button>
@@ -249,8 +228,8 @@ export default function B2BPortal() {
                 {products.map((product) => (
                   <Card key={product.id} className="overflow-hidden">
                     <div className="h-48 bg-gray-100">
-                      <img 
-                        src={product.images?.[0]?.image_url || 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=600'} 
+                      <img
+                        src={product.images?.[0]?.image_url || 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=600'}
                         alt={product.name}
                         className="w-full h-full object-cover"
                       />
@@ -265,7 +244,7 @@ export default function B2BPortal() {
                       </p>
                     </CardContent>
                     <CardFooter className="p-4 pt-0">
-                      <Button 
+                      <Button
                         className="w-full bg-red-600 hover:bg-red-700"
                         onClick={() => addToCart(product)}
                       >
@@ -312,6 +291,56 @@ export default function B2BPortal() {
                     )}
                   </TableBody>
                 </Table>
+              </Card>
+            </div>
+          )}
+          {currentView === 'cart' && (
+            <div className="space-y-6">
+              <h2 className="text-3xl font-bold">Your Cart</h2>
+              <Card>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Product</TableHead>
+                      <TableHead>Price</TableHead>
+                      <TableHead>Quantity</TableHead>
+                      <TableHead>Total</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {cart.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                          Your cart is empty.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      cart.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-medium">{item.name}</TableCell>
+                          <TableCell>₹{item.dealer_price || item.selling_price || item.mrp_price}</TableCell>
+                          <TableCell>{item.quantity}</TableCell>
+                          <TableCell>₹{(item.dealer_price || item.selling_price || item.mrp_price) * item.quantity}</TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="sm" onClick={() => removeFromCart(item.id)} className="text-red-500">
+                              Remove
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+                {cart.length > 0 && (
+                  <CardFooter className="flex justify-between items-center p-6 border-t bg-gray-50">
+                    <div className="text-xl font-bold">Total: ₹{cartTotal}</div>
+                    <div className="flex gap-4">
+                      <Button variant="outline" onClick={clearCart}>Clear Cart</Button>
+                      <Button className="bg-red-600 hover:bg-red-700" onClick={handlePlaceOrder}>Place Order</Button>
+                    </div>
+                  </CardFooter>
+                )}
               </Card>
             </div>
           )}

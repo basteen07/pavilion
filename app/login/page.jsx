@@ -26,11 +26,11 @@ async function apiCall(endpoint, options = {}) {
   })
 
   const data = await response.json()
-  
+
   if (!response.ok) {
     throw new Error(data.error || 'API request failed')
   }
-  
+
   return data
 }
 
@@ -59,12 +59,12 @@ export default function LoginPage() {
         localStorage.setItem('token', data.token)
         localStorage.setItem('user', JSON.stringify(data.user))
         toast.success('Login successful!')
-        
+
         // Redirect based on role
-        if (data.user.role === 'b2b_customer') {
+        if (data.user.role === 'b2b_user') {
           router.push('/b2b')
         } else {
-          router.push('/admin/dashboard')
+          router.push('/')
         }
       }
     } catch (error) {

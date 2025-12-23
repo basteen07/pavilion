@@ -7,9 +7,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, ArrowLeft, Search, LayoutList, Globe, Eye } from "lucide-react";
+import { Plus, Pencil, Trash2, ArrowLeft, Search, LayoutList, Globe, Eye, Copy, MoreHorizontal, CheckCircle2 } from "lucide-react";
 import RichEditor from "@/components/admin/RichEditor";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export default function CMSPages() {
     const [pages, setPages] = useState([]);
@@ -99,7 +102,7 @@ export default function CMSPages() {
                                                 <Button variant="ghost" size="sm" onClick={() => { setEditingPage(page); setView("editor"); }}>
                                                     <Pencil className="h-4 w-4 text-gray-500" />
                                                 </Button>
-                                                <Button variant="ghost" size="sm" onClick={() => handleDelete(blog.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                                                <Button variant="ghost" size="sm" onClick={() => handleDelete(page.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50">
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             </TableCell>
@@ -136,7 +139,10 @@ function CMSPageEditor({ page, onCancel, onSave }) {
         meta_title: page?.meta_title || "",
         meta_description: page?.meta_description || "",
         is_active: page?.is_active ?? true,
+        template: page?.template || "default",
     });
+
+    const [seoHover, setSeoHover] = useState(false);
 
     function handlePreview() {
         localStorage.setItem('previewData', JSON.stringify({
@@ -167,29 +173,46 @@ function CMSPageEditor({ page, onCancel, onSave }) {
     }
 
     return (
-        <div className="max-w-5xl mx-auto space-y-6">
-            <div className="flex items-center justify-between">
+        <div className="max-w-6xl mx-auto space-y-6 pb-20">
+            <div className="flex items-center justify-between sticky top-16 z-30 bg-gray-50/95 backdrop-blur py-4 border-b -mx-8 px-8 mb-6">
                 <div className="flex items-center gap-4">
-                    <Button variant="outline" size="sm" onClick={onCancel}>
-                        <ArrowLeft className="h-4 w-4 mr-2" /> Back
+                    <Button variant="ghost" size="sm" onClick={onCancel} className="text-gray-500 hover:text-gray-900">
+                        <ArrowLeft className="h-4 w-4 mr-2" />
                     </Button>
-                    <h1 className="text-2xl font-bold">{page ? "Edit Page" : "New Page"}</h1>
+                    <div>
+                        <h1 className="text-xl font-bold flex items-center gap-2">
+                            {formData.title || "Untitled Page"}
+                        </h1>
+                        <p className="text-xs text-gray-500">{page ? "Editing existing page" : "Creating new page"}</p>
+                    </div>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={handlePreview}>
+                    <Button variant="outline" onClick={handlePreview} size="sm">
                         <Eye className="w-4 h-4 mr-2" /> Preview
                     </Button>
-                    <Button variant="outline" onClick={onCancel}>Discard</Button>
-                    <Button onClick={handleSubmit} className="bg-red-600 hover:bg-red-700">Save Page</Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm">
+                                More actions <MoreHorizontal className="w-4 h-4 ml-2" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => toast.info("Duplicate functionality coming soon")}>
+                                <Copy className="w-4 h-4 mr-2" /> Duplicate
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Button onClick={handleSubmit} className="bg-red-600 hover:bg-red-700" size="sm">Save</Button>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Main Content Column */}
                 <div className="lg:col-span-2 space-y-6">
                     <Card>
                         <CardContent className="p-6 space-y-6">
-                            <div className="space-y-4">
-                                <Label>Page Title</Label>
+                            <div className="space-y-2">
+                                <Label>Title</Label>
                                 <Input
                                     value={formData.title}
                                     onChange={(e) => setFormData({ ...formData, title: e.target.value, slug: !page ? e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') : formData.slug })}
@@ -203,57 +226,124 @@ function CMSPageEditor({ page, onCancel, onSave }) {
                                 <RichEditor
                                     value={formData.content}
                                     onChange={(val) => setFormData({ ...formData, content: val })}
-                                    className="h-[400px]"
+                                    className="h-[500px]"
                                 />
                             </div>
                         </CardContent>
                     </Card>
 
+                    {/* SEO Section */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm font-medium uppercase tracking-wide flex items-center gap-2">
-                                <Globe className="w-4 h-4" /> SEO Settings
-                            </CardTitle>
+                            <CardTitle className="text-sm font-medium">Search engine listing</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                                <Label>Meta Title</Label>
-                                <Input value={formData.meta_title} onChange={(e) => setFormData({ ...formData, meta_title: e.target.value })} placeholder="Browser tab title..." />
+                        <CardContent className="space-y-6">
+                            <div className="p-4 bg-gray-50 rounded-lg border-2 border-transparent hover:border-gray-200 transition-colors cursor-pointer" onMouseEnter={() => setSeoHover(true)} onMouseLeave={() => setSeoHover(false)}>
+                                <div className="space-y-1">
+                                    <h4 className="text-lg text-blue-700 hover:underline font-medium truncate">
+                                        {formData.meta_title || formData.title || "Page Title"}
+                                    </h4>
+                                    <div className="text-sm text-green-700 flex items-center gap-1">
+                                        https://example.com/pages/{formData.slug}
+                                    </div>
+                                    <p className="text-sm text-gray-600 line-clamp-2">
+                                        {formData.meta_description || "Add a meta description to see how this page might appear in search results."}
+                                    </p>
+                                </div>
                             </div>
-                            <div className="space-y-2">
-                                <Label>Meta Description</Label>
-                                <textarea
-                                    className="w-full min-h-[80px] p-3 border rounded-md text-sm"
-                                    value={formData.meta_description}
-                                    onChange={(e) => setFormData({ ...formData, meta_description: e.target.value })}
-                                    placeholder="Search engine description..."
-                                />
+
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label className="flex justify-between">
+                                        Page title
+                                        <span className="text-xs text-gray-400">{formData.meta_title.length}/70 characters used</span>
+                                    </Label>
+                                    <Input
+                                        value={formData.meta_title}
+                                        onChange={(e) => setFormData({ ...formData, meta_title: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="flex justify-between">
+                                        Meta description
+                                        <span className="text-xs text-gray-400">{formData.meta_description.length}/160 characters used</span>
+                                    </Label>
+                                    <textarea
+                                        className="w-full min-h-[100px] p-3 border rounded-md text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                        value={formData.meta_description}
+                                        onChange={(e) => setFormData({ ...formData, meta_description: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>URL handle</Label>
+                                    <div className="flex rounded-md shadow-sm border">
+                                        <span className="flex items-center px-3 rounded-l-md bg-gray-50 text-gray-500 text-sm border-r">
+                                            https://.../pages/
+                                        </span>
+                                        <input
+                                            value={formData.slug}
+                                            onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                                            className="flex-1 block w-full rounded-none rounded-r-md sm:text-sm border-0 focus:ring-0 p-2"
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
                 </div>
 
+                {/* Sidebar Column */}
                 <div className="space-y-6">
                     <Card>
-                        <CardHeader>
-                            <CardTitle className="text-sm font-medium uppercase tracking-wide">Publishing</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="status">Status</Label>
-                                <Switch
-                                    id="status"
-                                    checked={formData.is_active}
-                                    onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>URL Slug</Label>
-                                <div className="flex items-center">
-                                    <span className="text-gray-500 mr-1">/</span>
-                                    <Input value={formData.slug} onChange={(e) => setFormData({ ...formData, slug: e.target.value })} required className="font-mono text-xs bg-gray-50" />
+                        <CardContent className="p-4 space-y-4">
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="font-semibold text-sm">Visibility</h3>
+                                    <div className="text-xs text-gray-500">
+                                        {formData.is_active ? "Visible" : "Hidden"}
+                                    </div>
                                 </div>
+
+                                <RadioGroup
+                                    value={formData.is_active ? "visible" : "hidden"}
+                                    onValueChange={(val) => setFormData({ ...formData, is_active: val === "visible" })}
+                                >
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="visible" id="r-visible" />
+                                        <Label htmlFor="r-visible" className="font-normal cursor-pointer">Visible</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="hidden" id="r-hidden" />
+                                        <Label htmlFor="r-hidden" className="font-normal cursor-pointer">Hidden</Label>
+                                    </div>
+                                </RadioGroup>
+
+                                {formData.is_active && (
+                                    <div className="bg-gray-50 p-2 rounded text-xs text-gray-500 flex items-start gap-2">
+                                        <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+                                        <span>Visible as of {new Date().toLocaleDateString()}</span>
+                                    </div>
+                                )}
                             </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-semibold">Template</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <Select value={formData.template} onValueChange={(val) => setFormData({ ...formData, template: val })}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select template" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="default">Default Page</SelectItem>
+                                    <SelectItem value="about">About Us</SelectItem>
+                                    <SelectItem value="contact">Contact Page</SelectItem>
+                                    <SelectItem value="full-width">Full Width</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </CardContent>
                     </Card>
                 </div>

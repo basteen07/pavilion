@@ -25,7 +25,10 @@ export async function POST(request) {
     }
 
     const result = await query(
-      'SELECT * FROM users WHERE email = $1 AND is_active = true',
+      `SELECT u.*, r.name as role_name 
+       FROM users u 
+       LEFT JOIN roles r ON u.role_id = r.id 
+       WHERE u.email = $1 AND u.is_active = true`,
       [email]
     );
 
@@ -43,9 +46,9 @@ export async function POST(request) {
     // Check MFA
     if (user.mfa_enabled && user.mfa_secret) {
       if (!mfa_code) {
-        return handleCORS(NextResponse.json({ 
+        return handleCORS(NextResponse.json({
           mfa_required: true,
-          message: 'MFA code required' 
+          message: 'MFA code required'
         }));
       }
 
@@ -55,7 +58,7 @@ export async function POST(request) {
       }
     }
 
-    const token = await createToken({ userId: user.id, email: user.email, role: user.role });
+    const token = await createToken({ userId: user.id, email: user.email, role: user.role_name });
 
     return handleCORS(NextResponse.json({
       success: true,
@@ -64,16 +67,16 @@ export async function POST(request) {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role,
+        role: user.role_name,
         mfa_enabled: user.mfa_enabled
       }
     }));
 
   } catch (error) {
     console.error('Login error:', error);
-    return handleCORS(NextResponse.json({ 
+    return handleCORS(NextResponse.json({
       error: 'Internal server error',
-      message: error.message 
+      message: error.message
     }, { status: 500 }));
   }
 }

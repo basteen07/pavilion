@@ -7,10 +7,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, ArrowLeft, Search, FileText, Eye } from "lucide-react";
+import { Plus, Pencil, Trash2, ArrowLeft, Search, FileText, Eye, Copy, MoreHorizontal, CheckCircle2 } from "lucide-react";
 import RichEditor from "@/components/admin/RichEditor";
 import ImageUploader from "@/components/admin/ImageUploader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export default function BlogsPage() {
     const [blogs, setBlogs] = useState([]);
@@ -172,20 +174,36 @@ function BlogEditor({ blog, onCancel, onSave }) {
     }
 
     return (
-        <div className="max-w-5xl mx-auto space-y-6">
-            <div className="flex items-center justify-between">
+        <div className="max-w-6xl mx-auto space-y-6 pb-20">
+            <div className="flex items-center justify-between sticky top-16 z-30 bg-gray-50/95 backdrop-blur py-4 border-b -mx-8 px-8 mb-6">
                 <div className="flex items-center gap-4">
-                    <Button variant="outline" size="sm" onClick={onCancel}>
+                    <Button variant="ghost" size="sm" onClick={onCancel}>
                         <ArrowLeft className="h-4 w-4 mr-2" /> Back
                     </Button>
-                    <h1 className="text-2xl font-bold">{blog ? "Edit Post" : "New Post"}</h1>
+                    <div>
+                        <h1 className="text-xl font-bold flex items-center gap-2">
+                            {formData.title || "Untitled Post"}
+                        </h1>
+                        <p className="text-xs text-gray-500">{blog ? "Editing existing post" : "Creating new post"}</p>
+                    </div>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={handlePreview}>
+                    <Button variant="outline" onClick={handlePreview} size="sm">
                         <Eye className="w-4 h-4 mr-2" /> Preview
                     </Button>
-                    <Button variant="secondary" onClick={onCancel}>Discard</Button>
-                    <Button onClick={handleSubmit} className="bg-red-600 hover:bg-red-700">Save Post</Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm">
+                                More actions <MoreHorizontal className="w-4 h-4 ml-2" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => toast.info("Duplicate functionality coming soon")}>
+                                <Copy className="w-4 h-4 mr-2" /> Duplicate
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Button onClick={handleSubmit} className="bg-red-600 hover:bg-red-700" size="sm">Save Post</Button>
                 </div>
             </div>
 
@@ -206,23 +224,60 @@ function BlogEditor({ blog, onCancel, onSave }) {
 
                             <div className="space-y-2">
                                 <Label>Content</Label>
-                                <div className="min-h-[400px]">
+                                <div className="min-h-[500px]">
                                     <RichEditor
                                         value={formData.content}
                                         onChange={(val) => setFormData({ ...formData, content: val })}
-                                        className="h-[350px]"
+                                        className="h-[450px]"
                                     />
                                 </div>
                             </div>
+                        </CardContent>
+                    </Card>
 
-                            <div className="space-y-2">
-                                <Label>Excerpt / Summary</Label>
-                                <textarea
-                                    className="w-full min-h-[100px] p-3 border rounded-md text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                    value={formData.excerpt}
-                                    onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                                    placeholder="Brief description for list views and SEO..."
-                                />
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-sm font-medium">Search engine listing</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="p-4 bg-gray-50 rounded-lg border-2 border-transparent hover:border-gray-200 transition-colors">
+                                <div className="space-y-1">
+                                    <h4 className="text-lg text-blue-700 hover:underline font-medium truncate">
+                                        {formData.title || "Post Title"}
+                                    </h4>
+                                    <div className="text-sm text-green-700 flex items-center gap-1">
+                                        https://example.com/blog/{formData.slug}
+                                    </div>
+                                    <p className="text-sm text-gray-600 line-clamp-2">
+                                        {formData.excerpt || "Add an excerpt to see how this page might appear in search results."}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label>URL handle</Label>
+                                    <div className="flex rounded-md shadow-sm border">
+                                        <span className="flex items-center px-3 rounded-l-md bg-gray-50 text-gray-500 text-sm border-r">
+                                            https://.../blog/
+                                        </span>
+                                        <Input
+                                            value={formData.slug}
+                                            onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                                            className="flex-1 block w-full rounded-none rounded-r-md sm:text-sm border-0 focus:ring-0 p-2"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Excerpt / Meta Description</Label>
+                                    <textarea
+                                        className="w-full min-h-[100px] p-3 border rounded-md text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                        value={formData.excerpt}
+                                        onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
+                                        placeholder="Brief description for list views and SEO..."
+                                    />
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
@@ -234,18 +289,29 @@ function BlogEditor({ blog, onCancel, onSave }) {
                             <CardTitle className="text-sm font-medium uppercase tracking-wide">Publishing</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-6">
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="status">Status</Label>
-                                <Switch
-                                    id="status"
-                                    checked={formData.is_active}
-                                    onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-                                />
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="font-semibold text-sm">Visibility</h3>
+                                    <div className="text-xs text-gray-500">
+                                        {formData.is_active ? "Visible" : "Hidden"}
+                                    </div>
+                                </div>
+
+                                <RadioGroup
+                                    value={formData.is_active ? "visible" : "hidden"}
+                                    onValueChange={(val) => setFormData({ ...formData, is_active: val === "visible" })}
+                                >
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="visible" id="r-visible" />
+                                        <Label htmlFor="r-visible" className="font-normal cursor-pointer">Visible</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="hidden" id="r-hidden" />
+                                        <Label htmlFor="r-hidden" className="font-normal cursor-pointer">Hidden</Label>
+                                    </div>
+                                </RadioGroup>
                             </div>
-                            <div className="space-y-2">
-                                <Label>Slug</Label>
-                                <Input value={formData.slug} onChange={(e) => setFormData({ ...formData, slug: e.target.value })} required className="font-mono text-xs bg-gray-50" />
-                            </div>
+
                             <div className="space-y-2">
                                 <Label>Publish Date</Label>
                                 <Input

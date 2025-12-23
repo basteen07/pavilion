@@ -72,10 +72,11 @@ export function QuotationBuilder({ onClose, onSuccess }) {
     }
 
     // --- Data Fetching ---
-    const { data: customers = [] } = useQuery({
+    const { data: customersData } = useQuery({
         queryKey: ['customers'],
         queryFn: () => apiCall('/customers')
     })
+    const customers = customersData?.customers || []
 
     const { data: categories = [] } = useQuery({
         queryKey: ['categories'],
@@ -355,7 +356,7 @@ export function QuotationBuilder({ onClose, onSuccess }) {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-4 rounded-lg shadow-sm border">
                 <div>
-                    
+
                     <p className="text-gray-500 text-sm">Create specific pricing for your B2B clients</p>
                 </div>
                 <div className="flex gap-2 w-full md:w-auto">

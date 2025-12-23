@@ -16,9 +16,13 @@ import { SiteLayout } from '@/components/layout/SiteLayout'
 import { toast } from 'sonner'
 import { useQuery } from '@tanstack/react-query'
 import { apiCall } from '@/lib/api-client'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { useB2BCart } from '@/components/providers/B2BCartProvider'
 
 export default function ProductDetailPage({ productSlug }) {
   const router = useRouter()
+  const { user } = useAuth()
+  const { addToCart } = useB2BCart()
   const [selectedImage, setSelectedImage] = useState(0)
   const [quantity, setQuantity] = useState(1)
 
@@ -133,12 +137,28 @@ export default function ProductDetailPage({ productSlug }) {
                   <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-6">B2B Special Pricing Applicable</p>
 
                   <div className="grid grid-cols-2 gap-4">
-                    <Button className="h-16 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest text-xs gap-3">
-                      <MessageCircle className="w-4 h-4" /> Request B2B Quote
-                    </Button>
-                    <Button variant="outline" className="h-16 rounded-2xl border-white/20 hover:bg-white/10 text-white font-black uppercase tracking-widest text-xs gap-3">
-                      <Heart className="w-4 h-4" /> Wishlist
-                    </Button>
+                    {user?.role === 'b2b_user' ? (
+                      <>
+                        <Button
+                          className="h-16 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest text-xs gap-3"
+                          onClick={() => addToCart(product, 1)}
+                        >
+                          <ShoppingCart className="w-4 h-4" /> Add to Order
+                        </Button>
+                        <Button variant="outline" className="h-16 rounded-2xl border-white/20 hover:bg-white/10 text-white font-black uppercase tracking-widest text-xs gap-3">
+                          <MessageCircle className="w-4 h-4" /> Order Notes
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button className="h-16 rounded-2xl bg-white text-gray-900 hover:bg-gray-100 font-black uppercase tracking-widest text-xs gap-3">
+                          <MessageCircle className="w-4 h-4" /> Enquiry
+                        </Button>
+                        <Button variant="outline" className="h-16 rounded-2xl border-white/20 hover:bg-white/10 text-white font-black uppercase tracking-widest text-xs gap-3">
+                          <Share2 className="w-4 h-4" /> Shop Now
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

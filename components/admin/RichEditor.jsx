@@ -1,6 +1,5 @@
 'use client';
-
-import { useState } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import 'react-quill/dist/quill.snow.css';
 import { Button } from '@/components/ui/button';
@@ -11,29 +10,66 @@ const ReactQuill = dynamic(() => import('react-quill'), {
     loading: () => <p className="p-4 text-gray-500">Loading Editor...</p>,
 });
 
-const modules = {
-    toolbar: [
-        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-        ['bold', 'italic', 'underline', 'strike'],
-        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-        ['blockquote', 'code-block'],
-        [{ 'color': [] }, { 'background': [] }],
-        ['link', 'image', 'video'],
-        ['clean']
-    ],
-};
-
-const formats = [
-    'header',
-    'bold', 'italic', 'underline', 'strike',
-    'list', 'bullet',
-    'blockquote', 'code-block',
-    'color', 'background',
-    'link', 'image', 'video'
-];
-
 export default function RichEditor({ value, onChange, className }) {
     const [mode, setMode] = useState('visual'); // 'visual' | 'code'
+    const quillRef = useRef(null);
+
+    const imageHandler = useCallback(() => {
+        const input = document.createElement('input');
+        input.setAttribute('type', 'file');
+        input.setAttribute('accept', 'image/*');
+        input.click();
+
+        input.onchange = async () => {
+            const file = input.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+                const data = await res.json();
+
+                if (data.url) {
+                    const quill = quillRef.current.getEditor();
+                    const range = quill.getSelection();
+                    quill.insertEmbed(range.index, 'image', data.url);
+                }
+            } catch (error) {
+                console.error('Image upload failed', error);
+            }
+        };
+    }, []);
+
+    const modules = useMemo(() => ({
+        toolbar: {
+            container: [
+                [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                ['blockquote', 'code-block'],
+                [{ 'color': [] }, { 'background': [] }],
+                ['link', 'image', 'video'],
+                ['clean']
+            ],
+            handlers: {
+                image: imageHandler
+            }
+        },
+    }), [imageHandler]);
+
+    const formats = [
+        'header',
+        'bold', 'italic', 'underline', 'strike',
+        'list', 'bullet',
+        'blockquote', 'code-block',
+        'color', 'background',
+        'link', 'image', 'video'
+    ];
 
     return (
         <div className={`flex flex-col border rounded-md overflow-hidden bg-white ${className}`}>
@@ -68,6 +104,7 @@ export default function RichEditor({ value, onChange, className }) {
             {mode === 'visual' ? (
                 <div className="cms-editor-wrapper">
                     <ReactQuill
+                        ref={quillRef}
                         theme="snow"
                         value={value || ''}
                         onChange={onChange}

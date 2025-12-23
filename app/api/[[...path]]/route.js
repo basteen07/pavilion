@@ -30,7 +30,10 @@ async function authenticateRequest(request) {
   }
 
   const result = await query(
-    'SELECT * FROM users WHERE id = $1 AND is_active = true',
+    `SELECT u.*, r.name as role_name 
+     FROM users u 
+     LEFT JOIN roles r ON u.role_id = r.id 
+     WHERE u.id = $1 AND u.is_active = true`,
     [payload.userId]
   );
 
@@ -289,7 +292,10 @@ async function handleRoute(request, { params }) {
       }
 
       const result = await query(
-        'SELECT * FROM users WHERE email = $1 AND is_active = true',
+        `SELECT u.*, r.name as role_name 
+         FROM users u 
+         LEFT JOIN roles r ON u.role_id = r.id 
+         WHERE u.email = $1 AND u.is_active = true`,
         [email]
       );
 
@@ -319,7 +325,7 @@ async function handleRoute(request, { params }) {
         }
       }
 
-      const token = await createToken({ userId: user.id, email: user.email, role: user.role });
+      const token = await createToken({ userId: user.id, email: user.email, role: user.role_name });
 
       return handleCORS(NextResponse.json({
         success: true,
@@ -328,7 +334,7 @@ async function handleRoute(request, { params }) {
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role,
+          role: user.role_name,
           mfa_enabled: user.mfa_enabled
         }
       }));
@@ -348,12 +354,15 @@ async function handleRoute(request, { params }) {
         return handleCORS(NextResponse.json({ error: 'Email already registered' }, { status: 400 }));
       }
 
+      const roleResult = await query("SELECT id FROM roles WHERE name = 'normal_user'");
+      const roleId = roleResult.rows[0]?.id;
+
       const passwordHash = await hashPassword(password);
       const result = await query(
-        `INSERT INTO users (email, password_hash, name, phone, role, mfa_enabled, is_active) 
-         VALUES ($1, $2, $3, $4, 'customer', false, true) 
-         RETURNING id, email, name, phone, role`,
-        [email, passwordHash, name || null, phone || null]
+        `INSERT INTO users (email, password_hash, name, phone, role_id, mfa_enabled, is_active) 
+         VALUES ($1, $2, $3, $4, $5, false, true) 
+         RETURNING id, email, name, phone`,
+        [email, passwordHash, name || null, phone || null, roleId]
       );
 
       return handleCORS(NextResponse.json({
@@ -377,12 +386,15 @@ async function handleRoute(request, { params }) {
         return handleCORS(NextResponse.json({ error: 'Email already registered' }, { status: 400 }));
       }
 
+      const roleResult = await query("SELECT id FROM roles WHERE name = 'normal_user'");
+      const roleId = roleResult.rows[0]?.id;
+
       const passwordHash = await hashPassword(password);
       const result = await query(
-        `INSERT INTO users (email, password_hash, name, phone, role, mfa_enabled, is_active) 
-         VALUES ($1, $2, $3, $4, 'customer', false, true) 
-         RETURNING id, email, name, phone, role`,
-        [email, passwordHash, name || null, phone || null]
+        `INSERT INTO users (email, password_hash, name, phone, role_id, mfa_enabled, is_active) 
+         VALUES ($1, $2, $3, $4, $5, false, true) 
+         RETURNING id, email, name, phone`,
+        [email, passwordHash, name || null, phone || null, roleId]
       );
 
       return handleCORS(NextResponse.json({
@@ -402,7 +414,10 @@ async function handleRoute(request, { params }) {
       }
 
       const result = await query(
-        'SELECT * FROM users WHERE email = $1 AND is_active = true',
+        `SELECT u.*, r.name as role_name 
+         FROM users u 
+         LEFT JOIN roles r ON u.role_id = r.id 
+         WHERE u.email = $1 AND u.is_active = true`,
         [email]
       );
 
@@ -432,7 +447,7 @@ async function handleRoute(request, { params }) {
         }
       }
 
-      const token = await createToken({ userId: user.id, email: user.email, role: user.role });
+      const token = await createToken({ userId: user.id, email: user.email, role: user.role_name });
 
       return handleCORS(NextResponse.json({
         success: true,
@@ -441,7 +456,7 @@ async function handleRoute(request, { params }) {
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role,
+          role: user.role_name,
           mfa_enabled: user.mfa_enabled
         }
       }));
@@ -521,12 +536,15 @@ async function handleRoute(request, { params }) {
       }
 
       // Create user account
+      const roleResult = await query("SELECT id FROM roles WHERE name = 'b2b_user'");
+      const roleId = roleResult.rows[0]?.id;
+
       const passwordHash = await hashPassword(password);
       const userResult = await query(
-        `INSERT INTO users (email, password_hash, name, phone, role, mfa_enabled, is_active) 
-         VALUES ($1, $2, $3, $4, 'customer', false, true) 
-         RETURNING id, email, name, phone, role`,
-        [email, passwordHash, name || null, phone || null]
+        `INSERT INTO users (email, password_hash, name, phone, role_id, mfa_enabled, is_active) 
+         VALUES ($1, $2, $3, $4, $5, false, true) 
+         RETURNING id, email, name, phone`,
+        [email, passwordHash, name || null, phone || null, roleId]
       );
 
       const newUser = userResult.rows[0];

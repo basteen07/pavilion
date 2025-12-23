@@ -8,9 +8,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import MegaMenu from '@/components/MegaMenu'
 import { Badge } from '@/components/ui/badge'
+import { useAuth } from '@/components/providers/AuthProvider'
 
 export function SiteHeader({ categories = [], brands = [], collections = [], subCategories = [] }) {
     const router = useRouter()
+    const { user, logout } = useAuth()
     const [isScrolled, setIsScrolled] = useState(false)
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
@@ -93,22 +95,54 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                             </div>
 
                             <div className="flex items-center gap-2">
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="rounded-full hover:bg-gray-100 transition-colors"
-                                    onClick={() => router.push('/login')}
-                                >
-                                    <User className="w-5 h-5 text-gray-700" />
-                                </Button>
-                                <div className="w-px h-6 bg-gray-200 mx-1"></div>
-                                <Button
-                                    size="sm"
-                                    className="hidden md:flex bg-red-600 hover:bg-red-700 text-white rounded-full font-bold shadow-md shadow-red-200 transform active:scale-95 transition-all"
-                                    onClick={() => router.push('/register')}
-                                >
-                                    B2B Register
-                                </Button>
+                                {user ? (
+                                    <>
+                                        {user.role === 'b2b_user' && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="rounded-full hover:bg-gray-100 transition-colors"
+                                                onClick={() => router.push('/b2b/cart')}
+                                            >
+                                                <ShoppingCart className="w-5 h-5 text-gray-700" />
+                                            </Button>
+                                        )}
+                                        {/* User Dropdown / Profile */}
+                                        <div className="flex items-center gap-2 cursor-pointer" onClick={() => user.role === 'b2b_user' ? router.push('/b2b') : null}>
+                                            <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center text-red-600 font-bold text-xs">
+                                                {user.name?.[0] || 'U'}
+                                            </div>
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={logout}
+                                            className="text-xs text-gray-500 hover:text-red-600"
+                                        >
+                                            Logout
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="rounded-full hover:bg-gray-100 transition-colors"
+                                            onClick={() => router.push('/login')}
+                                        >
+                                            <User className="w-5 h-5 text-gray-700" />
+                                        </Button>
+                                        <div className="w-px h-6 bg-gray-200 mx-1"></div>
+                                        <Button
+                                            size="sm"
+                                            className="hidden md:flex bg-red-600 hover:bg-red-700 text-white rounded-full font-bold shadow-md shadow-red-200 transform active:scale-95 transition-all"
+                                            onClick={() => router.push('/register')}
+                                        >
+                                            B2B Register
+                                        </Button>
+                                    </>
+                                )}
+
                                 <Button
                                     variant="ghost"
                                     size="icon"

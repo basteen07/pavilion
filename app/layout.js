@@ -1,6 +1,8 @@
 import './globals.css'
 import { Toaster } from '@/components/ui/sonner'
 import { QueryProvider } from '@/components/providers/QueryProvider'
+import { AuthProvider } from '@/components/providers/AuthProvider'
+import { B2BCartProvider } from '@/components/providers/B2BCartProvider'
 import { SiteLayout } from '@/components/layout/SiteLayout'
 
 export const metadata = {
@@ -18,9 +20,13 @@ export default function RootLayout({ children }) {
       </head>
       <body style={{ fontFamily: "'Poppins', 'Inter', sans-serif" }}>
         <QueryProvider>
-          <SiteLayout>
-            {children}
-          </SiteLayout>
+          <AuthProvider>
+            <B2BCartProvider>
+              <SiteLayout>
+                {children}
+              </SiteLayout>
+            </B2BCartProvider>
+          </AuthProvider>
         </QueryProvider>
         <Toaster />
       </body>
