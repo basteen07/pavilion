@@ -1,17 +1,29 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { useRouter, usePathname } from 'next/navigation'
 import { AdminSidebar } from '@/components/admin/Sidebar'
-import { Button } from '@/components/ui/button'
-import { LogOut, LayoutDashboard, Package, FileText } from 'lucide-react'
+import { UserNav } from '@/components/admin/UserNav'
+import {
+    SidebarProvider,
+    SidebarInset,
+    SidebarTrigger,
+} from "@/components/ui/sidebar"
+import { Separator } from "@/components/ui/separator"
+import {
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
 
 export function AdminLayout({ children }) {
-    const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
     const [user, setUser] = useState(null)
     const [loading, setLoading] = useState(true)
     const router = useRouter()
+    const pathname = usePathname()
 
     useEffect(() => {
         const userData = localStorage.getItem('user')
@@ -23,11 +35,12 @@ export function AdminLayout({ children }) {
         setLoading(false)
     }, [router])
 
-    function handleLogout() {
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
-        router.push('/admin/login')
-    }
+    // Generate breadcrumbs from pathname
+    const breadcrumbs = pathname
+        .split('/')
+        .filter(Boolean)
+        .filter(path => path !== 'admin')
+        .map((path) => path.charAt(0).toUpperCase() + path.slice(1))
 
     if (loading) {
         return (
@@ -38,65 +51,45 @@ export function AdminLayout({ children }) {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 font-sans">
-            {/* Header */}
-            <header className="bg-white border-b sticky top-0 z-50">
-                <div className="flex items-center justify-between h-16 px-6">
-                    <div className="flex items-center gap-3">
-                        <Link href="/admin/dashboard" className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
-                                <span className="text-white font-bold">P</span>
-                            </div>
-                            <div className="hidden md:block">
-                                <h1 className="font-bold text-lg">Pavilion Sports</h1>
-                                <p className="text-xs text-gray-500">Admin Console</p>
-                            </div>
-                        </Link>
+        <SidebarProvider>
+            <AdminSidebar />
+            <SidebarInset>
+                <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 border-b bg-white px-4">
+                    <div className="flex items-center gap-2 px-4">
+                        <SidebarTrigger className="-ml-1" />
+                        <Separator orientation="vertical" className="mr-2 h-4" />
+                        <Breadcrumb>
+                            <BreadcrumbList>
+                                <BreadcrumbItem className="hidden md:block">
+                                    <BreadcrumbLink href="/admin/dashboard">
+                                        Dashboard
+                                    </BreadcrumbLink>
+                                </BreadcrumbItem>
+                                {breadcrumbs.map((crumb, index) => (
+                                    <div key={crumb} className="flex items-center gap-2">
+                                        <BreadcrumbSeparator className="hidden md:block" />
+                                        <BreadcrumbItem>
+                                            {index === breadcrumbs.length - 1 ? (
+                                                <BreadcrumbPage>{crumb}</BreadcrumbPage>
+                                            ) : (
+                                                <BreadcrumbLink href="#">{crumb}</BreadcrumbLink> // Placeholder for now
+                                            )}
+                                        </BreadcrumbItem>
+                                    </div>
+                                ))}
+                            </BreadcrumbList>
+                        </Breadcrumb>
                     </div>
-
-                    <nav className="hidden lg:flex items-center gap-6 mr-auto ml-10">
-                        <Link href="/admin/dashboard" className="text-sm font-medium flex items-center gap-2 hover:text-red-600 transition-colors">
-                            <LayoutDashboard className="w-4 h-4" />
-                            Dashboard
-                        </Link>
-                        <Link href="/admin/products" className="text-sm font-medium flex items-center gap-2 hover:text-red-600 transition-colors">
-                            <Package className="w-4 h-4" />
-                            Products
-                        </Link>
-                        <Link href="/admin/quotations" className="text-sm font-medium flex items-center gap-2 hover:text-red-600 transition-colors">
-                            <FileText className="w-4 h-4" />
-                            Quotations
-                        </Link>
-                    </nav>
-
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                                <span className="text-red-600 font-bold text-sm">
-                                    {user?.email?.[0].toUpperCase() || 'A'}
-                                </span>
-                            </div>
-                            <div className="hidden md:block">
-                                <p className="text-sm font-medium leading-none">{user?.name || 'Admin'}</p>
-                                <p className="text-xs text-gray-500 mt-1">{user?.email}</p>
-                            </div>
-                        </div>
-                        <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-500 hover:text-red-600">
-                            <LogOut className="w-4 h-4" />
-                        </Button>
+                    <div className="ml-auto flex items-center gap-2">
+                        <UserNav user={user} />
                     </div>
-                </div>
-            </header>
-
-            <div className="flex">
-                <AdminSidebar
-                    collapsed={sidebarCollapsed}
-                    setCollapsed={setSidebarCollapsed}
-                />
-                <main className="flex-1 overflow-auto p-8 min-h-[calc(100vh-64px)]">
-                    {children}
+                </header>
+                <main className="flex flex-1 flex-col gap-4 p-4 pt-0 bg-gray-50/50">
+                    <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min pt-6">
+                        {children}
+                    </div>
                 </main>
-            </div>
-        </div>
+            </SidebarInset>
+        </SidebarProvider>
     )
 }

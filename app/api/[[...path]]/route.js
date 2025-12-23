@@ -206,7 +206,7 @@ async function handleRoute(request, { params }) {
     }
 
     if (route.startsWith('/cms-pages/slug/')) {
-      const slug = path[2];
+      const slug = path.slice(2).join('/');
       if (method === 'GET') {
         return import('@/lib/api/cms-pages').then(m => m.getCMSPageBySlug(slug));
       }

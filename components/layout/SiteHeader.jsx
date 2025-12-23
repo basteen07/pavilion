@@ -81,6 +81,7 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                             />
                             <Link href="/about" className="text-[15px] font-semibold text-gray-700 hover:text-red-600 transition">About</Link>
                             <Link href="/gallery" className="text-[15px] font-semibold text-gray-700 hover:text-red-600 transition">Gallery</Link>
+                            <Link href="/careers" className="text-[15px] font-semibold text-gray-700 hover:text-red-600 transition">Careers</Link>
                             <Link href="/contact" className="text-[15px] font-semibold text-gray-700 hover:text-red-600 transition">Contact</Link>
                         </nav>
 
