@@ -43,7 +43,8 @@ export function CustomerManagement({ onUpdate }) {
                 type: typeFilter
             })
             return apiCall(`/customers?${params}`)
-        }
+        },
+        staleTime: 30000, // Cache for 30s
     })
 
     const customers = data?.customers || []

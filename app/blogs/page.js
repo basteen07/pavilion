@@ -24,7 +24,7 @@ export default function BlogListingPage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {blogs.map((blog) => (
-                        <Link href={`/blogs/${blog.slug}`} key={blog.id} className="group">
+                        <Link href={`/${blog.slug}`} key={blog.id} className="group">
                             <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all border">
                                 <div className="aspect-video relative overflow-hidden bg-gray-100">
                                     {blog.image_url ? (

@@ -76,7 +76,8 @@ export function ProductList({ onEdit, onCreate }) {
                 ...(brandFilter && brandFilter !== 'all' && { brand: brandFilter }),
             })
             return apiCall(`/products?${params}`)
-        }
+        },
+        staleTime: 30000, // Cache for 30s
     })
 
     const deleteMutation = useMutation({

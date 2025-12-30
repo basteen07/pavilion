@@ -32,7 +32,8 @@ export function QuotationsList({ onCreate }) {
                 search: debouncedSearch
             })
             return apiCall(`/quotations?${params}`)
-        }
+        },
+        staleTime: 30000, // Cache for 30s
     })
 
     const quotations = data?.quotations || []

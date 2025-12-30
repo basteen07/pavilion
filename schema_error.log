@@ -1,0 +1,11 @@
+{
+  "length": 277,
+  "name": "error",
+  "severity": "ERROR",
+  "code": "42804",
+  "detail": "Key columns \"role_id\" of the referencing table and \"id\" of the referenced table are of incompatible types: integer and uuid.",
+  "file": "tablecmds.c",
+  "line": "10420",
+  "routine": "ATAddForeignKeyConstraint"
+}
+error: foreign key constraint "role_permissions_role_id_fkey" cannot be implemented

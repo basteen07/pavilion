@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
-export function DashboardOverview({ stats, user, onSetupMFA }) {
+export function DashboardOverview({ stats = {}, user, onSetupMFA }) {
+    if (!stats) return null;
     return (
         <div className="space-y-6">
             <h2 className="text-3xl font-bold">Dashboard</h2>

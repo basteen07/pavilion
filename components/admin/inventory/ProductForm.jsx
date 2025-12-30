@@ -446,7 +446,7 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                 <ImageUploader
                                     value={currentImages}
                                     onChange={(newImages) => setValue('images', newImages)}
-                                    maxFiles={5}
+                                    maxFiles={10}
                                 />
                             </div>
 

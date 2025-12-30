@@ -1,8 +1,12 @@
 import Link from 'next/link';
 import { ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/components/providers/AuthProvider';
+import { useB2BCart } from '@/components/providers/B2BCartProvider';
 
 export default function ProductList({ products = [], loading = false }) {
+    const { user } = useAuth();
+    const { addToCart } = useB2BCart();
     if (loading) {
         return (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -67,11 +71,17 @@ export default function ProductList({ products = [], loading = false }) {
                         </div>
 
                         {/* Quick Add Button */}
-                        {/* Quick Add Button - HIDDEN for B2B enforcement for now
-                        <button className="absolute bottom-3 right-3 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black hover:text-white z-10">
-                            <ShoppingCart className="w-4 h-4" />
-                        </button>
-                        */}
+                        {user?.role === 'b2b_user' && user?.b2b_status === 'approved' && (
+                            <button
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    addToCart(product);
+                                }}
+                                className="absolute bottom-3 right-3 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black hover:text-white z-10"
+                            >
+                                <ShoppingCart className="w-4 h-4" />
+                            </button>
+                        )}
                     </div>
 
                     <div className="space-y-1">

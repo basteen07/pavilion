@@ -8,9 +8,13 @@ import { ChevronRight, Star, Truck, ShieldCheck, RefreshCw, Minus, Plus, Shoppin
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import ProductList from '@/components/product/ProductList';
+import { useAuth } from '@/components/providers/AuthProvider';
+import { useB2BCart } from '@/components/providers/B2BCartProvider';
 
 export default function ProductPage({ params }) {
   const { slug } = params;
+  const { user } = useAuth();
+  const { addToCart } = useB2BCart();
 
   // Fetch Product Details
   const { data: product, isLoading, error } = useQuery({
@@ -36,6 +40,21 @@ export default function ProductPage({ params }) {
     : 0;
 
   const images = Array.isArray(product.images) ? product.images : [];
+  const videos = Array.isArray(product.videos) ? product.videos : [];
+  const galleryItems = [
+    ...images.map(url => ({ type: 'image', url })),
+    ...videos.map(url => ({ type: 'video', url }))
+  ];
+
+  const getYoutubeEmbedUrl = (url) => {
+    if (!url) return null;
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const match = url.match(regExp);
+      return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : null;
+    }
+    return null;
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -57,40 +76,80 @@ export default function ProductPage({ params }) {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
-          {/* Left: Image Gallery */}
+          {/* Left: Image & Video Gallery */}
           <div className="space-y-4">
             <div className="aspect-[4/5] bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 relative group">
-              {images.length > 0 ? (
-                <img
-                  src={images[activeImage]}
-                  alt={product.name}
-                  className="absolute inset-0 w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105"
-                />
+              {galleryItems.length > 0 ? (
+                galleryItems[activeImage].type === 'image' ? (
+                  <img
+                    src={galleryItems[activeImage].url}
+                    alt={product.name}
+                    className="absolute inset-0 w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="absolute inset-0 w-full h-full">
+                    {getYoutubeEmbedUrl(galleryItems[activeImage].url) ? (
+                      <iframe
+                        src={getYoutubeEmbedUrl(galleryItems[activeImage].url)}
+                        className="w-full h-full border-0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    ) : (
+                      <video
+                        src={galleryItems[activeImage].url}
+                        controls
+                        className="w-full h-full object-contain"
+                      />
+                    )}
+                  </div>
+                )
               ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-gray-300">NO IMAGE</div>
+                <div className="absolute inset-0 flex items-center justify-center text-gray-300">NO MEDIA</div>
               )}
               {discount > 0 && (
-                <div className="absolute top-4 left-4 bg-red-600 text-white text-xs font-black px-3 py-1.5 rounded-full shadow-lg">
+                <div className="absolute top-4 left-4 bg-red-600 text-white text-xs font-black px-3 py-1.5 rounded-full shadow-lg z-10">
                   SAVE {discount}%
                 </div>
               )}
             </div>
 
             {/* Thumbnails */}
-            {images.length > 1 && (
-              <div className="flex gap-4 overflow-x-auto pb-2">
-                {images.map((img, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setActiveImage(idx)}
-                    className={`w-20 h-20 rounded-xl border-2 flex-shrink-0 overflow-hidden p-1 ${activeImage === idx
+            {galleryItems.length > 1 && (
+              <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                {galleryItems.map((item, idx) => {
+                  const maxVisible = 6;
+                  const isLast = idx === maxVisible - 1 && galleryItems.length > maxVisible;
+                  const remainingCount = galleryItems.length - (maxVisible - 1);
+
+                  if (idx >= maxVisible) return null;
+
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => setActiveImage(idx)}
+                      className={`w-20 h-20 rounded-xl border-2 flex-shrink-0 overflow-hidden relative ${activeImage === idx
                         ? 'border-red-600 ring-2 ring-red-100'
                         : 'border-transparent bg-gray-50 hover:border-gray-200'
-                      }`}
-                  >
-                    <img src={img} alt="" className="w-full h-full object-contain" />
-                  </button>
-                ))}
+                        }`}
+                    >
+                      {item.type === 'image' ? (
+                        <img src={item.url} alt="" className="w-full h-full object-contain p-1" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-900 border-0">
+                          <Plus className="w-6 h-6 text-white rotate-45" />
+                          <span className="absolute bottom-1 right-1 text-[10px] text-white font-bold bg-black/50 px-1 rounded uppercase">Video</span>
+                        </div>
+                      )}
+                      {isLast && (
+                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white z-20">
+                          <span className="text-lg font-black">+{remainingCount}</span>
+                          <span className="text-[10px] font-bold uppercase tracking-tighter">More</span>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -137,8 +196,13 @@ export default function ProductPage({ params }) {
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
-                <Button className="flex-1 h-12 bg-red-600 hover:bg-red-700 text-white font-bold text-sm uppercase tracking-wide shadow-xl shadow-red-100 gap-2">
-                  <ShoppingCart className="w-5 h-5" /> Add to Cart
+                <Button
+                  onClick={() => addToCart(product, qty)}
+                  disabled={!(user?.role === 'b2b_user' && user?.b2b_status === 'approved')}
+                  className="flex-1 h-12 bg-red-600 hover:bg-red-700 text-white font-bold text-sm uppercase tracking-wide shadow-xl shadow-red-100 gap-2 disabled:bg-gray-400 disabled:shadow-none"
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  {user?.role === 'b2b_user' && user?.b2b_status === 'approved' ? 'Add to Cart' : 'B2B Only'}
                 </Button>
               </div>
             </div>

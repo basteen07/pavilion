@@ -157,11 +157,8 @@ export default function ProductDetailPage({ productSlug }) {
                       )
                     ) : (
                       <>
-                        <Button className="h-16 rounded-2xl bg-white text-gray-900 hover:bg-gray-100 font-black uppercase tracking-widest text-xs gap-3">
+                        <Button className="h-16 rounded-2xl bg-white text-gray-900 hover:bg-gray-100 font-black uppercase tracking-widest text-xs gap-3" onClick={() => router.push('/contact')}>
                           <MessageCircle className="w-4 h-4" /> Enquiry
-                        </Button>
-                        <Button variant="outline" className="h-16 rounded-2xl border-white/20 hover:bg-white/10 text-white font-black uppercase tracking-widest text-xs gap-3">
-                          <Share2 className="w-4 h-4" /> Shop Now
                         </Button>
                       </>
                     )}

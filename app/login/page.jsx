@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/components/providers/AuthProvider'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -36,6 +37,7 @@ async function apiCall(endpoint, options = {}) {
 
 export default function LoginPage() {
   const router = useRouter()
+  const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [mfaCode, setMfaCode] = useState('')
@@ -56,8 +58,7 @@ export default function LoginPage() {
         setMfaRequired(true)
         toast.info('Please enter your MFA code')
       } else {
-        localStorage.setItem('token', data.token)
-        localStorage.setItem('user', JSON.stringify(data.user))
+        await login(data.token, data.user)
         toast.success('Login successful!')
 
         // Redirect based on role

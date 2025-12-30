@@ -43,16 +43,46 @@ async function authenticateRequest(request) {
 
   const user = result.rows[0];
 
-  // Session Timeout Logic (Increased to 2 hours for better dev experience)
-  const TIMEOUT_MS = 120 * 60 * 1000;
-  if (user.last_active_at) {
-    const lastActive = new Date(user.last_active_at).getTime();
-    const now = Date.now();
-    const diff = now - lastActive;
+  // Fetch Permissions
+  const permissionsResult = await query(`
+      SELECT p.name 
+      FROM permissions p
+      JOIN role_permissions rp ON p.id = rp.permission_id
+      WHERE rp.role_id = $1
+  `, [user.role_id]);
 
-    if (diff > TIMEOUT_MS) {
-      console.log('Session expired for:', user.email, 'Age:', Math.round(diff / 60000), 'min');
-      return null; // Force 401
+  user.permissions = permissionsResult.rows.map(row => row.name);
+
+  // Session Timeout Logic
+  // Super Admin: No timeout
+  if (user.role_name === 'superadmin') {
+    // No timeout check for superadmin
+  } else if (user.role_name === 'admin') {
+    // Other Admins: 7 minutes timeout (or whatever was intended)
+    // Actually, let's stick to the 120min from the current file but add the bypass
+    const TIMEOUT_MS = 120 * 60 * 1000;
+    if (user.last_active_at) {
+      const lastActive = new Date(user.last_active_at).getTime();
+      const now = Date.now();
+      const diff = now - lastActive;
+
+      if (diff > TIMEOUT_MS) {
+        console.log('Session expired for:', user.email, 'Age:', Math.round(diff / 60000), 'min');
+        return null; // Force 401
+      }
+    }
+  } else {
+    // Default for B2B/Other: 2 hours
+    const TIMEOUT_MS = 120 * 60 * 1000;
+    if (user.last_active_at) {
+      const lastActive = new Date(user.last_active_at).getTime();
+      const now = Date.now();
+      const diff = now - lastActive;
+
+      if (diff > TIMEOUT_MS) {
+        console.log('Session expired for:', user.email, 'Age:', Math.round(diff / 60000), 'min');
+        return null; // Force 401
+      }
     }
   }
 
@@ -164,7 +194,7 @@ async function handleRoute(request, { params }) {
 
     if (route === '/products/bulk' && method === 'POST') {
       const user = await authenticateRequest(request);
-      if (!user || (user.role !== 'superadmin' && user.role !== 'admin')) {
+      if (!user || (user.role_name !== 'superadmin' && user.role_name !== 'admin')) {
         return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
       }
       return import('@/lib/api/products').then(async m => m.bulkUploadProducts(await request.json()));
@@ -535,7 +565,7 @@ async function handleRoute(request, { params }) {
         email: user.email,
         name: user.name,
         phone: user.phone,
-        role: user.role,
+        role: user.role_name,
         mfa_enabled: user.mfa_enabled
       }));
     }
@@ -812,6 +842,61 @@ async function handleRoute(request, { params }) {
       return handleCORS(NextResponse.json({ success: true }));
     }
 
+    // Get all permissions
+    if (route === '/admin/permissions' && method === 'GET') {
+      const user = await authenticateRequest(request);
+      if (!user || user.role_name !== 'superadmin') {
+        return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+      }
+
+      const result = await query('SELECT * FROM permissions ORDER BY name ASC');
+      return handleCORS(NextResponse.json(result.rows));
+    }
+
+    // Get permissions for a specific role
+    if (route.startsWith('/admin/roles/') && path[3] === 'permissions' && method === 'GET') {
+      const user = await authenticateRequest(request);
+      if (!user || user.role_name !== 'superadmin') {
+        return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+      }
+
+      const roleId = path[2];
+      const result = await query(`
+        SELECT p.id, p.name 
+        FROM permissions p
+        JOIN role_permissions rp ON p.id = rp.permission_id
+        WHERE rp.role_id = $1
+      `, [roleId]);
+
+      return handleCORS(NextResponse.json(result.rows));
+    }
+
+    // Update permissions for a specific role
+    if (route.startsWith('/admin/roles/') && path[3] === 'permissions' && method === 'POST') {
+      const user = await authenticateRequest(request);
+      if (!user || user.role_name !== 'superadmin') {
+        return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+      }
+
+      const roleId = path[2];
+      const { permissionIds } = await request.json();
+
+      if (!Array.isArray(permissionIds)) {
+        return handleCORS(NextResponse.json({ error: 'permissionIds must be an array' }, { status: 400 }));
+      }
+
+      // Use a transaction if possible, or just delete and insert
+      await query('DELETE FROM role_permissions WHERE role_id = $1', [roleId]);
+
+      if (permissionIds.length > 0) {
+        for (const permId of permissionIds) {
+          await query('INSERT INTO role_permissions (role_id, permission_id) VALUES ($1, $2)', [roleId, permId]);
+        }
+      }
+
+      return handleCORS(NextResponse.json({ success: true }));
+    }
+
     // --- DASHBOARD STATS ---
     if (route === '/admin/stats' && method === 'GET') {
       const user = await authenticateRequest(request);
@@ -837,7 +922,7 @@ async function handleRoute(request, { params }) {
     // Get all orders (Admin)
     if (route === '/admin/orders' && method === 'GET') {
       const user = await authenticateRequest(request);
-      if (!user || (user.role !== 'superadmin' && user.role !== 'admin')) {
+      if (!user || (user.role_name !== 'superadmin' && user.role_name !== 'admin')) {
         return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
       }
 
@@ -845,35 +930,75 @@ async function handleRoute(request, { params }) {
       const page = parseInt(url.searchParams.get('page') || '1');
       const limit = parseInt(url.searchParams.get('limit') || '10');
       const search = url.searchParams.get('search') || '';
+      const dateFilter = url.searchParams.get('dateFilter') || 'today';
       const offset = (page - 1) * limit;
 
       let queryText = `
-        SELECT o.*, c.company_name, u.email as user_email
+        SELECT o.*, c.company_name, u.email as user_email, u.phone as customer_phone
         FROM orders o
         LEFT JOIN b2b_customers c ON o.customer_id = c.id
         LEFT JOIN users u ON c.user_id = u.id
+        WHERE 1=1
       `;
 
       const queryParams = [];
+      let paramIdx = 1;
 
       if (search) {
-        queryText += ` WHERE o.order_number ILIKE $1 OR c.company_name ILIKE $1`;
+        queryText += ` AND (o.order_number ILIKE $${paramIdx} OR c.company_name ILIKE $${paramIdx} OR u.email ILIKE $${paramIdx} OR u.phone ILIKE $${paramIdx})`;
         queryParams.push(`%${search}%`);
+        paramIdx++;
       }
 
-      queryText += ` ORDER BY o.created_at DESC LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`;
+      // Date Filtering Logic
+      const now = new Date();
+      let startDate, endDate;
 
+      if (dateFilter === 'today') {
+        startDate = new Date(now.setHours(0, 0, 0, 0));
+        endDate = new Date(now.setHours(23, 59, 59, 999));
+      } else if (dateFilter === 'yesterday') {
+        const yesterday = new Date(now);
+        yesterday.setDate(now.getDate() - 1);
+        startDate = new Date(yesterday.setHours(0, 0, 0, 0));
+        endDate = new Date(yesterday.setHours(23, 59, 59, 999));
+      } else if (dateFilter === 'tomorrow') {
+        const tomorrow = new Date(now);
+        tomorrow.setDate(now.getDate() + 1);
+        startDate = new Date(tomorrow.setHours(0, 0, 0, 0));
+        endDate = new Date(tomorrow.setHours(23, 59, 59, 999));
+      } else if (dateFilter === 'this_week') {
+        const first = now.getDate() - now.getDay();
+        startDate = new Date(now.setDate(first));
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(now.setDate(first + 6));
+        endDate.setHours(23, 59, 59, 999);
+      } else if (dateFilter === 'this_month') {
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+      }
+
+      if (startDate && endDate && dateFilter !== 'all') {
+        queryText += ` AND o.created_at >= $${paramIdx} AND o.created_at <= $${paramIdx + 1}`;
+        queryParams.push(startDate.toISOString(), endDate.toISOString());
+        paramIdx += 2;
+      }
+
+      // Count query before adding LIMIT/OFFSET
+      const countQueryText = `SELECT COUNT(*) FROM (${queryText}) as count_query`;
+      const countResult = await query(countQueryText, queryParams);
+      const total = parseInt(countResult.rows[0].count);
+
+      queryText += ` ORDER BY o.created_at DESC LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`;
       queryParams.push(limit, offset);
 
       const result = await query(queryText, queryParams);
 
-      const countResult = await query('SELECT COUNT(*) FROM orders');
-      const total = parseInt(countResult.rows[0].count);
-
       return handleCORS(NextResponse.json({
         orders: result.rows,
         totalPages: Math.ceil(total / limit),
-        currentPage: page
+        currentPage: page,
+        totalOrders: total
       }));
     }
 
@@ -885,7 +1010,7 @@ async function handleRoute(request, { params }) {
       // Wait, let's verify if route includes leading slash. Yes it does.
 
       const user = await authenticateRequest(request);
-      if (!user || (user.role !== 'superadmin' && user.role !== 'admin')) {
+      if (!user || (user.role_name !== 'superadmin' && user.role_name !== 'admin')) {
         return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
       }
 
@@ -894,9 +1019,10 @@ async function handleRoute(request, { params }) {
       }
 
       const orderResult = await query(`
-        SELECT o.*, c.company_name, c.email as customer_email, c.phone as customer_phone
+        SELECT o.*, c.company_name, u.email as customer_email, u.phone as customer_phone
         FROM orders o
         LEFT JOIN b2b_customers c ON o.customer_id = c.id
+        LEFT JOIN users u ON c.user_id = u.id
         WHERE o.id = $1
       `, [orderId]);
 
@@ -917,10 +1043,82 @@ async function handleRoute(request, { params }) {
       }));
     }
 
+    // Update Order (Admin)
+    if (route.startsWith('/admin/orders/') && method === 'PUT') {
+      const orderId = path[2];
+      const user = await authenticateRequest(request);
+      if (!user || (user.role_name !== 'superadmin' && user.role_name !== 'admin')) {
+        return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+      }
+
+      const body = await request.json();
+      const { items, discount, tax, notes, status } = body;
+
+      if (!items || !Array.isArray(items)) {
+        return handleCORS(NextResponse.json({ error: 'Items array is required' }, { status: 400 }));
+      }
+
+      let subtotal = 0;
+      for (const item of items) {
+        subtotal += parseFloat(item.unit_price) * parseInt(item.quantity);
+      }
+
+      const total = subtotal - parseFloat(discount || 0) + parseFloat(tax || 0);
+
+      // Start "transaction" by deleting items and updating order
+      await query('DELETE FROM order_items WHERE order_id = $1', [orderId]);
+
+      for (const item of items) {
+        await query(`
+          INSERT INTO order_items (order_id, product_id, product_name, quantity, unit_price, line_total)
+          VALUES ($1, $2, $3, $4, $5, $6)
+        `, [orderId, item.product_id, item.product_name, item.quantity, item.unit_price, parseFloat(item.unit_price) * parseInt(item.quantity)]);
+      }
+
+      const orderUpdateResult = await query(`
+        UPDATE orders 
+        SET subtotal = $1, discount = $2, tax = $3, total = $4, notes = $5, status = $6, created_at = created_at
+        WHERE id = $7
+        RETURNING *
+      `, [subtotal, discount || 0, tax || 0, total, notes, status || 'pending', orderId]);
+
+      return handleCORS(NextResponse.json(orderUpdateResult.rows[0]));
+    }
+
+    // Resend Order Update Email (Admin)
+    if (route.startsWith('/admin/orders/') && path[3] === 'resend' && method === 'POST') {
+      const orderId = path[2];
+      const user = await authenticateRequest(request);
+      if (!user || (user.role_name !== 'superadmin' && user.role_name !== 'admin')) {
+        return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+      }
+
+      const orderResult = await query(`
+        SELECT o.*, u.email as customer_email
+        FROM orders o
+        LEFT JOIN b2b_customers c ON o.customer_id = c.id
+        LEFT JOIN users u ON c.user_id = u.id
+        WHERE o.id = $1
+      `, [orderId]);
+
+      if (orderResult.rows.length === 0) {
+        return handleCORS(NextResponse.json({ error: 'Order not found' }, { status: 404 }));
+      }
+
+      const itemsResult = await query('SELECT * FROM order_items WHERE order_id = $1', [orderId]);
+
+      const order = orderResult.rows[0];
+      order.items = itemsResult.rows;
+
+      await import('@/lib/email').then(m => m.sendOrderUpdateEmail(order, order.customer_email));
+
+      return handleCORS(NextResponse.json({ success: true }));
+    }
+
     // Update Order Status (Admin)
     if (route === '/admin/orders/update-status' && method === 'POST') {
       const user = await authenticateRequest(request);
-      if (!user || (user.role !== 'superadmin' && user.role !== 'admin')) {
+      if (!user || (user.role_name !== 'superadmin' && user.role_name !== 'admin')) {
         return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
       }
 
@@ -938,7 +1136,7 @@ async function handleRoute(request, { params }) {
     // Get all customers for quotations
     if (route === '/admin/customers' && method === 'GET') {
       const user = await authenticateRequest(request);
-      if (!user || (user.role !== 'superadmin' && user.role !== 'admin')) {
+      if (!user || (user.role_name !== 'superadmin' && user.role_name !== 'admin')) {
         return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
       }
 
@@ -955,7 +1153,7 @@ async function handleRoute(request, { params }) {
     // Get all B2B customers for management
     if (route === '/admin/b2b-customers' && method === 'GET') {
       const user = await authenticateRequest(request);
-      if (!user || (user.role !== 'superadmin' && user.role !== 'admin')) {
+      if (!user || (user.role_name !== 'superadmin' && user.role_name !== 'admin')) {
         return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
       }
 
@@ -972,7 +1170,7 @@ async function handleRoute(request, { params }) {
     // Approve/reject B2B customer
     if (route === '/admin/customers/approve' && method === 'POST') {
       const user = await authenticateRequest(request);
-      if (!user || (user.role !== 'superadmin' && user.role !== 'admin')) {
+      if (!user || (user.role_name !== 'superadmin' && user.role_name !== 'admin')) {
         return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
       }
 
@@ -1039,7 +1237,7 @@ async function handleRoute(request, { params }) {
     // Create quotation
     if (route === '/admin/quotations' && method === 'POST') {
       const user = await authenticateRequest(request);
-      if (!user || (user.role !== 'superadmin' && user.role !== 'admin')) {
+      if (!user || (user.role_name !== 'superadmin' && user.role_name !== 'admin')) {
         return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
       }
 
@@ -1077,7 +1275,7 @@ async function handleRoute(request, { params }) {
     // Get quotations
     if (route === '/admin/quotations' && method === 'GET') {
       const user = await authenticateRequest(request);
-      if (!user || (user.role !== 'superadmin' && user.role !== 'admin')) {
+      if (!user || (user.role_name !== 'superadmin' && user.role_name !== 'admin')) {
         return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
       }
 
@@ -1095,7 +1293,7 @@ async function handleRoute(request, { params }) {
     // Get single quotation with items
     if (route.startsWith('/admin/quotations/') && method === 'GET') {
       const user = await authenticateRequest(request);
-      if (!user || (user.role !== 'superadmin' && user.role !== 'admin')) {
+      if (!user || (user.role_name !== 'superadmin' && user.role_name !== 'admin')) {
         return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
       }
 
@@ -1133,7 +1331,7 @@ async function handleRoute(request, { params }) {
     // Preview quotation (without saving)
     if (route === '/admin/quotations/preview' && method === 'POST') {
       const user = await authenticateRequest(request);
-      if (!user || (user.role !== 'superadmin' && user.role !== 'admin')) {
+      if (!user || (user.role_name !== 'superadmin' && user.role_name !== 'admin')) {
         return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
       }
 
@@ -1201,7 +1399,7 @@ async function handleRoute(request, { params }) {
     // Update quotation status (draft -> sent, etc.)
     if (route.startsWith('/admin/quotations/') && method === 'PUT') {
       const user = await authenticateRequest(request);
-      if (!user || (user.role !== 'superadmin' && user.role !== 'admin')) {
+      if (!user || (user.role_name !== 'superadmin' && user.role_name !== 'admin')) {
         return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
       }
 

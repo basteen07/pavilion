@@ -220,7 +220,7 @@ function ProductCard({ product }) {
             className="w-full rounded-xl font-black text-[10px] uppercase tracking-[0.2em] text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-all h-10"
             onClick={() => router.push(`/product/${product.slug}`)}
           >
-            Shop Now <ExternalLink className="w-3 h-3 ml-2" />
+            View Details <ExternalLink className="w-3 h-3 ml-2" />
           </Button>
         </div>
       </div>

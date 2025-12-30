@@ -8,6 +8,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import MegaMenu from '@/components/MegaMenu'
 import { Badge } from '@/components/ui/badge'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { useAuth } from '@/components/providers/AuthProvider'
 
 export function SiteHeader({ categories = [], brands = [], collections = [], subCategories = [] }) {
@@ -98,7 +106,7 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                             <div className="flex items-center gap-2">
                                 {user ? (
                                     <>
-                                        {user.role === 'b2b_user' && (
+                                        {user.role === 'b2b_user' && user.b2b_status === 'approved' && (
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
@@ -109,19 +117,41 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                                             </Button>
                                         )}
                                         {/* User Dropdown / Profile */}
-                                        <div className="flex items-center gap-2 cursor-pointer" onClick={() => user.role === 'b2b_user' ? router.push('/b2b') : null}>
-                                            <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center text-red-600 font-bold text-xs">
-                                                {user.name?.[0] || 'U'}
-                                            </div>
-                                        </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={logout}
-                                            className="text-xs text-gray-500 hover:text-red-600"
-                                        >
-                                            Logout
-                                        </Button>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <div className="flex items-center gap-2 cursor-pointer">
+                                                    <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center text-red-600 font-bold text-xs hover:bg-red-200 transition">
+                                                        {user.name?.[0] || 'U'}
+                                                    </div>
+                                                </div>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="w-56">
+                                                <DropdownMenuLabel>
+                                                    <div className="flex flex-col space-y-1">
+                                                        <p className="text-sm font-medium leading-none">{user.name}</p>
+                                                        <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                                                    </div>
+                                                </DropdownMenuLabel>
+                                                <DropdownMenuSeparator />
+                                                {(user.role === 'b2b_user' || user.role_name === 'b2b_user') && (
+                                                    <DropdownMenuItem onClick={() => router.push('/b2b')}>
+                                                        B2B Dashboard
+                                                    </DropdownMenuItem>
+                                                )}
+                                                {(user.role === 'admin' || user.role === 'superadmin' || user.role_name === 'admin' || user.role_name === 'superadmin') && (
+                                                    <DropdownMenuItem onClick={() => router.push('/admin')}>
+                                                        Admin Dashboard
+                                                    </DropdownMenuItem>
+                                                )}
+                                                <DropdownMenuItem onClick={() => router.push('/profile')}>
+                                                    Profile Settings
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem onClick={logout} className="text-red-600 focus:text-red-600">
+                                                    Logout
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </>
                                 ) : (
                                     <>

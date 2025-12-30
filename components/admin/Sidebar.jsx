@@ -15,6 +15,7 @@ import {
     Users as UsersIcon,
     Briefcase,
     FolderOpen,
+    ShieldCheck,
 } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
@@ -118,6 +119,11 @@ const data = {
             title: "Users",
             url: "/admin/users",
             icon: UsersIcon,
+        },
+        {
+            title: "Roles & Permissions",
+            url: "/admin/roles",
+            icon: ShieldCheck,
         },
     ],
 }

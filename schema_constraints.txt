@@ -1,0 +1,10 @@
+Orders Constraints:
+orders_customer_id_fkey: FOREIGN KEY (customer_id) REFERENCES b2b_customers(id)
+orders_id_not_null: NOT NULL id
+orders_order_number_key: UNIQUE (order_number)
+orders_order_number_not_null: NOT NULL order_number
+orders_pkey: PRIMARY KEY (id)
+
+Tables Found:
+b2b_customers
+customers

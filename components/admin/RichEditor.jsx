@@ -7,48 +7,79 @@ import { Eye, Code } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Separator } from "@/components/ui/separator"
 
-const ReactQuill = dynamic(() => import('react-quill'), {
-    ssr: false,
-    loading: () => <div className="h-[400px] w-full flex items-center justify-center bg-gray-50 text-gray-400">Loading Editor...</div>,
-});
+// Correctly handle Forward Ref with Dynamic Import to fix "Function components cannot be given refs"
+const ReactQuill = dynamic(
+    async () => {
+        const { default: RQ } = await import('react-quill');
+        return function Comp({ forwardedRef, ...props }) {
+            return <RQ ref={forwardedRef} {...props} />;
+        };
+    },
+    {
+        ssr: false,
+        loading: () => <div className="h-[400px] w-full flex items-center justify-center bg-gray-50 text-gray-400">Loading Editor...</div>,
+    }
+);
 
 export default function RichEditor({ value, onChange, className }) {
     const [mode, setMode] = useState('visual'); // 'visual' | 'code'
     const quillRef = useRef(null);
 
-    const imageHandler = useCallback(() => {
+    const mediaHandler = useCallback(() => {
         const input = document.createElement('input');
         input.setAttribute('type', 'file');
-        input.setAttribute('accept', 'image/*');
+        // Allow images and videos, and multiple selection
+        input.setAttribute('accept', 'image/*,video/*');
+        input.setAttribute('multiple', '');
         input.click();
 
         input.onchange = async () => {
-            const file = input.files[0];
-            if (!file) return;
+            const files = Array.from(input.files || []);
+            if (files.length === 0) return;
 
-            const formData = new FormData();
-            formData.append('file', file);
+            // Process each file sequentially
+            for (const file of files) {
+                const formData = new FormData();
+                formData.append('file', file);
 
-            try {
-                const token = localStorage.getItem('token');
-                const res = await fetch('/api/upload', {
-                    method: 'POST',
-                    headers: {
-                        ...(token && { 'Authorization': `Bearer ${token}` })
-                    },
-                    body: formData,
-                });
-                const data = await res.json();
+                try {
+                    const token = localStorage.getItem('token');
+                    if (!token) {
+                        alert('You must be logged in to upload media');
+                        return;
+                    }
 
-                if (data.url) {
-                    const quill = quillRef.current.getEditor();
-                    const range = quill.getSelection(true); // true forces focus if possible
-                    const index = range ? range.index : quill.getLength();
-                    quill.insertEmbed(index, 'image', data.url);
-                    quill.setSelection(index + 1);
+                    const res = await fetch('/api/upload', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: formData,
+                    });
+
+                    if (!res.ok) {
+                        const errData = await res.json().catch(() => ({}));
+                        console.error(`Upload failed for ${file.name}:`, errData);
+                        continue;
+                    }
+
+                    const data = await res.json();
+
+                    if (data.url) {
+                        if (!quillRef.current) continue;
+
+                        const quill = quillRef.current.getEditor();
+                        // Get range, ensuring focused or end
+                        const range = quill.getSelection(true) || { index: quill.getLength() };
+
+                        const isVideo = file.type.startsWith('video/');
+                        quill.insertEmbed(range.index, isVideo ? 'video' : 'image', data.url);
+                        // Move cursor after the inserted item
+                        quill.setSelection(range.index + 1);
+                    }
+                } catch (error) {
+                    console.error('Media upload failed', error);
                 }
-            } catch (error) {
-                console.error('Image upload failed', error);
             }
         };
     }, []);
@@ -60,22 +91,25 @@ export default function RichEditor({ value, onChange, className }) {
                 ['bold', 'italic', 'underline', 'strike'],
                 [{ 'color': [] }, { 'background': [] }],
                 [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                [{ 'align': [] }],
                 ['blockquote', 'code-block'],
                 ['link', 'image', 'video'],
                 ['clean']
             ],
             handlers: {
-                image: imageHandler
+                image: mediaHandler,
+                video: mediaHandler
             }
         },
-    }), [imageHandler]);
+    }), [mediaHandler]);
 
     const formats = [
         'header',
         'bold', 'italic', 'underline', 'strike',
         'list', 'bullet',
-        'blockquote', 'code-block',
+        'align',
         'color', 'background',
+        'blockquote', 'code-block',
         'link', 'image', 'video'
     ];
 
@@ -118,7 +152,7 @@ export default function RichEditor({ value, onChange, className }) {
                 {mode === 'visual' ? (
                     <div className="cms-editor-wrapper h-full">
                         <ReactQuill
-                            ref={quillRef}
+                            forwardedRef={quillRef}
                             theme="snow"
                             value={value || ''}
                             onChange={onChange}
@@ -140,6 +174,3 @@ export default function RichEditor({ value, onChange, className }) {
         </div>
     );
 }
-
-// Add global styles for the editor via a style tag or similar if CSS module not used
-// Adjust height to match the toolbar height difference

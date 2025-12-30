@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/components/providers/AuthProvider'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,16 +28,17 @@ async function apiCall(endpoint, options = {}) {
   })
 
   const data = await response.json()
-  
+
   if (!response.ok) {
     throw new Error(data.error || 'API request failed')
   }
-  
+
   return data
 }
 
 export default function AdminLoginPage() {
   const router = useRouter()
+  const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [mfaCode, setMfaCode] = useState('')
@@ -57,8 +59,7 @@ export default function AdminLoginPage() {
         setMfaRequired(true)
         toast.info('Please enter your MFA code')
       } else {
-        localStorage.setItem('token', data.token)
-        localStorage.setItem('user', JSON.stringify(data.user))
+        await login(data.token, data.user)
         toast.success('Login successful!')
         router.push('/admin/dashboard')
       }

@@ -8,9 +8,13 @@ import { Badge } from '@/components/ui/badge'
 import { Star, Heart, ShoppingCart, ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { useB2BCart } from '@/components/providers/B2BCartProvider'
 
 export function FeaturedProductsHome() {
     const router = useRouter()
+    const { user } = useAuth()
+    const { addToCart } = useB2BCart()
     const { data, isLoading } = useQuery({
         queryKey: ['featured-products'],
         queryFn: () => apiCall('/products?featured=true&limit=8')
@@ -103,9 +107,18 @@ export function FeaturedProductsHome() {
                                     <Button size="icon" className="w-12 h-12 rounded-full bg-white text-gray-900 hover:bg-red-600 hover:text-white transition-all transform translate-y-4 group-hover:translate-y-0 duration-300">
                                         <Heart className="w-5 h-5" />
                                     </Button>
-                                    <Button size="icon" className="w-12 h-12 rounded-full bg-white text-gray-900 hover:bg-red-600 hover:text-white transition-all transform translate-y-4 group-hover:translate-y-0 duration-300 delay-75">
-                                        <ShoppingCart className="w-5 h-5" />
-                                    </Button>
+                                    {user?.role === 'b2b_user' && user?.b2b_status === 'approved' && (
+                                        <Button
+                                            size="icon"
+                                            className="w-12 h-12 rounded-full bg-white text-gray-900 hover:bg-red-600 hover:text-white transition-all transform translate-y-4 group-hover:translate-y-0 duration-300 delay-75"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                addToCart(product);
+                                            }}
+                                        >
+                                            <ShoppingCart className="w-5 h-5" />
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
 
