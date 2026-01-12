@@ -178,9 +178,14 @@ export function CategoryManager() {
                                     </div>
                                     <div className="flex flex-col">
                                         <span className="font-medium">{cat.name}</span>
-                                        {cat.parent_collection_name && (
-                                            <span className="text-xs text-gray-400">{cat.parent_collection_name}</span>
-                                        )}
+                                        <div className="flex items-center gap-2">
+                                            {cat.parent_collection_name && (
+                                                <span className="text-xs text-gray-400">{cat.parent_collection_name}</span>
+                                            )}
+                                            <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold uppercase">
+                                                {cat.sub_category_count || 0} Sub-Cats
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -228,7 +233,12 @@ export function CategoryManager() {
                                         <div className="w-8 h-8 bg-gray-50 rounded overflow-hidden">
                                             {sub.image_url && <img src={sub.image_url} alt="" className="w-full h-full object-cover" />}
                                         </div>
-                                        <span className="font-medium">{sub.name}</span>
+                                        <div className="flex flex-col">
+                                            <span className="font-medium">{sub.name}</span>
+                                            <span className="text-[10px] text-blue-500 font-bold uppercase tracking-tighter">
+                                                {sub.brand_count || 0} Brands Included
+                                            </span>
+                                        </div>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <Button size="sm" variant="ghost" onClick={() => openSubCategoryModal(sub)}>

@@ -8,6 +8,7 @@ import {
   Minus, Plus, Check, Truck, Shield, RefreshCw,
   Clock, MessageCircle, Info, Award, Zap, ChevronLeft
 } from 'lucide-react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -83,10 +84,13 @@ export default function ProductDetailPage({ productSlug }) {
             {/* Gallery */}
             <div className="space-y-6">
               <div className="relative aspect-square rounded-[3rem] overflow-hidden bg-gray-50 shadow-2xl group">
-                <img
+                <Image
                   src={images[selectedImage]?.image_url}
                   alt={product.name}
-                  className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                  fill
+                  className="object-cover transform group-hover:scale-110 transition-transform duration-700"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  priority
                 />
                 <div className="absolute top-8 left-8 flex flex-col gap-3">
                   {product.is_featured && <Badge className="bg-red-600 px-4 py-1.5 font-black text-[10px] uppercase tracking-widest border-none">Elite Selection</Badge>}
@@ -99,9 +103,15 @@ export default function ProductDetailPage({ productSlug }) {
                   <button
                     key={idx}
                     onClick={() => setSelectedImage(idx)}
-                    className={`aspect-square rounded-2xl overflow-hidden bg-gray-50 border-2 transition-all ${selectedImage === idx ? 'border-red-600 scale-105 shadow-lg' : 'border-transparent hover:border-gray-200'}`}
+                    className={`aspect-square rounded-2xl overflow-hidden bg-gray-50 border-2 transition-all relative ${selectedImage === idx ? 'border-red-600 scale-105 shadow-lg' : 'border-transparent hover:border-gray-200'}`}
                   >
-                    <img src={img.image_url} alt="Thumbnail" className="w-full h-full object-cover" />
+                    <Image
+                      src={img.image_url}
+                      alt="Thumbnail"
+                      fill
+                      className="object-cover"
+                      sizes="100px"
+                    />
                   </button>
                 ))}
               </div>
@@ -277,25 +287,24 @@ export default function ProductDetailPage({ productSlug }) {
               </Button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="space-y-4">
               {similarProducts.map((p) => (
                 <Link
                   key={p.id}
                   href={`/product/${p.slug}`}
-                  className="group"
+                  className="group flex items-center justify-between p-6 rounded-3xl bg-gray-50 hover:bg-white hover:shadow-xl transition-all duration-500 border border-transparent hover:border-gray-100"
                 >
-                  <div className="aspect-[4/5] rounded-[2.5rem] overflow-hidden bg-gray-50 mb-6 shadow-lg group-hover:shadow-2xl transition-all duration-500">
-                    <img
-                      src={p.images?.[0]?.image_url || 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=600'}
-                      alt={p.name}
-                      className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
-                    />
-                  </div>
-                  <div className="px-4">
+                  <div className="flex flex-col">
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-red-600 mb-1">{p.brand_name}</p>
-                    <h4 className="font-black text-lg text-gray-900 tracking-tight line-clamp-1 group-hover:text-red-600 transition-colors uppercase">{p.name}</h4>
-                    <span className="text-xl font-black text-gray-900 tracking-tighter">₹{p.selling_price || p.mrp_price}</span>
+                    <h4 className="font-black text-lg text-gray-900 tracking-tight group-hover:text-red-600 transition-colors uppercase">{p.name}</h4>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl font-black text-gray-900 tracking-tighter">₹{p.selling_price || p.mrp_price}</span>
+                      <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">SKU: {p.sku || 'N/A'}</span>
+                    </div>
                   </div>
+                  <Button variant="outline" className="h-12 px-8 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] border-gray-200 group-hover:bg-red-600 group-hover:text-white group-hover:border-red-600 transition-all">
+                    View Gear
+                  </Button>
                 </Link>
               ))}
             </div>

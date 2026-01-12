@@ -47,6 +47,11 @@ export function CustomerManagement({ onUpdate }) {
         staleTime: 30000, // Cache for 30s
     })
 
+    const { data: customerTypes = [] } = useQuery({
+        queryKey: ['customer-types'],
+        queryFn: () => apiCall('/customer-types'),
+    })
+
     const customers = data?.customers || []
     const totalPages = data?.totalPages || 1
 
@@ -129,9 +134,9 @@ export function CustomerManagement({ onUpdate }) {
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Types</SelectItem>
-                        <SelectItem value="General">General</SelectItem>
-                        <SelectItem value="Enterprise">Enterprise</SelectItem>
-                        <SelectItem value="Priority">Priority</SelectItem>
+                        {customerTypes.map(type => (
+                            <SelectItem key={type.id} value={type.name}>{type.name}</SelectItem>
+                        ))}
                     </SelectContent>
                 </Select>
             </div>
@@ -254,9 +259,9 @@ export function CustomerManagement({ onUpdate }) {
                                             <SelectValue placeholder="Select type" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="General">General</SelectItem>
-                                            <SelectItem value="Enterprise">Enterprise</SelectItem>
-                                            <SelectItem value="Priority">Priority</SelectItem>
+                                            {customerTypes.map(type => (
+                                                <SelectItem key={type.id} value={type.name}>{type.name}</SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
                                 </div>

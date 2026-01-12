@@ -1,2 +1,0 @@
-BANNERS: id, title, desktop_image_url, mobile_image_url, link, display_order, is_active, created_at, updated_at
-COLLECTIONS: id, name, slug, image_desktop, image_mobile, is_active, created_at, updated_at

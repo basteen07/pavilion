@@ -2,6 +2,7 @@
 
 import { Play, Volume2 } from 'lucide-react'
 import { useState } from 'react'
+import Image from 'next/image'
 
 export function VideoBlock() {
     const [isPlaying, setIsPlaying] = useState(false)
@@ -10,10 +11,13 @@ export function VideoBlock() {
         <section className="relative h-[600px] lg:h-[800px] bg-black overflow-hidden flex items-center justify-center">
             {/* Background Media */}
             <div className="absolute inset-0 z-0">
-                <img
+                <Image
                     src="https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=1920"
                     alt="Sports Action Background"
-                    className="w-full h-full object-cover opacity-60"
+                    fill
+                    className="object-cover opacity-60"
+                    priority
+                    sizes="100vw"
                 />
                 <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-black"></div>
             </div>

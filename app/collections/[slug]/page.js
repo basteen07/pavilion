@@ -43,8 +43,15 @@ export default function CollectionPage({ params }) {
         queryFn: () => apiCall('/categories')
     });
 
+    const { data: subCategories = [] } = useQuery({
+        queryKey: ['sub-categories'],
+        queryFn: () => apiCall('/sub-categories')
+    });
+
     // Filter categories relevant to this collection for the sidebar
     const relevantCategories = categories.filter(c => c.parent_collection_id === collection?.id);
+    const relevantCategoryIds = relevantCategories.map(c => c.id);
+    const relevantSubCategories = subCategories.filter(sc => relevantCategoryIds.includes(sc.category_id));
 
     if (collections.length > 0 && !collection) {
         return notFound();
@@ -85,9 +92,11 @@ export default function CollectionPage({ params }) {
                 <div className="flex flex-col lg:flex-row gap-12">
                     {/* Sidebar */}
                     <ProductFilters
-                        brands={brands} // Passing all brands for now, ideally filter by availability in collection
-                        // We reuse "subCategories" prop name for generalized category list here depending on context
-                        subCategories={relevantCategories.map(c => ({ id: c.id, name: c.name }))} // Map categories as sub-options
+                        brands={brands}
+                        categories={relevantCategories}
+                        subCategories={relevantSubCategories}
+                        products={productData?.products || []}
+                        showCategories={true}
                         showSubCategories={true}
                     />
 
@@ -110,8 +119,8 @@ export default function CollectionPage({ params }) {
                                         key={i}
                                         href={`?${new URLSearchParams({ ...Object.fromEntries(searchParams), page: i + 1 }).toString()}`}
                                         className={`w-10 h-10 flex items-center justify-center rounded-full font-bold transition-colors ${(productData.page || 1) === i + 1
-                                                ? 'bg-red-600 text-white shadow-lg shadow-red-200'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            ? 'bg-red-600 text-white shadow-lg shadow-red-200'
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                             }`}
                                     >
                                         {i + 1}

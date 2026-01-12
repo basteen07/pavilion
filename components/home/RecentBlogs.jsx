@@ -5,6 +5,7 @@ import { apiCall } from '@/lib/api-client'
 import { Card, CardContent } from '@/components/ui/card'
 import { ArrowRight, Clock } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export function RecentBlogs() {
     const { data: posts = [] } = useQuery({
@@ -34,10 +35,12 @@ export function RecentBlogs() {
                                 <Link href={`/${post.slug}`}>
                                     <div className="relative h-72 rounded-[2rem] overflow-hidden shadow-xl mb-6">
                                         {post.image_url ? (
-                                            <img
+                                            <Image
                                                 src={post.image_url}
                                                 alt={post.title}
-                                                className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                                                fill
+                                                className="object-cover transform group-hover:scale-110 transition-transform duration-700"
+                                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw"
                                             />
                                         ) : (
                                             <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">

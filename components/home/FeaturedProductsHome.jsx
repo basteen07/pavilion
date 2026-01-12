@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Star, Heart, ShoppingCart, ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { toast } from 'sonner'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useB2BCart } from '@/components/providers/B2BCartProvider'
@@ -84,10 +85,12 @@ export function FeaturedProductsHome() {
                             onClick={() => router.push(`/product/${product.slug}`)}
                         >
                             <div className="relative aspect-[4/5] overflow-hidden rounded-[2.5rem] bg-gray-100 shadow-xl group-hover:shadow-2xl transition-all duration-500 mb-6">
-                                <img
+                                <Image
                                     src={getProductImage(product) || "https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=600"}
                                     alt={product.name}
-                                    className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                                    fill
+                                    className="object-cover transform group-hover:scale-110 transition-transform duration-700"
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                                 />
 
                                 {/* Badges */}

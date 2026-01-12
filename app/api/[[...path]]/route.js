@@ -19,6 +19,7 @@ export async function OPTIONS() {
 async function authenticateRequest(request) {
   const authHeader = request.headers.get('authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.log('Auth Debug: No/Invalid Auth Header', authHeader);
     return null;
   }
 
@@ -26,6 +27,7 @@ async function authenticateRequest(request) {
   const payload = await verifyToken(token);
 
   if (!payload || !payload.userId) {
+    console.log('Auth Debug: Invalid Token or No UserID in Payload', payload);
     return null;
   }
 
@@ -38,6 +40,7 @@ async function authenticateRequest(request) {
   );
 
   if (result.rows.length === 0) {
+    console.log('Auth Debug: User not found or inactive', payload.userId);
     return null;
   }
 
@@ -71,8 +74,10 @@ async function authenticateRequest(request) {
         return null; // Force 401
       }
     }
+  } else if (user.role_name === 'b2b_user') {
+    // B2B Users: No timeout (as per user request)
   } else {
-    // Default for B2B/Other: 2 hours
+    // Default for Other roles: 2 hours
     const TIMEOUT_MS = 120 * 60 * 1000;
     if (user.last_active_at) {
       const lastActive = new Date(user.last_active_at).getTime();
@@ -1450,6 +1455,80 @@ async function handleRoute(request, { params }) {
       return handleCORS(NextResponse.json({ success: true, quotation: result.rows[0] }));
     }
 
+
+
+    // ============ SITE SETTINGS ENDPOINTS ============
+
+    // Get Site Settings
+    if (route === '/site-settings' && method === 'GET') {
+      // Ensure table exists (Lazy Migration)
+      await query(`
+        CREATE TABLE IF NOT EXISTS site_settings (
+          id SERIAL PRIMARY KEY,
+          meta_title TEXT,
+          meta_description TEXT,
+          head_scripts TEXT,
+          body_scripts TEXT,
+          google_analytics_id TEXT,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      // Ensure single row exists
+      const check = await query('SELECT * FROM site_settings LIMIT 1');
+      if (check.rows.length === 0) {
+        await query('INSERT INTO site_settings (meta_title) VALUES ($1)', ['Pavilion Sports']);
+      }
+
+      const result = await query('SELECT * FROM site_settings LIMIT 1');
+      return handleCORS(NextResponse.json(result.rows[0]));
+    }
+
+    // Update Site Settings
+    if (route === '/site-settings' && method === 'POST') {
+      const user = await authenticateRequest(request);
+      if (!user || (user.role_name !== 'superadmin' && user.role_name !== 'admin')) {
+        return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+      }
+
+      const body = await request.json();
+      const { meta_title, meta_description, head_scripts, body_scripts, google_analytics_id } = body;
+
+      // Ensure table exists (Lazy Migration)
+      await query(`
+        CREATE TABLE IF NOT EXISTS site_settings (
+          id SERIAL PRIMARY KEY,
+          meta_title TEXT,
+          meta_description TEXT,
+          head_scripts TEXT,
+          body_scripts TEXT,
+          google_analytics_id TEXT,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      const check = await query('SELECT id FROM site_settings LIMIT 1');
+      let result;
+
+      if (check.rows.length === 0) {
+        result = await query(
+          `INSERT INTO site_settings (meta_title, meta_description, head_scripts, body_scripts, google_analytics_id, updated_at)
+             VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+             RETURNING *`,
+          [meta_title, meta_description, head_scripts, body_scripts, google_analytics_id]
+        );
+      } else {
+        result = await query(
+          `UPDATE site_settings 
+             SET meta_title = $1, meta_description = $2, head_scripts = $3, body_scripts = $4, google_analytics_id = $5, updated_at = CURRENT_TIMESTAMP
+             WHERE id = $6
+             RETURNING *`,
+          [meta_title, meta_description, head_scripts, body_scripts, google_analytics_id, check.rows[0].id]
+        );
+      }
+
+      return handleCORS(NextResponse.json(result.rows[0]));
+    }
 
     // Route not found
     return handleCORS(NextResponse.json({ error: `Route ${route} not found` }, { status: 404 }));

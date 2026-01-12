@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { ChevronDown, ChevronRight, Zap } from 'lucide-react'
 
 export default function MegaMenu({ categories = [], brands = [], collections = [], subCategories = [], isScrolled = false }) {
@@ -146,7 +147,13 @@ export default function MegaMenu({ categories = [], brands = [], collections = [
                       >
                         <div className="flex items-center gap-3">
                           {cat.image_url && (
-                            <img src={cat.image_url} alt="" className="w-6 h-6 rounded-md object-cover" />
+                            <Image
+                              src={cat.image_url}
+                              alt=""
+                              width={24}
+                              height={24}
+                              className="w-6 h-6 rounded-md object-cover"
+                            />
                           )}
                           <span className="text-[14px]">{cat.name}</span>
                         </div>
@@ -188,7 +195,13 @@ export default function MegaMenu({ categories = [], brands = [], collections = [
                         >
                           <div className="w-8 h-8 rounded-lg bg-gray-200 shrink-0 overflow-hidden">
                             {sub.image_url ? (
-                              <img src={sub.image_url} alt="" className="w-full h-full object-cover" />
+                              <Image
+                                src={sub.image_url}
+                                alt=""
+                                width={32}
+                                height={32}
+                                className="w-full h-full object-cover"
+                              />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">IMG</div>
                             )}
@@ -229,11 +242,13 @@ export default function MegaMenu({ categories = [], brands = [], collections = [
                         >
                           {brand.logo_url ? (
                             // "Image make size little bit and show with color"
-                            <div className="h-12 w-full flex items-center justify-center">
-                              <img
+                            <div className="h-12 w-full flex items-center justify-center relative">
+                              <Image
                                 src={brand.logo_url}
                                 alt={brand.name}
-                                className="max-h-full max-w-full object-contain"
+                                fill
+                                className="object-contain"
+                                sizes="(max-width: 768px) 33vw, 20vw"
                               />
                             </div>
                           ) : (

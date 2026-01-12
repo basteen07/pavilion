@@ -11,8 +11,11 @@ import { toast } from 'sonner'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiCall } from '@/lib/api-client'
+import { useAuth } from '@/components/providers/AuthProvider'
 
 export function OrderManagement() {
+    const { user } = useAuth()
+    const isSuperAdmin = user?.role === 'superadmin'
     const [page, setPage] = useState(1)
     const [search, setSearch] = useState('')
     const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -118,7 +121,6 @@ export function OrderManagement() {
 
     return (
         <div className="space-y-6">
-            <h2 className="text-3xl font-bold">Orders</h2>
 
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
                 <div className="relative flex-1 max-w-sm">
@@ -260,8 +262,12 @@ export function OrderManagement() {
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead>Product</TableHead>
+                                                <TableHead className="text-right">MRP</TableHead>
+                                                {isSuperAdmin && (
+                                                    <TableHead className="text-right text-blue-600 font-bold bg-blue-50/30">Dealer</TableHead>
+                                                )}
                                                 <TableHead className="text-right">Price</TableHead>
-                                                <TableHead className="text-right w-32">Quantity</TableHead>
+                                                <TableHead className="text-right w-24">Qty</TableHead>
                                                 <TableHead className="text-right">Total</TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -276,11 +282,19 @@ export function OrderManagement() {
                                                             </div>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="text-right">₹{parseFloat(item.unit_price || item.price).toLocaleString()}</TableCell>
+                                                    <TableCell className="text-right text-gray-400 text-xs">
+                                                        ₹{parseFloat(item.mrp || item.mrp_price || 0).toLocaleString()}
+                                                    </TableCell>
+                                                    {isSuperAdmin && (
+                                                        <TableCell className="text-right bg-blue-50/20 text-blue-700 font-medium">
+                                                            ₹{parseFloat(item.dealer_price || 0).toLocaleString()}
+                                                        </TableCell>
+                                                    )}
+                                                    <TableCell className="text-right font-medium">₹{parseFloat(item.unit_price || item.price).toLocaleString()}</TableCell>
                                                     <TableCell className="text-right">
                                                         <Input
                                                             type="number"
-                                                            className="text-right h-8"
+                                                            className="text-right h-8 font-bold"
                                                             value={item.quantity}
                                                             onChange={(e) => handleQuantityChange(idx, e.target.value)}
                                                         />

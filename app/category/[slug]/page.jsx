@@ -25,7 +25,7 @@ export default function CategoryPage({ params }) {
   const queryStr = searchParams.toString();
   const { data: productData, isLoading: productsLoading } = useQuery({
     queryKey: ['products', 'category', category?.id, queryStr],
-    queryFn: () => apiCall(`/products?category_id=${category.id}&${queryStr}`),
+    queryFn: () => apiCall(`/products?category=${category.id}&${queryStr}`),
     enabled: !!category
   });
 
@@ -86,10 +86,10 @@ export default function CategoryPage({ params }) {
           {/* Sidebar */}
           <ProductFilters
             brands={brands}
+            categories={categories}
             subCategories={relevantSubCategories}
+            products={productData?.products || []}
             showSubCategories={true}
-          // Actually yes, filtering by sub-category inside a category is main use case.
-          // I will override my prop logic to pass relevantSubCategories and enable showing them.
           />
           {/* Wait, the ProductFilters component logic I wrote takes `subCategories` and `showSubCategories`. 
                         So I should verify if I want to show subcategories. Yes. 

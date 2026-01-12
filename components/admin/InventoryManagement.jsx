@@ -7,9 +7,10 @@ import { BrandManager } from '@/components/admin/inventory/BrandManager'
 import { ProductList } from '@/components/admin/inventory/ProductList'
 import { ProductForm } from '@/components/admin/inventory/ProductForm'
 import { CollectionManager } from '@/components/admin/inventory/CollectionManager'
+import { InventoryOverview } from '@/components/admin/inventory/InventoryOverview'
 
 export function InventoryManagement() {
-    const [activeTab, setActiveTab] = useState('products')
+    const [activeTab, setActiveTab] = useState('overview')
     const [view, setView] = useState('list') // 'list', 'create', 'edit'
     const [selectedProduct, setSelectedProduct] = useState(null)
 
@@ -40,12 +41,17 @@ export function InventoryManagement() {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
+                <TabsList className="grid w-full grid-cols-5 lg:w-[750px]">
+                    <TabsTrigger value="overview">Overview</TabsTrigger>
                     <TabsTrigger value="products">Products</TabsTrigger>
                     <TabsTrigger value="collections">Collections</TabsTrigger>
                     <TabsTrigger value="categories">Categories</TabsTrigger>
                     <TabsTrigger value="brands">Brands</TabsTrigger>
                 </TabsList>
+
+                <TabsContent value="overview" className="mt-6">
+                    <InventoryOverview />
+                </TabsContent>
 
                 <TabsContent value="products" className="mt-6">
                     {view === 'list' && (

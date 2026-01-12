@@ -101,6 +101,11 @@ const data = {
             url: "/admin/cms-pages",
             icon: LayoutList,
         },
+        {
+            title: "Site Settings",
+            url: "/admin/site-settings",
+            icon: Settings,
+        },
     ],
     navSecondary: [
         {

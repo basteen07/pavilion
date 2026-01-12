@@ -48,17 +48,27 @@ export function HeroScroller() {
                     <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10"></div>
 
                     {/* Desktop Image */}
-                    <img
-                        src={slide.desktop_image_url}
-                        alt={slide.title}
-                        className={`w-full h-full object-cover hidden md:block`}
-                    />
+                    <div className="relative w-full h-full hidden md:block">
+                        <Image
+                            src={slide.desktop_image_url}
+                            alt={slide.title}
+                            fill
+                            className="object-cover"
+                            priority={idx === 0}
+                            sizes="100vw"
+                        />
+                    </div>
                     {/* Mobile Image */}
-                    <img
-                        src={slide.mobile_image_url || slide.desktop_image_url}
-                        alt={slide.title}
-                        className={`w-full h-full object-cover md:hidden`}
-                    />
+                    <div className="relative w-full h-full md:hidden">
+                        <Image
+                            src={slide.mobile_image_url || slide.desktop_image_url}
+                            alt={slide.title}
+                            fill
+                            className="object-cover"
+                            priority={idx === 0}
+                            sizes="100vw"
+                        />
+                    </div>
 
                     <div className="absolute inset-0 z-20 flex items-center">
                         <div className="container">

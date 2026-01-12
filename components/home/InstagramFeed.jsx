@@ -1,6 +1,7 @@
 'use client'
 
 import { Instagram } from 'lucide-react'
+import Image from 'next/image'
 
 const feed = [
     'https://images.unsplash.com/photo-1540747913346-19e3adca174f?w=600',
@@ -31,10 +32,12 @@ export function InstagramFeed() {
                             <div className="absolute inset-0 bg-red-600/0 group-hover:bg-red-600/40 z-10 transition-colors duration-500 flex items-center justify-center">
                                 <Instagram className="text-white w-8 h-8 opacity-0 group-hover:opacity-100 transform scale-50 group-hover:scale-100 transition-all duration-500" />
                             </div>
-                            <img
+                            <Image
                                 src={img}
                                 alt={`Instagram Post ${idx}`}
-                                className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                                fill
+                                className="object-cover transform group-hover:scale-110 transition-transform duration-700"
+                                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 16vw"
                             />
                         </div>
                     ))}

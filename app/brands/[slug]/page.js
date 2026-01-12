@@ -51,6 +51,11 @@ export default function BrandPage({ params }) {
         queryFn: () => apiCall('/categories')
     });
 
+    const { data: subCategories = [] } = useQuery({
+        queryKey: ['sub-categories'],
+        queryFn: () => apiCall('/sub-categories')
+    });
+
     if (brands.length > 0 && !brand) {
         return notFound();
     }
@@ -72,9 +77,11 @@ export default function BrandPage({ params }) {
                 <div className="flex flex-col lg:flex-row gap-12">
                     {/* Sidebar */}
                     <ProductFilters
-                        // No brands filter needed here obviously
-                        subCategories={categories.map(c => ({ id: c.id, name: c.name }))} // Showing Categories as "sub" filters? Or fetch real sub-categories?
-                        // Showing Categories makes more sense for a Brand page.
+                        brands={brands}
+                        categories={categories}
+                        subCategories={subCategories}
+                        products={productData?.products || []}
+                        showCategories={true}
                         showSubCategories={true}
                     />
 
@@ -96,8 +103,8 @@ export default function BrandPage({ params }) {
                                         key={i}
                                         href={`?${new URLSearchParams({ ...Object.fromEntries(searchParams), page: i + 1 }).toString()}`}
                                         className={`w-10 h-10 flex items-center justify-center rounded-full font-bold transition-colors ${(productData.page || 1) === i + 1
-                                                ? 'bg-red-600 text-white shadow-lg shadow-red-200'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            ? 'bg-red-600 text-white shadow-lg shadow-red-200'
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                             }`}
                                     >
                                         {i + 1}

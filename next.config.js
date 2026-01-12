@@ -1,11 +1,17 @@
 const nextConfig = {
   output: 'standalone',
   images: {
-    unoptimized: true,
+    // unoptimized: true, // Disabled to allow Next.js Image Optimization
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
   },
   experimental: {
     // Remove if not using Server Components
-    serverComponentsExternalPackages: ['mongodb'],
+    serverComponentsExternalPackages: ['mongodb', 'jspdf', 'html2canvas'],
   },
   webpack(config, { dev }) {
     if (dev) {
@@ -32,6 +38,20 @@ const nextConfig = {
           { key: "Access-Control-Allow-Origin", value: process.env.CORS_ORIGINS || "*" },
           { key: "Access-Control-Allow-Methods", value: "GET, POST, PUT, DELETE, OPTIONS" },
           { key: "Access-Control-Allow-Headers", value: "*" },
+          // Caching for static assets (managed by Next.js automatically mostly, but good for explicit override if needed on some routes)
+          {
+            key: "Cache-Control", // Default for non-static routes. Static assets in _next/static have their own long-cache headers.
+            value: "public, max-age=0, must-revalidate"
+          }
+        ],
+      },
+      {
+        source: "/_next/image(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
         ],
       },
     ];

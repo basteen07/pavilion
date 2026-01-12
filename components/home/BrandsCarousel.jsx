@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiCall } from '@/lib/api-client'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export function BrandsCarousel() {
     const { data: brands = [] } = useQuery({
@@ -27,13 +28,15 @@ export function BrandsCarousel() {
                             <Link
                                 key={`${brand.id}-${idx}`}
                                 href={`/brands/${brand.id}`}
-                                className="flex items-center justify-center transition-all duration-300 transform hover:scale-110 shrink-0"
+                                className="flex items-center justify-center transition-all duration-300 transform hover:scale-110 shrink-0 h-20 w-32 relative"
                             >
                                 {brand.logo_url || brand.image_url ? (
-                                    <img
+                                    <Image
                                         src={brand.logo_url || brand.image_url}
                                         alt={brand.name}
-                                        className="h-16 md:h-20 w-auto object-contain"
+                                        fill
+                                        className="object-contain"
+                                        sizes="(max-width: 768px) 100px, 150px"
                                     />
                                 ) : (
                                     <span className="text-xl font-bold text-gray-400 font-serif tracking-tight">{brand.name}</span>
@@ -55,7 +58,7 @@ export function BrandsCarousel() {
           100% { transform: translateX(-50%); }
         }
         .animate-marquee {
-          animation: marquee 30s linear infinite;
+          animation: marquee 45s linear infinite;
         }
         .pause-animation {
           animation-play-state: paused;

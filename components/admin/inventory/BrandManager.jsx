@@ -191,9 +191,14 @@ export function BrandManager() {
                                     </Button>
                                 </div>
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-gray-500 space-y-1">
                                 <p>{brand.category_name || 'No Category'}</p>
                                 <p>{brand.sub_category_name || 'No Sub-category'}</p>
+                                <div className="pt-2 border-t mt-2">
+                                    <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                                        {brand.product_count || 0} Products
+                                    </span>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>

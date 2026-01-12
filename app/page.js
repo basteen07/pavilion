@@ -35,6 +35,7 @@ import { Testimonials } from '@/components/home/Testimonials'
 import { VideoBlock } from '@/components/home/VideoBlock'
 import { RecentBlogs } from '@/components/home/RecentBlogs'
 import { InstagramFeed } from '@/components/home/InstagramFeed'
+import { CricketSpecialistStore } from '@/components/home/CricketSpecialistStore'
 
 // Utility function for API calls
 const API_BASE = '/api'
@@ -333,7 +334,7 @@ function PublicHomePage() {
       <HeroScroller />
       <BrandsCarousel />
       <CategoryGrid />
-      <FeaturedProductsHome />
+      <CricketSpecialistStore />
       <USPSection />
       <Testimonials />
       <VideoBlock />

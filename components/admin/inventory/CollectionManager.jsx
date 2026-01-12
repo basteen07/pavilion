@@ -155,7 +155,14 @@ export function CollectionManager() {
                                                 </div>
                                             )}
                                         </TableCell>
-                                        <TableCell className="font-medium">{collection.name}</TableCell>
+                                        <TableCell className="font-medium">
+                                            <div className="flex flex-col">
+                                                <span>{collection.name}</span>
+                                                <span className="text-[10px] text-blue-500 font-bold uppercase tracking-tight">
+                                                    {collection.category_count || 0} Categories
+                                                </span>
+                                            </div>
+                                        </TableCell>
                                         <TableCell className="text-gray-500">{collection.slug}</TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">

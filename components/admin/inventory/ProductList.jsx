@@ -175,6 +175,7 @@ export function ProductList({ onEdit, onCreate }) {
                             <TableHead>Category</TableHead>
                             <TableHead>Brand</TableHead>
                             <TableHead>MRP</TableHead>
+                            <TableHead>Dealer</TableHead>
                             <TableHead>Stock</TableHead>
                             <TableHead>Actions</TableHead>
                         </TableRow>
@@ -215,6 +216,7 @@ export function ProductList({ onEdit, onCreate }) {
                                     </TableCell>
                                     <TableCell>{product.brand_name || '-'}</TableCell>
                                     <TableCell>₹{product.mrp_price}</TableCell>
+                                    <TableCell className="text-blue-600 font-medium whitespace-nowrap">₹{product.dealer_price || '-'}</TableCell>
                                     <TableCell>
                                         <Badge variant={product.is_active ? 'default' : 'secondary'}>
                                             {product.is_active ? 'Active' : 'Inactive'}

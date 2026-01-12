@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiCall } from '@/lib/api-client'
 import Link from 'next/link'
+import Image from 'next/image'
 import { ArrowRight } from 'lucide-react'
 
 export function CategoryGrid() {
@@ -35,10 +36,12 @@ export function CategoryGrid() {
                             >
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent z-10 opacity-70 group-hover:opacity-90 transition-opacity"></div>
                                 {collection.image_desktop || collection.image_mobile ? (
-                                    <img
+                                    <Image
                                         src={collection.image_desktop || collection.image_mobile}
                                         alt={collection.name}
-                                        className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-1000"
+                                        fill
+                                        className="object-cover transform group-hover:scale-110 transition-transform duration-1000"
+                                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                     />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center bg-gray-300">
@@ -77,10 +80,12 @@ function CategoryItem({ title, image, link, large = false }) {
                 }`}
         >
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent z-10 opacity-70 group-hover:opacity-90 transition-opacity"></div>
-            <img
+            <Image
                 src={image}
                 alt={title}
-                className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-1000"
+                fill
+                className="object-cover transform group-hover:scale-110 transition-transform duration-1000"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
             <div className="absolute bottom-0 left-0 w-full p-8 lg:p-12 z-20">
                 <span className="text-xs font-bold text-red-500 uppercase tracking-widest mb-3 block transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
