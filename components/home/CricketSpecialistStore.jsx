@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowRight, Star, ShoppingBag, ShieldCheck, Trophy, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import Image from 'next/image'
 
 export function CricketSpecialistStore() {
     const router = useRouter()
@@ -56,8 +57,14 @@ export function CricketSpecialistStore() {
                     <div className="flex flex-col items-end gap-4">
                         <div className="flex -space-x-3 mb-4">
                             {[1, 2, 3, 4].map(i => (
-                                <div key={i} className="w-12 h-12 rounded-full border-4 border-white bg-gray-100 overflow-hidden">
-                                    <img src={`https://i.pravatar.cc/150?u=${i + 10}`} alt="User" className="w-full h-full object-cover" />
+                                <div key={i} className="w-12 h-12 relative rounded-full border-4 border-white bg-gray-100 overflow-hidden">
+                                    <Image
+                                        src={`https://i.pravatar.cc/150?u=${i + 10}`}
+                                        alt="User"
+                                        fill
+                                        sizes="48px"
+                                        className="object-cover"
+                                    />
                                 </div>
                             ))}
                             <div className="w-12 h-12 rounded-full border-4 border-white bg-red-600 flex items-center justify-center text-white text-xs font-black">
@@ -74,10 +81,13 @@ export function CricketSpecialistStore() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-20">
                     {/* Featured Large Card */}
                     <div className="lg:col-span-8 group relative aspect-[16/9] lg:aspect-auto h-full min-h-[500px] overflow-hidden rounded-[3rem] shadow-2xl transition-all duration-700 hover:shadow-red-100">
-                        <img
+                        <Image
                             src="/images/cricket_bats_hero.png"
                             alt="English Willow Bats"
-                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                            fill
+                            className="object-cover transition-transform duration-1000 group-hover:scale-105"
+                            sizes="(max-width: 1024px) 100vw, 66vw"
+                            priority
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
 
@@ -86,7 +96,7 @@ export function CricketSpecialistStore() {
                             <Badge className="bg-white/20 backdrop-blur-md text-white font-black uppercase tracking-widest px-4 py-2 border-none">English Willow</Badge>
                         </div>
 
-                        <div className="absolute bottom-12 left-12 right-12">
+                        <div className="absolute bottom-12 left-12 right-12 z-10">
                             <h3 className="text-4xl lg:text-6xl font-black text-white tracking-tighter mb-6 group-hover:translate-x-2 transition-transform duration-500">
                                 PRO SERIES <br />BATS 2024
                             </h3>
@@ -116,13 +126,15 @@ export function CricketSpecialistStore() {
                             onClick={() => router.push('/category/cricket?sub_category=69,70')}
                             className="flex-1 group relative overflow-hidden rounded-[2.5rem] bg-gray-900 cursor-pointer shadow-xl"
                         >
-                            <img
+                            <Image
                                 src="/images/cricket_protective.png"
                                 alt="Protective Gear"
-                                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                fill
+                                className="object-cover transition-transform duration-700 group-hover:scale-110"
+                                sizes="(max-width: 1024px) 100vw, 33vw"
                             />
                             <div className="absolute inset-0 bg-gradient-to-br from-red-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                            <div className="relative p-10 h-full flex flex-col justify-end">
+                            <div className="relative p-10 h-full flex flex-col justify-end z-10">
                                 <h4 className="text-2xl font-black text-white tracking-tight mb-2">PROTECTIVE GEAR</h4>
                                 <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-6 translate-y-2 group-hover:translate-y-0 transition-transform">Safety meets Style</p>
                                 <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center translate-y-2 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all">
@@ -136,13 +148,15 @@ export function CricketSpecialistStore() {
                             onClick={() => router.push('/category/cricket?sub_category=72')}
                             className="flex-1 group relative overflow-hidden rounded-[2.5rem] bg-gray-100 cursor-pointer shadow-xl"
                         >
-                            <img
+                            <Image
                                 src="/images/cricket_accessories.png"
                                 alt="Accessories"
-                                className="absolute inset-0 w-full h-full object-cover transition-all duration-700"
+                                fill
+                                className="object-cover transition-all duration-700"
+                                sizes="(max-width: 1024px) 100vw, 33vw"
                             />
                             <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px] group-hover:backdrop-blur-0 transition-all"></div>
-                            <div className="relative p-10 h-full flex flex-col justify-end">
+                            <div className="relative p-10 h-full flex flex-col justify-end z-10">
                                 <h4 className="text-2xl font-black text-gray-900 tracking-tight mb-2">PRO ACCESSORIES</h4>
                                 <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-6 translate-y-2 group-hover:translate-y-0 transition-transform">The Complete Loadout</p>
                                 <div className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center translate-y-2 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all">

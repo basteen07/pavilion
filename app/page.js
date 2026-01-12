@@ -29,12 +29,7 @@ import { SiteLayout } from '@/components/layout/SiteLayout'
 import { HeroScroller } from '@/components/home/HeroScroller'
 import { BrandsCarousel } from '@/components/home/BrandsCarousel'
 import { CategoryGrid } from '@/components/home/CategoryGrid'
-import { FeaturedProductsHome } from '@/components/home/FeaturedProductsHome'
 import { USPSection } from '@/components/home/USPSection'
-import { Testimonials } from '@/components/home/Testimonials'
-import { VideoBlock } from '@/components/home/VideoBlock'
-import { RecentBlogs } from '@/components/home/RecentBlogs'
-import { InstagramFeed } from '@/components/home/InstagramFeed'
 import { CricketSpecialistStore } from '@/components/home/CricketSpecialistStore'
 
 // Utility function for API calls
@@ -326,6 +321,15 @@ function GalleryPage() {
     </div >
   )
 }
+
+import dynamic from 'next/dynamic'
+
+const Testimonials = dynamic(() => import('@/components/home/Testimonials').then(mod => mod.Testimonials), {
+  loading: () => <p className="text-center py-20">Loading testimonials...</p>
+})
+const VideoBlock = dynamic(() => import('@/components/home/VideoBlock').then(mod => mod.VideoBlock))
+const RecentBlogs = dynamic(() => import('@/components/home/RecentBlogs').then(mod => mod.RecentBlogs))
+const InstagramFeed = dynamic(() => import('@/components/home/InstagramFeed').then(mod => mod.InstagramFeed))
 
 // Public Homepage
 function PublicHomePage() {

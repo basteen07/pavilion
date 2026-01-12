@@ -48,9 +48,9 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                     <div className="flex items-center gap-4">
                         <span className="text-gray-400">Follow us:</span>
                         <div className="flex items-center gap-3">
-                            <Instagram className="w-3.5 h-3.5 cursor-pointer hover:text-red-500 transition" />
-                            <Facebook className="w-3.5 h-3.5 cursor-pointer hover:text-red-500 transition" />
-                            <Twitter className="w-3.5 h-3.5 cursor-pointer hover:text-red-500 transition" />
+                            <Instagram className="w-3.5 h-3.5 cursor-pointer hover:text-red-500 transition" aria-label="Instagram" role="button" tabIndex={0} />
+                            <Facebook className="w-3.5 h-3.5 cursor-pointer hover:text-red-500 transition" aria-label="Facebook" role="button" tabIndex={0} />
+                            <Twitter className="w-3.5 h-3.5 cursor-pointer hover:text-red-500 transition" aria-label="Twitter" role="button" tabIndex={0} />
                         </div>
                     </div>
                 </div>
@@ -66,7 +66,7 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                 <div className="container">
                     <div className="flex items-center justify-between">
                         {/* Logo */}
-                        <Link href="/" className="flex items-center">
+                        <Link href="/" className="flex items-center" aria-label="Pavilion Sports Home">
                             <Image
                                 src="/pavilion-sports.png"
                                 alt="Pavilion Sports"
@@ -100,6 +100,7 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                                 <Input
                                     placeholder="Search gear..."
                                     className="pl-9 w-48 bg-gray-50 border-transparent focus:bg-white focus:border-red-500 focus:w-64 transition-all duration-300 rounded-full h-10"
+                                    aria-label="Search"
                                 />
                             </div>
 
@@ -112,6 +113,7 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                                                 size="icon"
                                                 className="rounded-full hover:bg-gray-100 transition-colors"
                                                 onClick={() => router.push('/b2b/cart')}
+                                                aria-label="Shopping Cart"
                                             >
                                                 <ShoppingCart className="w-5 h-5 text-gray-700" />
                                             </Button>
@@ -119,7 +121,7 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                                         {/* User Dropdown / Profile */}
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <div className="flex items-center gap-2 cursor-pointer">
+                                                <div className="flex items-center gap-2 cursor-pointer" role="button" tabIndex={0} aria-label="User Menu">
                                                     <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center text-red-600 font-bold text-xs hover:bg-red-200 transition">
                                                         {user.name?.[0] || 'U'}
                                                     </div>
@@ -160,6 +162,7 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                                             size="icon"
                                             className="rounded-full hover:bg-gray-100 transition-colors"
                                             onClick={() => router.push('/login')}
+                                            aria-label="Login"
                                         >
                                             <User className="w-5 h-5 text-gray-700" />
                                         </Button>
@@ -179,6 +182,7 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                                     size="icon"
                                     className="lg:hidden"
                                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                                    aria-label={isMobileMenuOpen ? "Close Menu" : "Open Menu"}
                                 >
                                     <Menu className="w-6 h-6" />
                                 </Button>
@@ -190,11 +194,11 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
             {/* Mobile Menu Overlay */}
             {isMobileMenuOpen && (
                 <div className="fixed inset-0 z-[110] lg:hidden">
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} aria-hidden="true" />
                     <div className="fixed inset-y-0 right-0 w-full max-w-xs bg-white shadow-2xl p-6 overflow-y-auto animate-in slide-in-from-right duration-300">
                         <div className="flex justify-between items-center mb-8">
                             <span className="text-xl font-black text-gray-900">MENU</span>
-                            <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-gray-100 rounded-full">
+                            <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-gray-100 rounded-full" aria-label="Close Menu">
                                 <Menu className="w-6 h-6" />
                             </button>
                         </div>

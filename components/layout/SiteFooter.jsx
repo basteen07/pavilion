@@ -109,21 +109,21 @@ export function SiteFooter({ categories = [] }) {
                                     placeholder="Email address"
                                     className="bg-black/50 border-white/10 text-white placeholder:text-gray-600 h-11 focus:border-red-500"
                                 />
-                                <Button className="bg-red-600 hover:bg-red-700 h-11 px-4">
+                                <Button className="bg-red-600 hover:bg-red-700 h-11 px-4" aria-label="Subscribe">
                                     <ArrowRight className="w-4 h-4" />
                                 </Button>
                             </div>
                             <div className="flex items-center gap-4 pt-2">
-                                <a href="#" className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-red-600 transition-colors duration-300">
+                                <a href="#" className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-red-600 transition-colors duration-300" aria-label="Instagram">
                                     <Instagram className="w-4 h-4" />
                                 </a>
-                                <a href="#" className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-blue-600 transition-colors duration-300">
+                                <a href="#" className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-blue-600 transition-colors duration-300" aria-label="Facebook">
                                     <Facebook className="w-4 h-4" />
                                 </a>
-                                <a href="#" className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-sky-500 transition-colors duration-300">
+                                <a href="#" className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-sky-500 transition-colors duration-300" aria-label="Twitter">
                                     <Twitter className="w-4 h-4" />
                                 </a>
-                                <a href="#" className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-red-700 transition-colors duration-300">
+                                <a href="#" className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-red-700 transition-colors duration-300" aria-label="YouTube">
                                     <Youtube className="w-4 h-4" />
                                 </a>
                             </div>
