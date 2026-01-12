@@ -1,6 +1,8 @@
 import { query } from '@/lib/simple-db';
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     try {
         console.log('=== Starting 500 Product Seeding & Update ===');
