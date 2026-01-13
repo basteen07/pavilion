@@ -22,7 +22,7 @@ const nextConfig = {
     optimizeCss: true,
     // Remove if not using Server Components
     serverComponentsExternalPackages: ['mongodb', 'jspdf', 'html2canvas'],
-    optimizePackageImports: ['lucide-react', 'date-fns', 'lodash'], // Tree shake big libs
+    optimizePackageImports: ['lucide-react', 'date-fns', 'lodash', 'recharts', 'framer-motion', '@radix-ui/react-icons'], // Tree shake big libs
   },
 
   compiler: {

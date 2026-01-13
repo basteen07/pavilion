@@ -6,10 +6,11 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight } from 'lucide-react'
 
-export function CategoryGrid() {
-    const { data: collections = [] } = useQuery({
+export function CategoryGrid({ initialCollections = [] }) {
+    const { data: collections = initialCollections } = useQuery({
         queryKey: ['parent-collections'],
-        queryFn: () => apiCall('/parent-collections')
+        queryFn: () => apiCall('/parent-collections'),
+        initialData: initialCollections
     })
 
     return (

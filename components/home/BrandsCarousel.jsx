@@ -5,10 +5,11 @@ import { apiCall } from '@/lib/api-client'
 import Link from 'next/link'
 import Image from 'next/image'
 
-export function BrandsCarousel() {
-    const { data: brands = [] } = useQuery({
+export function BrandsCarousel({ initialBrands = [] }) {
+    const { data: brands = initialBrands } = useQuery({
         queryKey: ['brands'],
-        queryFn: () => apiCall('/brands')
+        queryFn: () => apiCall('/brands'),
+        initialData: initialBrands
     })
 
     // Duplicate for seamless loop if we have brands

@@ -16,105 +16,98 @@ import { apiCall } from '@/lib/api-client'
 
 export default function CategoryPage({ categorySlug, subcategorySlug }) {
   const router = useRouter()
-  const [viewMode, setViewMode] = useState('grid')
+  const [viewMode, setViewMode] = useState('list')
   const [sortBy, setSortBy] = useState('featured')
   const [selectedBrand, setSelectedBrand] = useState('all')
   const [priceRange, setPriceRange] = useState([0, 200000])
 
-  // Reset filters when category changes
+  // Reset filters when category/subcategory changes
   useEffect(() => {
     setSelectedBrand('all')
     setPriceRange([0, 200000])
   }, [categorySlug, subcategorySlug])
 
   // Fetch all categories
-  const { data: allCategories = [] } = useQuery({
+  const { data: allCategories = [], isLoading: categoriesLoading } = useQuery({
     queryKey: ['categories'],
     queryFn: () => apiCall('/categories')
   })
 
-  // Find current category
+  // Find current category by slug
   const currentCategory = useMemo(() => {
-    const found = allCategories.find(c => c.slug === categorySlug)
-    console.log('🔍 Finding category:', { categorySlug, allCategories: allCategories.map(c => c.slug), found })
-    return found
+    return allCategories.find(c => c.slug === categorySlug)
   }, [allCategories, categorySlug])
 
-  // Fetch sub-categories for current category
+  // Fetch sub-categories for the current category
   const { data: subCategories = [] } = useQuery({
     queryKey: ['sub-categories', currentCategory?.id],
-    queryFn: () => {
+    queryFn: async () => {
       if (!currentCategory?.id) return []
-      return apiCall(`/sub-categories?categoryId=${currentCategory.id}`)
+      const result = await apiCall(`/sub-categories?categoryId=${currentCategory.id}`)
+      return result || []
     },
     enabled: !!currentCategory?.id
   })
 
-  // Find current sub-category from the fetched sub-categories
+  // Find current sub-category by matching slug to name
   const currentSubCategory = useMemo(() => {
     if (!subcategorySlug || !subCategories.length) return null
-    // Sub-categories don't have slugs, so we need to match by name converted to slug format
-    const found = subCategories.find(sc =>
+    return subCategories.find(sc =>
       sc.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === subcategorySlug
     )
-    console.log('🔍 Finding sub-category:', { subcategorySlug, subCategories: subCategories.map(sc => sc.name), found })
-    return found
   }, [subcategorySlug, subCategories])
 
-  // Fetch brands (Contextual) - only brands that have products in the selected category/subcategory
+  // Fetch contextual brands (only brands with products in selected category/subcategory)
   const { data: brands = [] } = useQuery({
-    queryKey: ['brands', currentCategory?.id, currentSubCategory?.id],
-    queryFn: () => {
+    queryKey: ['contextual-brands', currentCategory?.id, currentSubCategory?.id],
+    queryFn: async () => {
       const params = new URLSearchParams()
       if (currentCategory?.id) params.append('category_id', currentCategory.id)
       if (currentSubCategory?.id) params.append('sub_category_id', currentSubCategory.id)
-      return apiCall(`/brands?${params.toString()}`)
+      const result = await apiCall(`/brands?${params.toString()}`)
+      return result || []
     },
     enabled: !!currentCategory?.id
   })
 
-  // Fetch products with proper category/subcategory filtering
+  // Fetch products with all filters applied
   const { data: productsData, isLoading: productsLoading } = useQuery({
-    queryKey: ['category-products', currentCategory?.id, currentSubCategory?.id, sortBy, selectedBrand, priceRange],
-    queryFn: () => {
+    queryKey: ['filtered-products', currentCategory?.id, currentSubCategory?.id, selectedBrand, priceRange, sortBy],
+    queryFn: async () => {
       const params = new URLSearchParams()
-      params.append('limit', '100')
+      params.append('limit', '500')
 
-      console.log('🔍 Products query:', {
-        currentCategory: currentCategory?.id,
-        currentSubCategory: currentSubCategory?.id,
-        selectedBrand,
-        priceRange
-      })
-
-      // Filter by category ID (required)
+      // Category filter (required)
       if (currentCategory?.id) {
         params.append('category', currentCategory.id)
       }
 
-      // Filter by sub-category ID if selected
+      // Sub-category filter (optional)
       if (currentSubCategory?.id) {
         params.append('sub_category', currentSubCategory.id)
       }
 
-      // Filter by brand slug
+      // Brand filter (optional)
       if (selectedBrand && selectedBrand !== 'all') {
         params.append('brand', selectedBrand)
       }
 
-      // Price range filtering
-      params.append('price_min', priceRange[0])
-      params.append('price_max', priceRange[1])
+      // Price range filter
+      params.append('price_min', priceRange[0].toString())
+      params.append('price_max', priceRange[1].toString())
 
-      console.log('🔍 API URL:', `/products?${params.toString()}`)
-      return apiCall(`/products?${params.toString()}`)
+      // Sorting
+      if (sortBy) params.append('sort', sortBy)
+
+      const result = await apiCall(`/products?${params.toString()}`)
+      return result || { products: [], total: 0 }
     },
     enabled: !!currentCategory?.id
   })
 
   const products = productsData?.products || []
 
-  // Group products by brand
+  // Group products by brand for display
   const groupedProducts = useMemo(() => {
     const groups = {}
     products.forEach(product => {
@@ -127,25 +120,29 @@ export default function CategoryPage({ categorySlug, subcategorySlug }) {
 
   const sortedBrands = Object.keys(groupedProducts).sort()
 
-  // Show error if category not found
-  if (!currentCategory && categorySlug) {
+  // Loading state
+  if (categoriesLoading) {
     return (
-      <>
-        <section className="bg-gray-900 text-white py-20">
-          <div className="container">
-            <h1 className="text-5xl font-black mb-6">Category Not Found</h1>
-            <p className="text-xl text-gray-400 mb-8">
-              The category "{categorySlug}" could not be found.
-            </p>
-            <p className="text-sm text-gray-500 mb-4">
-              Available categories: {allCategories.map(c => c.slug).join(', ')}
-            </p>
-            <Button className="bg-red-600 hover:bg-red-700" onClick={() => window.location.href = '/'}>
-              Go to Homepage
-            </Button>
-          </div>
-        </section>
-      </>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-16 h-16 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    )
+  }
+
+  // Category not found
+  if (!currentCategory) {
+    return (
+      <section className="bg-gray-900 text-white py-20">
+        <div className="container">
+          <h1 className="text-5xl font-black mb-6">Category Not Found</h1>
+          <p className="text-xl text-gray-400 mb-8">
+            The category "{categorySlug}" does not exist.
+          </p>
+          <Button className="bg-red-600 hover:bg-red-700" onClick={() => router.push('/')}>
+            Return to Homepage
+          </Button>
+        </div>
+      </section>
     )
   }
 
@@ -158,10 +155,16 @@ export default function CategoryPage({ categorySlug, subcategorySlug }) {
           <div className="flex items-center gap-2 text-red-500 font-bold uppercase tracking-widest text-xs mb-4">
             <Link href="/" className="hover:text-white transition">Home</Link>
             <ChevronRight className="w-4 h-4" />
-            <span className="text-white">{currentCategory?.name || categorySlug}</span>
+            <span className="text-white">{currentCategory.name}</span>
+            {currentSubCategory && (
+              <>
+                <ChevronRight className="w-4 h-4" />
+                <span className="text-white">{currentSubCategory.name}</span>
+              </>
+            )}
           </div>
           <h1 className="text-5xl lg:text-7xl font-black tracking-tighter mb-6 uppercase">
-            {subcategorySlug ? subcategorySlug.replace(/-/g, ' ') : (currentCategory?.name || categorySlug)}
+            {currentSubCategory ? currentSubCategory.name : currentCategory.name}
           </h1>
           <p className="text-xl text-gray-400 max-w-2xl font-medium">
             Explore our professional grade equipment used by elite athletes and institutions worldwide.
@@ -169,7 +172,7 @@ export default function CategoryPage({ categorySlug, subcategorySlug }) {
         </div>
       </section>
 
-      {/* Sub-Categories Grid */}
+      {/* Sub-Categories Grid (only show if on main category page) */}
       {!subcategorySlug && subCategories.length > 0 && (
         <section className="py-16 bg-white border-b">
           <div className="container">
@@ -199,7 +202,7 @@ export default function CategoryPage({ categorySlug, subcategorySlug }) {
       <section className="py-20 bg-gray-50">
         <div className="container">
           {/* Filter Bar */}
-          <div className="sticky top-24 z-30 mb-10 p-4 rounded-3xl bg-white/80 backdrop-blur-md shadow-lg border border-gray-100 animate-in slide-in-from-top-4 duration-700">
+          <div className="sticky top-24 z-30 mb-10 p-4 rounded-3xl bg-white/80 backdrop-blur-md shadow-lg border border-gray-100">
             <div className="flex flex-col xl:flex-row justify-between items-center gap-6">
               <div className="flex flex-col lg:flex-row items-center gap-4 w-full xl:w-auto">
                 <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full text-xs font-black uppercase tracking-widest text-gray-500 whitespace-nowrap">
@@ -207,15 +210,14 @@ export default function CategoryPage({ categorySlug, subcategorySlug }) {
                 </div>
 
                 <div className="flex items-center gap-4 w-full overflow-x-auto pb-2 lg:pb-0 no-scrollbar">
-
                   {/* Main Category Dropdown */}
-                  <Select value={categorySlug} onValueChange={(val) => val === 'all' ? router.push('/products') : router.push(`/category/${val}`)}>
+                  <Select value={categorySlug} onValueChange={(val) => router.push(val === 'all' ? '/products' : `/category/${val}`)}>
                     <SelectTrigger className="min-w-[160px] h-10 rounded-full border-gray-200 bg-white font-bold text-xs uppercase tracking-wide hover:border-red-600 transition-colors">
                       <SelectValue placeholder="Category" />
                     </SelectTrigger>
                     <SelectContent className="z-[200]">
                       <SelectItem value="all" className="font-bold text-xs uppercase">All Categories</SelectItem>
-                      {allCategories.filter(c => !c.parent_id).map(c => (
+                      {allCategories.map(c => (
                         <SelectItem key={c.id} value={c.slug} className="font-bold text-xs uppercase">{c.name}</SelectItem>
                       ))}
                     </SelectContent>
@@ -231,7 +233,7 @@ export default function CategoryPage({ categorySlug, subcategorySlug }) {
                         router.push(`/category/${categorySlug}/${val}`)
                       }
                     }}
-                    disabled={!subCategories.length && !subcategorySlug}
+                    disabled={!subCategories.length}
                   >
                     <SelectTrigger className="w-[180px] h-10 rounded-full border-gray-200 bg-white font-bold text-xs uppercase tracking-wide hover:border-red-600 transition-colors">
                       <SelectValue placeholder="Sub-Category" />
@@ -320,13 +322,13 @@ export default function CategoryPage({ categorySlug, subcategorySlug }) {
           {productsLoading ? (
             <div className="flex flex-col items-center justify-center py-40">
               <div className="w-16 h-16 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-              <p className="mt-6 text-gray-500 font-bold animate-pulse">Syncing catalog data...</p>
+              <p className="mt-6 text-gray-500 font-bold animate-pulse">Loading products...</p>
             </div>
           ) : products.length === 0 ? (
             <div className="text-center py-40">
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">No gear found in this category</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">No products found</h3>
               <p className="text-gray-500 mb-8">Try adjusting your filters or check back later for new arrivals.</p>
-              <Button className="bg-red-600 hover:bg-red-700" onClick={() => router.push('/')}>Browse All Gear</Button>
+              <Button className="bg-red-600 hover:bg-red-700" onClick={() => router.push('/')}>Browse All Products</Button>
             </div>
           ) : (
             <div className="space-y-20">
@@ -355,81 +357,118 @@ export default function CategoryPage({ categorySlug, subcategorySlug }) {
   )
 }
 
-function ProductCard({ product }) {
+function ProductCard({ product, viewMode }) {
   const router = useRouter()
   const detailUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/product/${product.slug}`
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(detailUrl)}`
 
-  return (
-    <Card className="group overflow-hidden rounded-[2.5rem] border-none bg-white shadow-xl hover:shadow-2xl transition-all duration-500 flex flex-col h-full">
-      <div className="relative aspect-[4/5] overflow-hidden bg-gray-100">
-        <img
-          src={product.images?.[0]?.image_url || 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=600'}
-          alt={product.name}
-          className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
-        />
-
-        {/* QR Code Hover */}
-        <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-8 text-center space-y-4">
-          <div className="bg-white p-2 rounded-2xl shadow-2xl">
-            <img src={qrCodeUrl} alt="Product QR" className="w-32 h-32" />
-          </div>
-          <p className="text-white text-xs font-bold uppercase tracking-widest">Scan to view on mobile</p>
-        </div>
-
-        {/* Badge Overlay */}
-        <div className="absolute top-6 left-6 flex flex-col gap-2">
-          {product.is_featured && <Badge className="bg-red-600 border-none font-black text-[9px] uppercase tracking-widest">Elite</Badge>}
-          {product.discount_percentage > 0 && <Badge className="bg-green-600 border-none font-black text-[9px] uppercase tracking-widest">Sale</Badge>}
-        </div>
-      </div>
-
-      <div className="p-6 flex flex-col flex-grow">
-        <div className="flex justify-between items-start mb-2">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-red-600">{product.brand_name}</p>
-          <div className="flex items-center gap-1">
-            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-            <span className="text-[10px] font-bold text-gray-400">4.8</span>
-          </div>
-        </div>
-
-        <h3 className="font-bold text-lg text-gray-900 leading-tight mb-4 group-hover:text-red-600 transition-colors line-clamp-2">
-          {product.name}
-        </h3>
-
-        <div className="flex items-center gap-3 mb-6">
-          <span className="text-2xl font-black text-gray-900 tracking-tighter">₹{product.selling_price || product.mrp_price}</span>
+  if (viewMode === 'list') {
+    return (
+      <div className="group flex flex-col md:flex-row items-center gap-6 p-6 bg-white border-b border-gray-100 hover:bg-gray-50 transition-colors">
+        {/* Image */}
+        <div className="w-full md:w-48 aspect-square flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden relative">
+          <img
+            src={product.images?.[0]?.image_url || 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=600'}
+            alt={product.name}
+            className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+          />
           {product.discount_percentage > 0 && (
-            <span className="text-sm text-gray-400 line-through font-bold">₹{product.mrp_price}</span>
+            <Badge className="absolute top-2 left-2 bg-red-600 border-none font-bold text-[10px] uppercase">
+              {product.discount_percentage}% OFF
+            </Badge>
           )}
         </div>
 
-        <div className="mt-auto space-y-2">
-          <div className="grid grid-cols-2 gap-2">
+        {/* Details */}
+        <div className="flex-grow text-center md:text-left space-y-2 w-full">
+          <div className="flex items-center justify-center md:justify-start gap-2">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-red-600">{product.brand_name}</p>
+            {product.is_featured && <Badge variant="outline" className="border-red-100 text-red-600 text-[9px] uppercase font-bold">Best Seller</Badge>}
+          </div>
+
+          <h3 className="font-bold text-xl text-gray-900 group-hover:text-red-600 transition-colors cursor-pointer" onClick={() => router.push(`/product/${product.slug}`)}>
+            {product.name}
+          </h3>
+
+          <div className="flex items-center justify-center md:justify-start gap-4">
+            {/* Rating and Reviews (Mock data for now) */}
+            <div className="flex items-center gap-1">
+              <div className="flex">
+                {[1, 2, 3, 4, 5].map(i => (
+                  <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                ))}
+              </div>
+              <span className="text-xs text-gray-400 font-medium">(24 Reviews)</span>
+            </div>
+          </div>
+
+          <p className="text-sm text-gray-500 line-clamp-2 md:line-clamp-1 max-w-2xl">
+            Professional grade quality. Used by international players. Authentic English Willow.
+          </p>
+        </div>
+
+        {/* Price & Action */}
+        <div className="flex flex-col items-center md:items-end gap-4 min-w-[200px] w-full md:w-auto mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-gray-100">
+          <div className="text-center md:text-right">
+            <span className="block text-2xl font-black text-gray-900 tracking-tighter">₹{product.selling_price?.toLocaleString('en-IN')}</span>
+            {product.discount_percentage > 0 && (
+              <span className="text-sm text-gray-400 line-through font-bold">MRP: ₹{product.mrp_price?.toLocaleString('en-IN')}</span>
+            )}
+          </div>
+
+          <div className="flex gap-2 w-full md:w-auto">
             <Button
-              variant="outline"
-              className="rounded-xl font-bold text-xs h-10 border-gray-200 hover:border-red-600 hover:text-red-600 transition-all gap-2"
+              className="flex-1 md:flex-none rounded-lg bg-gray-900 hover:bg-red-600 text-white font-bold text-xs h-10 px-6 gap-2 transition-colors"
               onClick={() => router.push(`/product/${product.slug}`)}
             >
-              <Grid className="w-3 h-3" /> View
+              View Details <ChevronRight className="w-3 h-3" />
             </Button>
             <Button
-              className="rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs h-10 gap-2 shadow-lg shadow-red-200"
+              variant="outline"
+              className="rounded-lg border-gray-200 hover:border-red-600 hover:text-red-600 h-10 w-10 p-0"
               onClick={() => window.open(`https://wa.me/911234567890?text=Hi, I am interested in ${product.name}`, '_blank')}
             >
-              <MessageCircle className="w-3 h-3" /> Enquire
+              <MessageCircle className="w-4 h-4" />
             </Button>
           </div>
-          <Button
-            variant="ghost"
-            className="w-full rounded-xl font-black text-[10px] uppercase tracking-[0.2em] text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-all h-10"
-            onClick={() => router.push(`/product/${product.slug}`)}
-          >
-            View Details <ExternalLink className="w-3 h-3 ml-2" />
+        </div>
+      </div>
+    )
+  }
+
+  // Grid View (Simplified Card)
+  return (
+    <div className="group bg-white rounded-2xl p-4 hover:shadow-xl transition-shadow border border-gray-100">
+      <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-50 mb-4 cursor-pointer" onClick={() => router.push(`/product/${product.slug}`)}>
+        <img
+          src={product.images?.[0]?.image_url || 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=600'}
+          alt={product.name}
+          className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+        />
+        {product.discount_percentage > 0 && (
+          <Badge className="absolute top-2 left-2 bg-red-600 border-none font-bold text-[10px] uppercase">
+            -{product.discount_percentage}%
+          </Badge>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{product.brand_name}</p>
+        <h3 className="font-bold text-sm text-gray-900 line-clamp-2 min-h-[40px] group-hover:text-red-600 transition-colors cursor-pointer" onClick={() => router.push(`/product/${product.slug}`)}>
+          {product.name}
+        </h3>
+
+        <div className="flex items-end justify-between pt-2">
+          <div>
+            <span className="block text-lg font-black text-gray-900">₹{product.selling_price?.toLocaleString('en-IN')}</span>
+            {product.discount_percentage > 0 && (
+              <span className="text-xs text-gray-400 line-through">₹{product.mrp_price?.toLocaleString('en-IN')}</span>
+            )}
+          </div>
+          <Button size="icon" className="h-8 w-8 rounded-full bg-gray-100 hover:bg-red-600 hover:text-white text-gray-900 transition-colors" onClick={() => router.push(`/product/${product.slug}`)}>
+            <ChevronRight className="w-4 h-4" />
           </Button>
         </div>
       </div>
-    </Card>
+    </div>
   )
 }
-

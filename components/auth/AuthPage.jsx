@@ -156,7 +156,7 @@ export function AuthPage({ mode = 'login' }) {
                     <CardFooter className="flex justify-center pt-0">
                         <p className="text-sm text-gray-600">
                             Admin user?{' '}
-                            <Link href="/admin-login" className="text-red-600 hover:underline font-semibold">
+                            <Link href="/admin/login" className="text-red-600 hover:underline font-semibold">
                                 Admin Login →
                             </Link>
                         </p>

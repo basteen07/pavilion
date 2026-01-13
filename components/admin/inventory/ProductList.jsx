@@ -74,6 +74,7 @@ export function ProductList({ onEdit, onCreate }) {
                 ...(categoryFilter && categoryFilter !== 'all' && { category: categoryFilter }),
                 ...(subCategoryFilter && subCategoryFilter !== 'all' && { sub_category: subCategoryFilter }),
                 ...(brandFilter && brandFilter !== 'all' && { brand: brandFilter }),
+                showHiddenQuotes: 'true'
             })
             return apiCall(`/products?${params}`)
         },

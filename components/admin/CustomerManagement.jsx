@@ -104,10 +104,7 @@ export function CustomerManagement({ onUpdate }) {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <div>
-                    <h2 className="text-3xl font-bold">Customer Management</h2>
-                    <p className="text-gray-500">Manage B2B and Enterprise clients</p>
-                </div>
+                
                 <Button onClick={openCreate} className="bg-red-600 hover:bg-red-700">
                     <Plus className="w-4 h-4 mr-2" />
                     New Customer

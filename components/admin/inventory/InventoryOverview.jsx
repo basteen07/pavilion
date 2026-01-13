@@ -3,9 +3,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiCall } from '@/lib/api-client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Layers, FolderTree, Tag, Box, Loader2 } from 'lucide-react'
+import { Layers, FolderTree, Tag, Box, Loader2, ChevronRight, ChevronDown } from 'lucide-react'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 export function InventoryOverview() {
     // Queries
@@ -14,9 +15,9 @@ export function InventoryOverview() {
         queryFn: () => apiCall('/collections')
     })
 
-    const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
-        queryKey: ['categories'],
-        queryFn: () => apiCall('/categories')
+    const { data: hierarchy = [], isLoading: isLoadingHierarchy } = useQuery({
+        queryKey: ['inventory-hierarchy'],
+        queryFn: () => apiCall('/admin/inventory-hierarchy')
     })
 
     const { data: brands = [], isLoading: isLoadingBrands } = useQuery({
@@ -24,7 +25,12 @@ export function InventoryOverview() {
         queryFn: () => apiCall('/brands')
     })
 
-    const isLoading = isLoadingCollections || isLoadingCategories || isLoadingBrands
+    const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
+        queryKey: ['categories'],
+        queryFn: () => apiCall('/categories')
+    })
+
+    const isLoading = isLoadingCollections || isLoadingHierarchy || isLoadingBrands || isLoadingCategories
 
     if (isLoading) {
         return (
@@ -34,8 +40,7 @@ export function InventoryOverview() {
         )
     }
 
-    const totalSubCategories = categories.reduce((sum, cat) => sum + Number(cat.sub_category_count || 0), 0)
-    const totalProducts = brands.reduce((sum, brand) => sum + Number(brand.product_count || 0), 0)
+    const totalProducts = hierarchy.reduce((acc, cat) => acc + cat.totalProducts, 0) || 0
 
     return (
         <div className="space-y-6">
@@ -59,7 +64,7 @@ export function InventoryOverview() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{categories.length}</div>
-                        <p className="text-xs text-gray-500 mt-1">{totalSubCategories} Sub-categories included</p>
+                        <p className="text-xs text-gray-500 mt-1">Active categories</p>
                     </CardContent>
                 </Card>
 
@@ -81,66 +86,74 @@ export function InventoryOverview() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{totalProducts}</div>
-                        <p className="text-xs text-gray-500 mt-1">Across all categories & brands</p>
+                        <p className="text-xs text-gray-500 mt-1">Across all categories</p>
                     </CardContent>
                 </Card>
             </div>
 
-            {/* Hierarchical Detailed View */}
-            <Card className="border-none shadow-sm overflow-hidden">
-                <CardHeader className="bg-white border-b border-gray-100">
-                    <CardTitle className="text-lg font-bold">Brand & Category Hierarchy</CardTitle>
+            {/* Hierarchical View using Accordion */}
+            <Card className="border-none shadow-sm overflow-hidden bg-white">
+                <CardHeader className="border-b border-gray-100 pb-4">
+                    <CardTitle className="text-lg font-bold">Inventory Structure</CardTitle>
+                    <p className="text-sm text-gray-500">Category &gt; Sub-Category &gt; Brand &gt; Product Count</p>
                 </CardHeader>
-                <CardContent className="p-0 bg-white">
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="bg-gray-50">
-                                <TableHead className="w-[200px] font-bold">Brand</TableHead>
-                                <TableHead className="font-bold">Category</TableHead>
-                                <TableHead className="font-bold">Sub-Category</TableHead>
-                                <TableHead className="text-right font-bold w-[150px]">Product Count</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {brands.map((brand) => (
-                                <TableRow key={brand.id} className="hover:bg-gray-50/50 transition-colors">
-                                    <TableCell className="py-4">
-                                        <div className="flex items-center gap-3">
-                                            {brand.logo_url && (
-                                                <div className="w-8 h-8 rounded border bg-white p-1 shrink-0 overflow-hidden">
-                                                    <img src={brand.logo_url} alt="" className="w-full h-full object-contain" />
-                                                </div>
+                <CardContent className="p-6">
+                    <ScrollArea className="h-[600px] pr-4">
+                        <Accordion type="multiple" className="w-full space-y-2">
+                            {hierarchy.map((category) => (
+                                <AccordionItem key={category.id} value={`cat-${category.id}`} className="border rounded-xl px-4 bg-gray-50/50">
+                                    <AccordionTrigger className="hover:no-underline py-4">
+                                        <div className="flex items-center gap-3 w-full">
+                                            <div className="p-2 bg-white rounded-lg shadow-sm">
+                                                <FolderTree className="w-5 h-5 text-blue-600" />
+                                            </div>
+                                            <div className="flex flex-col items-start text-left flex-1">
+                                                <span className="font-bold text-gray-900">{category.name}</span>
+                                                <span className="text-xs text-gray-500 font-normal">{category.subCategories.length} Sub-Categories</span>
+                                            </div>
+                                            <Badge variant="secondary" className="mr-2">
+                                                {category.totalProducts} Products
+                                            </Badge>
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="pt-2 pb-4">
+                                        <div className="ml-4 pl-4 border-l-2 border-gray-200 mt-2 space-y-3">
+                                            {category.subCategories.length === 0 ? (
+                                                <p className="text-sm text-gray-400 italic py-2">No sub-categories found.</p>
+                                            ) : (
+                                                category.subCategories.map((sub) => (
+                                                    <div key={sub.id} className="bg-white rounded-lg border border-gray-100 shadow-sm p-4">
+                                                        <div className="flex items-center gap-2 mb-3">
+                                                            <Layers className="w-4 h-4 text-orange-500" />
+                                                            <h4 className="font-bold text-gray-800">{sub.name}</h4>
+                                                        </div>
+
+                                                        {sub.brands.length === 0 ? (
+                                                            <p className="text-xs text-gray-400 italic">No products yet.</p>
+                                                        ) : (
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                                                {sub.brands.map((brand) => (
+                                                                    <div key={brand.id} className="flex items-center justify-between p-2 rounded bg-gray-50 border border-gray-100 hover:border-gray-200 transition-colors">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <Tag className="w-3 h-3 text-gray-400" />
+                                                                            <span className="text-sm font-medium text-gray-700">{brand.name}</span>
+                                                                        </div>
+                                                                        <Badge className="bg-gray-900 text-white h-5 text-[10px] min-w-[24px] flex justify-center">
+                                                                            {brand.count}
+                                                                        </Badge>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))
                                             )}
-                                            <span className="font-bold text-gray-900">{brand.name}</span>
                                         </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline" className="text-gray-600 border-gray-200">
-                                            {brand.category_name || 'N/A'}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        <span className="text-sm text-gray-500">
-                                            {brand.sub_category_name || '-'}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            <span className="font-bold text-blue-600">{Number(brand.product_count || 0)}</span>
-                                            <span className="text-[10px] text-gray-400 font-medium uppercase tracking-tighter">Products</span>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
+                                    </AccordionContent>
+                                </AccordionItem>
                             ))}
-                            {brands.length === 0 && (
-                                <TableRow>
-                                    <TableCell colSpan={4} className="text-center py-20 text-gray-500">
-                                        No inventory data available.
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
+                        </Accordion>
+                    </ScrollArea>
                 </CardContent>
             </Card>
         </div>

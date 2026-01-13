@@ -8,12 +8,13 @@ import { useQuery } from '@tanstack/react-query'
 import { apiCall } from '@/lib/api-client'
 import Image from 'next/image'
 
-export function HeroScroller() {
+export function HeroScroller({ initialBanners = [] }) {
     const [current, setCurrent] = useState(0)
 
-    const { data: banners = [] } = useQuery({
+    const { data: banners = initialBanners } = useQuery({
         queryKey: ['banners', 'active'],
-        queryFn: () => apiCall('/banners?activeOnly=true')
+        queryFn: () => apiCall('/banners?activeOnly=true'),
+        initialData: initialBanners
     })
 
     const next = useCallback(() => {
