@@ -194,8 +194,8 @@ export async function GET() {
                     `, [
                         sku, name, slug, brandId, categoryId, subCategoryId,
                         mrp, dealerPrice, sellingPrice, 15,
-                        `High performance ${subCat}`,
-                        `Professional grade ${name} specifically designed for ${catName} athletes who demand the best in quality and performance. Featuring advanced materials and ergonomic design.`,
+                        `Premium ${brand} ${subCat} - ${adj} Series`,
+                        `Experience the game like never before with the ${name}. Specifically engineered for ${catName} professionals, featuring our ${adj} technology for superior performance and durability in all conditions.`,
                         Math.floor(Math.random() * 100) + 10,
                         JSON.stringify(images),
                         (i < 5), // first 5 per cat are featured

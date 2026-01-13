@@ -1,6 +1,7 @@
 'use client'
 
 import { ShieldCheck, Zap, Award, Headphones } from 'lucide-react'
+import Image from 'next/image'
 
 const usps = [
     {
@@ -32,11 +33,13 @@ export function USPSection() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
                     <div className="relative">
                         <div className="absolute -top-10 -left-10 w-40 h-40 bg-red-100 rounded-full blur-3xl opacity-50"></div>
-                        <div className="relative rounded-[2rem] overflow-hidden shadow-2xl">
-                            <img
+                        <div className="relative rounded-[2rem] overflow-hidden shadow-2xl h-[600px]">
+                            <Image
                                 src="https://images.unsplash.com/photo-1540747913346-19e3adca174f?w=800"
                                 alt="Pavilion Sports Craftsmanship"
-                                className="w-full h-[600px] object-cover"
+                                fill
+                                className="object-cover"
+                                sizes="(max-width: 1024px) 100vw, 50vw"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                             <div className="absolute bottom-10 left-10 p-8 glass rounded-2xl border-white/20 text-white max-w-sm">

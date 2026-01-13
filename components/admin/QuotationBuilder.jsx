@@ -178,7 +178,6 @@ export function QuotationBuilder({ onClose, onSuccess }) {
         // Add Logo - Top Left
         try {
             const logoUrl = '/pavilion-sports.png'
-            // Pos: 15, 12, Size: 45x12
             doc.addImage(logoUrl, 'PNG', 15, 12, 45, 12)
         } catch (e) {
             console.error('Logo add error:', e)
@@ -203,103 +202,110 @@ export function QuotationBuilder({ onClose, onSuccess }) {
         doc.text('GST: 27AAAAA0000A1Z5', 15, 40)
         doc.text('Email: sales@pavilionsports.com', 15, 45)
 
-        // Customer Details
+        // Customer Details - WITH WRAPPING
+        let currentY = 60
         doc.setFont('helvetica', 'bold')
         doc.setTextColor(40)
-        doc.text('QUOTATION FOR:', 15, 60)
+        doc.text('QUOTATION FOR:', 15, currentY)
+        currentY += 5
         doc.setFont('helvetica', 'normal')
-        doc.text(customer?.company_name || 'Walking Customer', 15, 65)
-        doc.text(customer?.address || 'N/A', 15, 70)
-        doc.text(`Phone: ${customer?.phone || 'N/A'}`, 15, 75)
-        doc.text(`Email: ${customer?.email || 'N/A'}`, 15, 80)
+        doc.text(customer?.company_name || 'Walking Customer', 15, currentY)
+        currentY += 5
 
-        // Dates
+        // Wrap Address
+        const splitAddress = doc.splitTextToSize(customer?.address || 'N/A', 80)
+        doc.text(splitAddress, 15, currentY)
+        // Advance currentY by number of lines in address
+        currentY += (splitAddress.length * 5)
+
+        doc.text(`Phone: ${customer?.phone || 'N/A'}`, 15, currentY)
+        currentY += 5
+        doc.text(`Email: ${customer?.email || 'N/A'}`, 15, currentY)
+
+        // Dates - Fixed Position Right Side (Unchanged Y relative to top, safe from address overlap)
         doc.text(`Date: ${quotationDetails.issue_date}`, 150, 65)
         doc.text(`Valid Until: ${quotationDetails.valid_until}`, 150, 70)
 
-        // Group Items Hierarchy: Category -> (Sub-Category + Brand)
-        const hierarchy = quotationItems.reduce((acc, item) => {
-            const cat = item.category_name || 'General';
-            const subCat = item.sub_category_name || '';
-            const brand = item.brand_name || '';
-            const subBrandGroup = subCat && brand ? `${subCat} - ${brand}` : (subCat || brand || 'Others');
-
-            if (!acc[cat]) acc[cat] = {};
-            if (!acc[cat][subBrandGroup]) acc[cat][subBrandGroup] = [];
-            acc[cat][subBrandGroup].push(item);
+        // Group by SUB-CATEGORY Only (Simpler Grouping)
+        const groups = quotationItems.reduce((acc, item) => {
+            const groupName = item.sub_category_name || item.category_name || 'General Items';
+            if (!acc[groupName]) acc[groupName] = [];
+            acc[groupName].push(item);
             return acc;
         }, {});
 
-        let currentY = 95
+        // Reset Y for Items if address pushed it too far down, else start at fixed 95 or below address
+        currentY = Math.max(currentY + 15, 95)
 
-        Object.entries(hierarchy).forEach(([category, subGroups]) => {
+        Object.entries(groups).forEach(([groupName, items]) => {
             if (currentY > 250) {
                 doc.addPage()
                 currentY = 20
             }
 
-            // Category Header (Top Level)
+            // Group Header (Sub-Category Name)
             doc.setFillColor(245, 245, 245)
             doc.rect(15, currentY, 180, 8, 'F')
             doc.setFont('helvetica', 'bold')
-            doc.setTextColor(40)
+            doc.setTextColor(220, 38, 38)
             doc.setFontSize(10)
-            doc.text(category.toUpperCase(), 20, currentY + 6)
+            doc.text(groupName.toUpperCase(), 20, currentY + 6)
             currentY += 12
 
-            Object.entries(subGroups).forEach(([subBrand, items]) => {
-                if (currentY > 250) {
+            // Table Header
+            doc.setFillColor(220, 38, 38)
+            doc.rect(15, currentY, 180, 8, 'F')
+            doc.setTextColor(255, 255, 255)
+            doc.setFontSize(9)
+            doc.text('Item Details', 20, currentY + 6)
+            doc.text('MRP', 100, currentY + 6)
+            doc.text('Your Price', 125, currentY + 6)
+            doc.text('Qty', 155, currentY + 6)
+            doc.text('Total', 175, currentY + 6)
+
+            currentY += 12
+
+            items.forEach((item) => {
+                if (currentY > 260) {
                     doc.addPage()
                     currentY = 20
                 }
 
-                // Sub-Category - Brand Header
                 doc.setFont('helvetica', 'bold')
-                doc.setTextColor(220, 38, 38)
-                doc.setFontSize(9)
-                doc.text(subBrand, 20, currentY + 5)
-                currentY += 8
+                doc.setTextColor(40)
+                doc.text(item.name, 20, currentY)
+                doc.setFont('helvetica', 'normal')
+                doc.setTextColor(120)
+                doc.text(`SKU: ${item.sku}`, 20, currentY + 5)
 
-                // Table Header for the group
-                doc.setFillColor(220, 38, 38)
-                doc.rect(15, currentY, 180, 8, 'F')
-                doc.setTextColor(255, 255, 255)
-                doc.setFontSize(9)
-                doc.text('Item Details', 20, currentY + 6)
-                doc.text('MRP', 100, currentY + 6)
-                doc.text('Your Price', 125, currentY + 6)
-                doc.text('Qty', 155, currentY + 6)
-                doc.text('Total', 175, currentY + 6)
-
-                currentY += 12
-
-                items.forEach((item) => {
-                    if (currentY > 270) {
-                        doc.addPage()
-                        currentY = 20
-                    }
-
-                    doc.setFont('helvetica', 'bold')
-                    doc.setTextColor(40)
-                    doc.text(item.name, 20, currentY)
-                    doc.setFont('helvetica', 'normal')
-                    doc.setTextColor(120)
-                    doc.text(`SKU: ${item.sku}`, 20, currentY + 5)
+                // Short Description
+                if (item.short_description) {
                     doc.setFontSize(8)
-                    doc.text(`Brand: ${item.brand || '-'}`, 20, currentY + 9)
-                    doc.setFontSize(9)
+                    doc.setTextColor(100)
+                    doc.setFont('helvetica', 'italic')
+                    const splitDesc = doc.splitTextToSize(item.short_description, 75)
+                    doc.text(splitDesc, 20, currentY + 9)
+                }
 
-                    doc.setTextColor(40)
-                    doc.text(`Rs. ${parseFloat(item.mrp || 0).toLocaleString()}`, 100, currentY)
-                    doc.text(`Rs. ${parseFloat(item.custom_price).toLocaleString()}`, 125, currentY)
-                    doc.text(item.quantity.toString(), 155, currentY)
-                    doc.text(`Rs. ${(parseFloat(item.custom_price) * item.quantity).toLocaleString()}`, 175, currentY)
+                doc.setFontSize(8)
+                doc.setFont('helvetica', 'normal')
+                doc.setTextColor(120)
+                doc.text(`Brand: ${item.brand || '-'}`, 20, currentY + 14)
 
-                    currentY += 15
-                })
-                currentY += 5
+                // View Product Link
+                doc.setTextColor(37, 99, 235) // Blue
+                doc.textWithLink('View Product', 20, currentY + 19, { url: `${window.location.origin}/product/${item.slug}` })
+
+                doc.setFontSize(9)
+                doc.setTextColor(40)
+                doc.text(`Rs. ${parseFloat(item.mrp || 0).toLocaleString()}`, 100, currentY)
+                doc.text(`Rs. ${parseFloat(item.custom_price).toLocaleString()}`, 125, currentY)
+                doc.text(item.quantity.toString(), 155, currentY)
+                doc.text(`Rs. ${(parseFloat(item.custom_price) * item.quantity).toLocaleString()}`, 175, currentY)
+
+                currentY += 25 // Increased for link
             })
-            currentY += 5
+            currentY += 10 // Space between groups
         })
 
         // Totals
@@ -309,13 +315,13 @@ export function QuotationBuilder({ onClose, onSuccess }) {
                 currentY = 20
             }
 
-            currentY += 5
             doc.setDrawColor(200)
             doc.line(15, currentY, 195, currentY)
             currentY += 10
 
             const totalsX = 140
             doc.setFont('helvetica', 'normal')
+            doc.setTextColor(40)
             doc.text('Subtotal:', totalsX, currentY)
             doc.text(`Rs. ${subtotal.toLocaleString()}`, 175, currentY)
 
@@ -427,6 +433,7 @@ export function QuotationBuilder({ onClose, onSuccess }) {
                 ((parseFloat(product.mrp_price) - parseFloat(product.dealer_price)) / parseFloat(product.mrp_price) * 100).toFixed(2) : 0,
             custom_price: parseFloat(product.dealer_price || product.selling_price || product.mrp_price),
             quantity: 1,
+            short_description: product.short_description || '',
         }
         setQuotationItems(prev => [...prev, newItem])
         toast.success(`Added ${product.name}`)
@@ -450,6 +457,7 @@ export function QuotationBuilder({ onClose, onSuccess }) {
                     ((parseFloat(product.mrp_price) - parseFloat(product.dealer_price)) / parseFloat(product.mrp_price) * 100).toFixed(2) : 0,
                 custom_price: parseFloat(product.dealer_price || product.selling_price || product.mrp_price),
                 quantity: 1,
+                short_description: product.short_description || '',
             }
         }).filter(Boolean)
 

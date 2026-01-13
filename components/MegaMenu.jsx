@@ -88,7 +88,7 @@ export default function MegaMenu({ categories = [], brands = [], collections = [
         className="flex items-center gap-2 text-[15px] font-bold text-gray-800 hover:text-red-600 transition-colors py-2 uppercase tracking-tight"
         onMouseEnter={handleMouseEnter}
       >
-        <span>Gear & Equipment</span>
+        <span>Products</span>
         <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { Star, Quote } from 'lucide-react'
+import Image from 'next/image'
 import { Card, CardContent } from '@/components/ui/card'
 
 const reviews = [
@@ -48,10 +49,12 @@ export function Testimonials() {
                                 </p>
 
                                 <div className="flex items-center gap-4 border-t border-white/10 pt-8 mt-auto">
-                                    <img
+                                    <Image
                                         src={review.avatar}
                                         alt={review.name}
-                                        className="w-14 h-14 rounded-2xl object-cover ring-2 ring-red-600/20"
+                                        width={56}
+                                        height={56}
+                                        className="rounded-2xl object-cover ring-2 ring-red-600/20"
                                     />
                                     <div>
                                         <h4 className="text-white font-bold">{review.name}</h4>

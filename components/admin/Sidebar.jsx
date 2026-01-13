@@ -141,7 +141,7 @@ export function AdminSidebar({ ...props }) {
     return (
         <Sidebar collapsible="icon" {...props}>
             <SidebarHeader>
-                <div className="flex items-center gap-2 px-2 py-1">
+                <div className="flex items-center gap-2 px-2 py-1 overflow-hidden">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-600">
                         <span className="text-lg font-bold text-white">P</span>
                     </div>
