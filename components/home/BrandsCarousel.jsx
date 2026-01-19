@@ -12,25 +12,36 @@ export function BrandsCarousel({ initialBrands = [] }) {
         initialData: initialBrands
     })
 
-    // Duplicate for seamless loop if we have brands
+    // Duplicate for seamless loop
     const displayBrands = [...brands, ...brands, ...brands]
 
     return (
-        <section className="py-20 bg-white overflow-hidden border-b border-gray-100">
-            <div className="w-full px-4 md:px-8 lg:px-12 mb-12 text-center">
+        <section className="py-8 md:py-10 bg-white relative overflow-hidden">
+            {/* Subtle border */}
+            <div className="absolute top-0 left-0 right-0 h-px bg-gray-100"></div>
 
-                <h2 className="text-sm font-black uppercase tracking-[0.3em] text-red-600 mb-4 animate-fade-in">Our Trusted Partners</h2>
-                <h3 className="text-3xl lg:text-4xl font-black text-gray-900 tracking-tight animate-fade-in delay-75">Supplying Global Brands Since 1988</h3>
+            <div className="container mb-6">
+                <div className="flex items-center justify-center gap-3">
+                    <div className="h-px w-10 bg-gray-200"></div>
+                    <p className="text-xs text-gray-400 font-medium">
+                        Trusted by <span className="text-gray-700 font-semibold">50+ Global Brands</span>
+                    </p>
+                    <div className="h-px w-10 bg-gray-200"></div>
+                </div>
             </div>
 
-            <div className="relative flex overflow-x-hidden group">
-                <div className="flex gap-16 animate-marquee py-4 whitespace-nowrap group-hover:pause-animation items-center">
+            <div className="relative">
+                {/* Fade edges */}
+                <div className="absolute left-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
+                <div className="absolute right-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
+
+                <div className="flex gap-12 md:gap-16 animate-marquee py-2 items-center">
                     {displayBrands.length > 0 ? (
                         displayBrands.map((brand, idx) => (
                             <Link
                                 key={`${brand.id}-${idx}`}
                                 href={`/brands/${brand.id}`}
-                                className="flex items-center justify-center transition-all duration-300 transform hover:scale-110 shrink-0 h-20 w-32 relative"
+                                className="flex items-center justify-center shrink-0 h-8 w-20 md:w-24 relative grayscale hover:grayscale-0 opacity-40 hover:opacity-100 transition-all duration-300"
                             >
                                 {brand.logo_url || brand.image_url ? (
                                     <Image
@@ -38,34 +49,33 @@ export function BrandsCarousel({ initialBrands = [] }) {
                                         alt={brand.name}
                                         fill
                                         className="object-contain"
-                                        sizes="(max-width: 768px) 100px, 150px"
+                                        sizes="100px"
                                     />
                                 ) : (
-                                    <span className="text-xl font-bold text-gray-400 font-serif tracking-tight">{brand.name}</span>
+                                    <span className="text-sm font-semibold text-gray-400 whitespace-nowrap">{brand.name}</span>
                                 )}
                             </Link>
                         ))
                     ) : (
-                        // Placeholder logos
-                        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
-                            <div key={i} className="h-16 w-32 bg-gray-100 rounded-lg animate-pulse" />
+                        Array.from({ length: 10 }).map((_, i) => (
+                            <div key={i} className="h-6 w-20 bg-gray-100 rounded animate-pulse shrink-0" />
                         ))
                     )}
                 </div>
             </div>
 
             <style jsx>{`
-        @keyframes marquee {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        .animate-marquee {
-          animation: marquee 45s linear infinite;
-        }
-        .pause-animation {
-          animation-play-state: paused;
-        }
-      `}</style>
+                @keyframes marquee {
+                    0% { transform: translateX(0); }
+                    100% { transform: translateX(-33.333%); }
+                }
+                .animate-marquee {
+                    animation: marquee 35s linear infinite;
+                }
+                .animate-marquee:hover {
+                    animation-play-state: paused;
+                }
+            `}</style>
         </section>
     )
 }

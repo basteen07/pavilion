@@ -35,22 +35,22 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
     return (
         <>
             {/* Top Bar */}
-            <div className="bg-gray-900 text-white py-2 hidden md:block">
+            <div className="bg-gray-900 text-white py-2.5 hidden md:block border-b border-gray-800/50">
                 <div className="container flex justify-between items-center text-xs">
-                    <div className="flex items-center gap-6">
-                        <a href="tel:+911234567890" className="flex items-center gap-2 hover:text-red-500 transition">
-                            <Phone className="w-3 h-3" /> +91 12345 67890
+                    <div className="flex items-center gap-8">
+                        <a href="tel:+911234567890" className="flex items-center gap-2 hover:text-red-400 transition-colors">
+                            <Phone className="w-3.5 h-3.5" /> +91 12345 67890
                         </a>
-                        <a href="mailto:info@pavilionsports.com" className="flex items-center gap-2 hover:text-red-500 transition">
-                            <Mail className="w-3 h-3" /> info@pavilionsports.com
+                        <a href="mailto:info@pavilionsports.com" className="flex items-center gap-2 hover:text-red-400 transition-colors">
+                            <Mail className="w-3.5 h-3.5" /> info@pavilionsports.com
                         </a>
                     </div>
-                    <div className="flex items-center gap-4">
-                        <span className="text-gray-400">Follow us:</span>
-                        <div className="flex items-center gap-3">
-                            <Instagram className="w-3.5 h-3.5 cursor-pointer hover:text-red-500 transition" aria-label="Instagram" role="button" tabIndex={0} />
-                            <Facebook className="w-3.5 h-3.5 cursor-pointer hover:text-red-500 transition" aria-label="Facebook" role="button" tabIndex={0} />
-                            <Twitter className="w-3.5 h-3.5 cursor-pointer hover:text-red-500 transition" aria-label="Twitter" role="button" tabIndex={0} />
+                    <div className="flex items-center gap-5">
+                        <span className="text-gray-500 text-[10px] uppercase tracking-wider font-bold">Follow us</span>
+                        <div className="flex items-center gap-4">
+                            <Instagram className="w-4 h-4 cursor-pointer hover:text-red-400 transition-colors" aria-label="Instagram" role="button" tabIndex={0} />
+                            <Facebook className="w-4 h-4 cursor-pointer hover:text-red-400 transition-colors" aria-label="Facebook" role="button" tabIndex={0} />
+                            <Twitter className="w-4 h-4 cursor-pointer hover:text-red-400 transition-colors" aria-label="Twitter" role="button" tabIndex={0} />
                         </div>
                     </div>
                 </div>
@@ -59,8 +59,8 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
             {/* Main Header */}
             <header
                 className={`sticky top-0 z-[100] transition-all duration-300 ${isScrolled
-                    ? 'bg-white/80 backdrop-blur-lg shadow-lg py-2'
-                    : 'bg-white py-4'
+                    ? 'bg-white/95 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.06)] py-2'
+                    : 'bg-white py-4 border-b border-gray-100'
                     }`}
             >
                 <div className="container">

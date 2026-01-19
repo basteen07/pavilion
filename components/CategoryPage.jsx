@@ -223,13 +223,14 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
   return (
     <>
       {/* Category Hero */}
-      <section className="bg-gray-900 text-white py-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1540747913346-19e3adca174f?w=1920')] bg-cover bg-center opacity-20"></div>
+      <section className="bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 text-white py-16 lg:py-20 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1540747913346-19e3adca174f?w=1920')] bg-cover bg-center opacity-10"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-transparent"></div>
         <div className="container relative z-10">
-          <div className="flex items-center gap-2 text-red-500 font-bold uppercase tracking-widest text-xs mb-4">
-            <Link href="/" className="hover:text-white transition">Home</Link>
+          <div className="flex items-center gap-2 text-red-500 font-bold uppercase tracking-widest text-xs mb-6">
+            <Link href="/" className="hover:text-white transition-colors">Home</Link>
             <ChevronRight className="w-4 h-4" />
-            <span className="text-white">{currentCategory.name}</span>
+            <span className="text-white/80">{currentCategory.name}</span>
             {currentSubCategory && (
               <>
                 <ChevronRight className="w-4 h-4" />
@@ -237,10 +238,10 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
               </>
             )}
           </div>
-          <h1 className="text-5xl lg:text-7xl font-black tracking-tighter mb-6 uppercase">
+          <h1 className="text-4xl lg:text-6xl font-black tracking-tight mb-4 uppercase">
             {currentSubCategory ? currentSubCategory.name : currentCategory.name}
           </h1>
-          <p className="text-xl text-gray-400 max-w-2xl font-medium">
+          <p className="text-lg text-gray-400 max-w-2xl font-medium leading-relaxed">
             Explore our professional grade equipment used by elite athletes and institutions worldwide.
           </p>
         </div>
@@ -299,11 +300,11 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
         <div className="container">
           {/* Unified Compact Filter Bar */}
           <div className="sticky top-20 z-30 mb-6 p-2 rounded-2xl bg-white/95 backdrop-blur-md shadow-lg border border-gray-100">
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-3">
               {/* Left Side: Category & Sub-Category */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 p-1 bg-gray-50/50 rounded-lg border border-gray-100">
                 <Select value={categorySlug} onValueChange={(val) => router.push(val === 'all' ? '/products' : `/${val}`)}>
-                  <SelectTrigger className="w-[140px] h-9 rounded-lg border-gray-200 bg-white font-bold text-[10px] uppercase tracking-wide">
+                  <SelectTrigger className="w-[140px] h-9 border-none bg-transparent font-bold text-[10px] uppercase tracking-wide focus:ring-0 shadow-none">
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
                   <SelectContent className="z-[200]">
@@ -313,6 +314,8 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
                     ))}
                   </SelectContent>
                 </Select>
+
+                <div className="h-4 w-px bg-gray-200"></div>
 
                 <Select
                   value={subcategorySlug || "all"}
@@ -325,7 +328,7 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
                   }}
                   disabled={!subCategories.length}
                 >
-                  <SelectTrigger className="w-[140px] h-9 rounded-lg border-gray-200 bg-white font-bold text-[10px] uppercase tracking-wide">
+                  <SelectTrigger className="w-[140px] h-9 border-none bg-transparent font-bold text-[10px] uppercase tracking-wide focus:ring-0 shadow-none disabled:opacity-50">
                     <SelectValue placeholder="Sub-Category" />
                   </SelectTrigger>
                   <SelectContent className="z-[200]">
@@ -598,7 +601,7 @@ function ProductCard({ product, viewMode, onEnquire }) {
           <img
             src={product.images?.[0]?.image_url || 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=600'}
             alt={product.name}
-            className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out"
           />
           {product.discount_percentage > 0 && (
             <Badge className="absolute top-2 left-2 bg-red-600 border-none font-bold text-[10px] uppercase">
@@ -668,7 +671,7 @@ function ProductCard({ product, viewMode, onEnquire }) {
             </Button>
             <Button
               variant="outline"
-              className="rounded-lg border-gray-200 hover:border-red-600 hover:text-red-600 h-10 w-10 p-0 shadow-sm transition-all"
+              className="rounded-lg border-gray-200 hover:border-red-600 hover:text-red-600 h-10 w-10 p-0 shadow-sm transition-all text-gray-400"
               onClick={() => window.open(`https://wa.me/911234567890?text=Hi, I am interested in ${product.name}`, '_blank')}
             >
               <MessageCircle className="w-4 h-4" />

@@ -59,12 +59,11 @@ export default function MegaMenu({ categories = [], subCategories = [], tags = [
 
   const MegaPanel = ({ children }) => (
     <div
-      className={`fixed ${topClass} left-0 w-full bg-white/98 backdrop-blur-sm border-t border-gray-100 shadow-[0_8px_30px_rgba(0,0,0,0.08)] z-50 animate-in fade-in slide-in-from-top-1 duration-150`}
+      className={`fixed ${topClass} left-0 w-full bg-white border-t border-gray-100 shadow-lg z-50 animate-in fade-in slide-in-from-top-1 duration-150`}
       onMouseEnter={() => handleMouseEnter(openMenu)}
       onMouseLeave={handleMouseLeave}
     >
-      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-30"></div>
-      <div className="container mx-auto py-8 px-6">
+      <div className="container mx-auto py-6 px-6">
         {children}
       </div>
     </div>

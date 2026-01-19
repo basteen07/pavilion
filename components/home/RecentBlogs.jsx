@@ -2,8 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { apiCall } from '@/lib/api-client'
-import { Card, CardContent } from '@/components/ui/card'
-import { ArrowRight, Clock } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, Clock } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -16,72 +15,87 @@ export function RecentBlogs() {
     if (posts.length === 0) return null;
 
     return (
-        <section className="py-24 bg-white">
-            <div className="w-full px-4 md:px-8 lg:px-12">
+        <section className="py-12 lg:py-16 bg-white relative overflow-hidden">
+            {/* SVG Pattern */}
+            <div className="absolute right-0 top-0 w-64 h-64 opacity-[0.03] pointer-events-none hidden lg:block">
+                <svg width="100%" height="100%" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="128" y="0" width="128" height="128" stroke="#111827" strokeWidth="1" fill="none" />
+                    <rect x="160" y="32" width="64" height="64" stroke="#111827" strokeWidth="1" fill="none" />
+                </svg>
+            </div>
 
-                <div className="flex justify-between items-end mb-16 px-4">
+            <div className="w-full px-4 md:px-8 lg:px-12 relative">
+                {/* Header */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-6">
                     <div>
-                        <h2 className="text-sm font-black uppercase tracking-[0.3em] text-red-600 mb-4">Latest Insights</h2>
-                        <h3 className="text-4xl lg:text-5xl font-black text-gray-900 tracking-tight leading-none">News & Field Guides</h3>
+                        <div className="section-label">Latest Insights</div>
+                        <h2 className="text-xl md:text-2xl font-bold text-gray-900 tracking-tight">
+                            News & Field Guides
+                        </h2>
                     </div>
-                    <Link href="/blogs" className="hidden border-b-2 border-red-600 pb-1 text-gray-900 font-bold hover:text-red-600 transition-colors md:block">
-                        View All Insights
+                    <Link
+                        href="/blogs"
+                        className="group inline-flex items-center gap-2 text-sm text-gray-900 font-semibold hover:text-red-600 transition-colors"
+                    >
+                        View All <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </Link>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                {/* Cards Grid - Smaller cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {posts.map((post) => (
-                        <Card key={post.id} className="group border-none shadow-none bg-transparent">
-                            <CardContent className="p-0 space-y-6">
-                                <Link href={`/${post.slug}`}>
-                                    <div className="relative h-72 rounded-[2rem] overflow-hidden shadow-xl mb-6">
+                        <article key={post.id}>
+                            <Link href={`/${post.slug}`} className="block group">
+                                <div className="bg-white border border-gray-100 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                                    {/* Smaller image */}
+                                    <div className="relative overflow-hidden aspect-[16/9]">
                                         {post.image_url ? (
                                             <Image
                                                 src={post.image_url}
                                                 alt={post.title}
                                                 fill
-                                                className="object-cover transform group-hover:scale-110 transition-transform duration-700"
-                                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw"
+                                                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                                sizes="(max-width: 768px) 100vw, 33vw"
                                             />
                                         ) : (
-                                            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
+                                            <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
                                                 No Image
                                             </div>
                                         )}
+
                                         {post.tags && post.tags.length > 0 && (
-                                            <div className="absolute top-6 left-6">
-                                                <span className="bg-white/90 backdrop-blur px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest text-red-600">
+                                            <div className="absolute top-2 left-2">
+                                                <span className="px-2 py-0.5 bg-white/90 rounded text-[9px] font-semibold text-red-600 uppercase tracking-wide">
                                                     {post.tags[0]}
                                                 </span>
                                             </div>
                                         )}
                                     </div>
-                                </Link>
 
-                                <div className="flex items-center gap-2 text-xs text-gray-400 font-bold uppercase tracking-widest">
-                                    <Clock className="w-3.5 h-3.5" />
-                                    {new Date(post.published_at || post.created_at).toLocaleDateString()}
+                                    {/* Compact content */}
+                                    <div className="p-3">
+                                        <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-medium mb-1.5">
+                                            <Clock className="w-2.5 h-2.5" />
+                                            {new Date(post.published_at || post.created_at).toLocaleDateString('en-US', {
+                                                month: 'short',
+                                                day: 'numeric'
+                                            })}
+                                        </div>
+
+                                        <h3 className="text-sm font-semibold text-gray-900 group-hover:text-red-600 transition-colors leading-snug line-clamp-2 mb-2">
+                                            {post.title}
+                                        </h3>
+
+                                        <div className="flex items-center gap-1 text-xs font-medium text-gray-500 group-hover:text-red-600 transition-colors">
+                                            Read <ArrowUpRight className="w-3 h-3" />
+                                        </div>
+                                    </div>
                                 </div>
-
-                                <Link href={`/${post.slug}`}>
-                                    <h4 className="text-2xl font-black text-gray-900 tracking-tight leading-tight group-hover:text-red-600 transition-colors duration-300 line-clamp-2">
-                                        {post.title}
-                                    </h4>
-                                </Link>
-
-                                <p className="text-gray-500 leading-relaxed text-sm line-clamp-2">
-                                    {post.excerpt}
-                                </p>
-
-                                <Link href={`/${post.slug}`} className="inline-flex items-center gap-2 text-gray-900 font-black text-sm uppercase tracking-tighter hover:gap-4 transition-all">
-                                    Read Insight <ArrowRight className="w-4 h-4 text-red-600" />
-                                </Link>
-                            </CardContent>
-                        </Card>
+                            </Link>
+                        </article>
                     ))}
                 </div>
             </div>
         </section>
     )
 }
-

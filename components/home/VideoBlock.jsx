@@ -1,6 +1,6 @@
 'use client'
 
-import { Play, Volume2 } from 'lucide-react'
+import { Play } from 'lucide-react'
 import { useState } from 'react'
 import Image from 'next/image'
 
@@ -8,45 +8,62 @@ export function VideoBlock() {
     const [isPlaying, setIsPlaying] = useState(false)
 
     return (
-        <section className="relative h-[600px] lg:h-[800px] bg-black overflow-hidden flex items-center justify-center">
-            {/* Background Media */}
-            <div className="absolute inset-0 z-0">
+        <section className="relative h-[400px] lg:h-[500px] bg-gray-900 overflow-hidden">
+            {/* Background */}
+            <div className="absolute inset-0">
                 <Image
                     src="https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=1920"
-                    alt="Sports Action Background"
+                    alt="Sports Action"
                     fill
-                    className="object-cover opacity-60"
-                    priority
+                    className="object-cover opacity-30"
                     sizes="100vw"
                 />
-                <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-black"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-gray-900/50 via-gray-900/20 to-gray-900/80"></div>
             </div>
 
-            <div className="w-full px-4 md:px-8 lg:px-12 relative z-10 text-center space-y-8">
+            {/* SVG Pattern - Corners */}
+            <div className="absolute left-0 top-0 w-40 h-40 opacity-[0.05] pointer-events-none hidden lg:block">
+                <svg width="100%" height="100%" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M0 0 L80 0 L80 80 L0 80" stroke="white" strokeWidth="1" fill="none" />
+                    <path d="M0 0 L60 0 L60 60 L0 60" stroke="white" strokeWidth="1" fill="none" />
+                    <path d="M0 0 L40 0 L40 40 L0 40" stroke="white" strokeWidth="1" fill="none" />
+                </svg>
+            </div>
+            <div className="absolute right-0 bottom-0 w-40 h-40 opacity-[0.05] pointer-events-none hidden lg:block">
+                <svg width="100%" height="100%" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M160 160 L80 160 L80 80 L160 80" stroke="white" strokeWidth="1" fill="none" />
+                    <path d="M160 160 L100 160 L100 100 L160 100" stroke="white" strokeWidth="1" fill="none" />
+                    <path d="M160 160 L120 160 L120 120 L160 120" stroke="white" strokeWidth="1" fill="none" />
+                </svg>
+            </div>
 
-                <h2 className="text-sm font-black uppercase tracking-[0.4em] text-red-500 mb-4 tracking-[0.3em]">Cinematic Showcase</h2>
-                <h3 className="text-5xl lg:text-7xl font-black text-white tracking-tighter leading-none max-w-4xl mx-auto">
-                    Performance. Power. <br /><span className="text-red-600 italic">Precision.</span>
-                </h3>
+            {/* Content */}
+            <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4">
+                <div className="max-w-2xl">
+                    <div className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-4">
+                        <span className="w-6 h-px bg-gray-500"></span>
+                        Cinematic Showcase
+                        <span className="w-6 h-px bg-gray-500"></span>
+                    </div>
 
-                <div className="flex flex-col items-center gap-6 pt-10">
+                    <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight mb-6">
+                        Performance. Power. <span className="text-red-500">Precision.</span>
+                    </h2>
+
+                    {/* Play Button */}
                     <button
-                        className="w-24 h-24 lg:w-32 lg:h-32 rounded-full bg-red-600 text-white flex items-center justify-center hover:scale-110 transition-transform duration-500 shadow-[0_0_50px_rgba(220,38,38,0.5)] group relative"
+                        className="group relative w-16 h-16 lg:w-20 lg:h-20 rounded-full bg-red-600 text-white flex items-center justify-center transition-all duration-500 hover:scale-110 mx-auto"
                         onClick={() => setIsPlaying(!isPlaying)}
                     >
-                        <div className="absolute inset-0 rounded-full border-4 border-white inline-flex animate-ping opacity-20"></div>
-                        <Play className="w-10 h-10 lg:w-16 lg:h-16 fill-white" />
+                        <span className="absolute inset-0 rounded-full border border-red-500/50 animate-ping"></span>
+                        <Play className="w-6 h-6 lg:w-8 lg:h-8 fill-white ml-1" />
                     </button>
 
-                    <div className="flex items-center gap-2 text-white font-black text-xl tracking-tighter uppercase whitespace-nowrap">
-                        Watch the Craftsmanship <Volume2 className="w-5 h-5 ml-2 text-red-500" />
-                    </div>
+                    <p className="text-gray-400 font-medium mt-4 text-sm">
+                        Watch the Craftsmanship
+                    </p>
                 </div>
             </div>
-
-            {/* Decorative lines */}
-            <div className="absolute top-0 left-0 w-full h-[100px] bg-gradient-to-b from-gray-50 to-transparent"></div>
-            <div className="absolute bottom-0 left-0 w-full h-[100px] bg-gradient-to-t from-gray-50 to-transparent"></div>
         </section>
     )
 }
