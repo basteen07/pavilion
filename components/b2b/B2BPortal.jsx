@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,9 +10,11 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { toast } from 'sonner'
-import { ShoppingCart, LogOut, Home, Package } from 'lucide-react'
+import { ShoppingCart, LogOut, Home, Package, Search, Filter, ChevronRight } from 'lucide-react'
 import { apiCall } from '@/lib/api-client'
 import Image from 'next/image'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Slider } from '@/components/ui/slider'
 
 export function B2BPortal() {
     const router = useRouter()
@@ -21,6 +24,20 @@ export function B2BPortal() {
     const [products, setProducts] = useState([])
     const [cart, setCart] = useState([])
     const [currentView, setCurrentView] = useState('dashboard')
+
+    // Filter & Search State
+    const [searchQuery, setSearchQuery] = useState('')
+    const [selectedCategory, setSelectedCategory] = useState('all')
+    const [selectedSubCategory, setSelectedSubCategory] = useState('all')
+    const [selectedBrand, setSelectedBrand] = useState('all')
+    const [selectedTag, setSelectedTag] = useState('all')
+    const [priceRange, setPriceRange] = useState([0, 200000])
+
+    // Meta Data State
+    const [categories, setCategories] = useState([])
+    const [subCategories, setSubCategories] = useState([])
+    const [tags, setTags] = useState([])
+    const [brands, setBrands] = useState([])
 
     useEffect(() => {
         const userData = localStorage.getItem('user')
@@ -34,18 +51,85 @@ export function B2BPortal() {
 
     async function loadData() {
         try {
-            const [profileData, ordersData, productsData] = await Promise.all([
+            const [profileData, ordersData, categoriesData, brandsData] = await Promise.all([
                 apiCall('/b2b/profile'),
                 apiCall('/b2b/orders'),
-                apiCall('/products?limit=50')
+                apiCall('/categories'),
+                apiCall('/brands')
             ])
             setProfile(profileData)
             setOrders(ordersData)
-            setProducts(productsData.products || [])
+            setCategories(categoriesData || [])
+            setBrands(brandsData || [])
+
+            // Initial products load
+            fetchProducts()
         } catch (error) {
             console.error('Error loading data:', error)
         }
     }
+
+    async function fetchProducts() {
+        try {
+            const params = new URLSearchParams()
+            params.append('limit', '500')
+            if (selectedCategory !== 'all') {
+                const cat = categories.find(c => c.slug === selectedCategory)
+                if (cat) params.append('category', cat.id)
+            }
+            if (selectedSubCategory !== 'all') params.append('sub_category', selectedSubCategory)
+            if (selectedBrand !== 'all') params.append('brand', selectedBrand)
+            if (selectedTag !== 'all') params.append('tag', selectedTag)
+            if (searchQuery) params.append('search', searchQuery)
+
+            const result = await apiCall(`/products?${params.toString()}`)
+            setProducts(result.products || [])
+        } catch (error) {
+            console.error('Error fetching products:', error)
+        }
+    }
+
+    // Load sub-categories when category changes
+    useEffect(() => {
+        if (selectedCategory === 'all') {
+            setSubCategories([])
+            setSelectedSubCategory('all')
+            return
+        }
+        const cat = categories.find(c => c.slug === selectedCategory)
+        if (cat) {
+            apiCall(`/sub-categories?categoryId=${cat.id}`).then(data => {
+                setSubCategories(data || [])
+                setSelectedSubCategory('all')
+            })
+        }
+    }, [selectedCategory, categories])
+
+    // Load tags when sub-category changes
+    useEffect(() => {
+        if (selectedSubCategory === 'all') {
+            setTags([])
+            setSelectedTag('all')
+            return
+        }
+        apiCall(`/tags?subCategoryId=${selectedSubCategory}`).then(data => {
+            setTags(data || [])
+            setSelectedTag('all')
+        })
+    }, [selectedSubCategory])
+
+    // Debounced search effect
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (profile) fetchProducts()
+        }, 500)
+        return () => clearTimeout(timer)
+    }, [searchQuery])
+
+    // Refetch products when filters change (immediate)
+    useEffect(() => {
+        if (profile) fetchProducts()
+    }, [selectedCategory, selectedSubCategory, selectedBrand, selectedTag])
 
     async function placeOrder() {
         try {
@@ -55,7 +139,7 @@ export function B2BPortal() {
                     products: cart.map(item => ({
                         product_id: item.id,
                         name: item.name,
-                        price: item.discount_price || item.mrp,
+                        price: Math.round(parseFloat(item.selling_price || item.mrp_price) * (1 - profile.discount_percentage / 100)),
                         quantity: item.quantity
                     })),
                     notes: 'Order from B2B portal'
@@ -121,16 +205,21 @@ export function B2BPortal() {
             <header className="bg-white border-b sticky top-0 z-50">
                 <div className="container flex items-center justify-between h-16">
                     <div className="flex items-center gap-4">
-                        <h1 className="text-xl font-bold text-red-600">B2B PORTAL</h1>
-                        <Badge>{profile.company_name}</Badge>
+                        <Link href="/" className="hover:opacity-80 transition-opacity">
+                            <h1 className="text-xl font-black text-red-600 tracking-tighter italic">PAVILION <span className="text-gray-900 not-italic">PORTAL</span></h1>
+                        </Link>
+                        <Badge variant="secondary" className="font-bold">{profile.company_name}</Badge>
                     </div>
                     <div className="flex items-center gap-4">
-                        <Badge variant="outline">Discount: {profile.discount_percentage}%</Badge>
-                        <Button variant="ghost" size="sm">
-                            <ShoppingCart className="w-4 h-4 mr-2" />
-                            Cart ({cart.length})
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={handleLogout}>
+                        <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50 hidden sm:flex font-bold">
+                            Discount Level: {profile.discount_percentage}%
+                        </Badge>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleLogout}
+                            className="rounded-full font-bold text-gray-500 hover:text-red-600"
+                        >
                             <LogOut className="w-4 h-4 mr-2" />
                             Logout
                         </Button>
@@ -159,12 +248,23 @@ export function B2BPortal() {
                             Browse Products
                         </Button>
                         <Button
+                            variant={currentView === 'cart' ? 'default' : 'ghost'}
+                            className="w-full justify-start"
+                            onClick={() => setCurrentView('cart')}
+                        >
+                            <ShoppingCart className="w-4 h-4 mr-2" />
+                            My Order / Cart
+                            {cart.length > 0 && (
+                                <Badge className="ml-auto bg-red-600 font-bold" variant="default">{cart.length}</Badge>
+                            )}
+                        </Button>
+                        <Button
                             variant={currentView === 'orders' ? 'default' : 'ghost'}
                             className="w-full justify-start"
                             onClick={() => setCurrentView('orders')}
                         >
-                            <ShoppingCart className="w-4 h-4 mr-2" />
-                            My Orders
+                            <Package className="w-4 h-4 mr-2" />
+                            Order History
                         </Button>
                     </nav>
                 </aside>
@@ -206,32 +306,152 @@ export function B2BPortal() {
                     {currentView === 'products' && (
                         <div className="space-y-6">
                             <h2 className="text-3xl font-bold">Browse Products</h2>
+
+                            {/* Filters Bar - Unified Compact Style */}
+                            <div className="p-2 rounded-xl bg-white shadow-sm border border-gray-100">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                        <Filter className="w-3 h-3" /> Filters
+                                    </div>
+
+                                    {/* Search Bar Integrated */}
+                                    <div className="relative w-48">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400" />
+                                        <Input
+                                            placeholder="Find anything..."
+                                            className="pl-8 h-9 rounded-lg border-gray-200 text-[10px] font-bold uppercase"
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                        />
+                                    </div>
+
+                                    {/* Category */}
+                                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                                        <SelectTrigger className="w-[140px] h-9 rounded-lg border-gray-200 bg-white font-bold text-[10px] uppercase">
+                                            <SelectValue placeholder="Category" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all" className="font-bold text-[10px] uppercase">All Categories</SelectItem>
+                                            {categories.map(c => (
+                                                <SelectItem key={c.id} value={c.slug} className="font-bold text-[10px] uppercase">{c.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+
+                                    {/* Sub-Category */}
+                                    <Select
+                                        value={selectedSubCategory}
+                                        onValueChange={setSelectedSubCategory}
+                                        disabled={!subCategories.length}
+                                    >
+                                        <SelectTrigger className="w-[140px] h-9 rounded-lg border-gray-200 bg-white font-bold text-[10px] uppercase">
+                                            <SelectValue placeholder="Sub-Category" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all" className="font-bold text-[10px] uppercase">All Sub-Categories</SelectItem>
+                                            {subCategories.map(sc => (
+                                                <SelectItem key={sc.id} value={sc.id} className="font-bold text-[10px] uppercase">{sc.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+
+                                    {/* Tag */}
+                                    {tags.length > 0 && (
+                                        <Select value={selectedTag} onValueChange={setSelectedTag}>
+                                            <SelectTrigger className="w-[140px] h-9 rounded-lg border-gray-200 bg-white font-bold text-[10px] uppercase">
+                                                <SelectValue placeholder="Tag" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all" className="font-bold text-[10px] uppercase">All Tags</SelectItem>
+                                                {tags.map(t => (
+                                                    <SelectItem key={t.id} value={t.id} className="font-bold text-[10px] uppercase">{t.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    )}
+
+                                    {/* Brand */}
+                                    <Select value={selectedBrand} onValueChange={setSelectedBrand}>
+                                        <SelectTrigger className="w-[140px] h-9 rounded-lg border-gray-200 bg-white font-bold text-[10px] uppercase">
+                                            <SelectValue placeholder="Brand" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all" className="font-bold text-[10px] uppercase">All Brands</SelectItem>
+                                            {brands.map(b => (
+                                                <SelectItem key={b.id} value={b.slug || b.id.toString()} className="font-bold text-[10px] uppercase">{b.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+
+                                    {/* Price Slider */}
+                                    <div className="flex items-center gap-3 px-3 h-9 bg-gray-50 rounded-lg border border-gray-100">
+                                        <span className="text-[10px] font-black text-gray-400 uppercase">Price</span>
+                                        <Slider
+                                            defaultValue={[0, 200000]}
+                                            max={200000}
+                                            step={1000}
+                                            value={priceRange}
+                                            onValueChange={setPriceRange}
+                                            className="w-[80px]"
+                                        />
+                                        <span className="text-[10px] font-bold text-gray-900 whitespace-nowrap min-w-[80px]">
+                                            ₹{priceRange[0].toLocaleString()} - {priceRange[1].toLocaleString()}
+                                        </span>
+                                    </div>
+
+                                    <div className="ml-auto text-[10px] font-black text-red-600 uppercase">
+                                        {products.length} Products Found
+                                    </div>
+                                </div>
+                            </div>
+
                             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
                                 {products.map((product) => (
-                                    <Card key={product.id}>
-                                        <CardHeader className="p-0">
-                                            <div className="h-48 bg-gray-100 rounded-t-lg relative">
-                                                <Image
-                                                    src={product.images?.[0]?.image_url || "https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=600"}
-                                                    alt={product.name}
-                                                    fill
-                                                    className="object-cover rounded-t-lg"
-                                                />
+                                    <Card key={product.id} className="overflow-hidden border-gray-100 hover:shadow-lg transition-shadow">
+                                        <div className="aspect-[4/3] bg-gray-50 relative">
+                                            <Image
+                                                src={product.images?.[0]?.image_url || "https://images.unsplash.com/photo-1540747913346-19e3adca174f?w=600"}
+                                                alt={product.name}
+                                                fill
+                                                className="object-cover"
+                                            />
+                                            {product.tag_name && (
+                                                <Badge className="absolute top-2 left-2 bg-red-600/90 text-[8px] uppercase font-black tracking-widest">
+                                                    {product.tag_name}
+                                                </Badge>
+                                            )}
+                                        </div>
+                                        <CardContent className="p-3">
+                                            <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 line-clamp-1">
+                                                {product.brand_name || 'Generic'}
                                             </div>
-                                        </CardHeader>
-                                        <CardContent className="p-4">
-                                            <h3 className="font-semibold mb-2 line-clamp-2">{product.name}</h3>
-                                            <p className="text-2xl font-bold text-red-600">
-                                                ₹{Math.round(parseFloat(product.dealer_price || product.selling_price || product.mrp_price) * (1 - profile.discount_percentage / 100))}
-                                            </p>
-                                            <p className="text-sm text-gray-400 line-through">₹{product.mrp_price}</p>
+                                            <h3 className="font-bold text-sm text-gray-900 mb-2 line-clamp-2 h-10">{product.name}</h3>
+
+                                            <div className="flex items-baseline gap-2">
+                                                <span className="text-xl font-black text-red-600">
+                                                    ₹{Math.round(parseFloat(product.selling_price || product.mrp_price) * (1 - profile.discount_percentage / 100)).toLocaleString()}
+                                                </span>
+                                                <span className="text-[10px] text-gray-400 line-through">
+                                                    ₹{parseFloat(product.mrp_price || product.selling_price).toLocaleString()}
+                                                </span>
+                                            </div>
                                         </CardContent>
-                                        <CardFooter className="p-4 pt-0">
+                                        <CardFooter className="p-3 pt-0">
                                             <Button
-                                                className="w-full bg-red-600 hover:bg-red-700"
-                                                onClick={() => setCart([...cart, { ...product, quantity: 1 }])}
+                                                className="w-full bg-gray-900 hover:bg-red-600 text-white font-bold uppercase tracking-widest text-[10px] h-9 rounded-lg transition-colors"
+                                                onClick={() => {
+                                                    const existing = cart.find(item => item.id === product.id)
+                                                    if (existing) {
+                                                        setCart(cart.map(item =>
+                                                            item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+                                                        ))
+                                                    } else {
+                                                        setCart([...cart, { ...product, quantity: 1 }])
+                                                    }
+                                                    toast.success(`Added ${product.name} to cart`)
+                                                }}
                                             >
-                                                Add to Cart
+                                                Add to Order
                                             </Button>
                                         </CardFooter>
                                     </Card>
@@ -269,35 +489,120 @@ export function B2BPortal() {
                             </Card>
                         </div>
                     )}
+
+
+                    {currentView === 'cart' && (
+                        <div className="space-y-8 max-w-4xl">
+                            <div className="flex items-center justify-between border-b pb-6">
+                                <h2 className="text-4xl font-black italic tracking-tighter uppercase text-gray-900"><span className="text-red-600">Your</span> Order List</h2>
+                                <Badge variant="secondary" className="text-lg py-1 px-4 rounded-full font-black">{cart.length} ITEMS</Badge>
+                            </div>
+
+                            {cart.length === 0 ? (
+                                <div className="py-20 text-center space-y-6 bg-white rounded-3xl border border-dashed border-gray-200 shadow-sm">
+                                    <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <ShoppingCart className="w-10 h-10 text-gray-300" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-gray-900">Your Order List is Empty</h3>
+                                    <p className="text-gray-400 max-w-xs mx-auto">Add products to your list to request a quote or place a wholesale order.</p>
+                                    <Button
+                                        onClick={() => setCurrentView('products')}
+                                        className="bg-red-600 hover:bg-red-700 text-white font-black px-10 h-12 rounded-full uppercase tracking-tighter italic"
+                                    >
+                                        Browse Catalog
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="space-y-6">
+                                    <Card className="border-gray-100 shadow-xl rounded-3xl overflow-hidden text-gray-900">
+                                        <div className="divide-y divide-gray-50">
+                                            {cart.map((item, idx) => (
+                                                <div key={idx} className="p-6 flex items-center gap-6 group hover:bg-gray-50/50 transition-colors">
+                                                    <div className="w-20 h-20 bg-gray-100 rounded-2xl relative flex-shrink-0 overflow-hidden border border-gray-100">
+                                                        <Image
+                                                            src={item.images?.[0]?.image_url || "https://images.unsplash.com/photo-1540747913346-19e3adca174f?w=200"}
+                                                            alt={item.name}
+                                                            fill
+                                                            className="object-cover"
+                                                        />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">{item.brand_name || 'Generic'}</div>
+                                                        <h4 className="text-lg font-bold text-gray-900 group-hover:text-red-600 transition-colors leading-tight">{item.name}</h4>
+                                                    </div>
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="flex items-center bg-gray-100 rounded-xl p-1">
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 rounded-lg"
+                                                                onClick={() => {
+                                                                    if (item.quantity > 1) {
+                                                                        setCart(cart.map((c, i) => i === idx ? { ...c, quantity: c.quantity - 1 } : c))
+                                                                    } else {
+                                                                        setCart(cart.filter((_, i) => i !== idx))
+                                                                    }
+                                                                }}
+                                                            >
+                                                                -
+                                                            </Button>
+                                                            <span className="w-10 text-center font-black">{item.quantity}</span>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 rounded-lg"
+                                                                onClick={() => setCart(cart.map((c, i) => i === idx ? { ...c, quantity: c.quantity + 1 } : c))}
+                                                            >
+                                                                +
+                                                            </Button>
+                                                        </div>
+                                                        <div className="text-right min-w-[120px]">
+                                                            <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Unit Price</div>
+                                                            <div className="text-lg font-black text-red-600 uppercase italic">₹{Math.round(parseFloat(item.selling_price || item.mrp_price) * (1 - profile.discount_percentage / 100)).toLocaleString()}</div>
+                                                        </div>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="text-gray-300 hover:text-red-600"
+                                                            onClick={() => setCart(cart.filter((_, i) => i !== idx))}
+                                                        >
+                                                            <ShoppingCart className="w-5 h-5" />
+                                                            <span className="sr-only">Remove</span>
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="bg-gray-900 p-8 text-white flex items-center justify-between">
+                                            <div>
+                                                <div className="text-gray-400 text-xs font-black uppercase tracking-widest mb-1">Total Order Value</div>
+                                                <div className="text-4xl font-black italic tracking-tighter">
+                                                    ₹{cart.reduce((acc, item) => acc + (Math.round(parseFloat(item.selling_price || item.mrp_price) * (1 - profile.discount_percentage / 100)) * item.quantity), 0).toLocaleString()}
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-4">
+                                                <Button
+                                                    variant="outline"
+                                                    className="border-gray-700 text-white hover:bg-gray-800 rounded-full px-8 h-12 font-bold"
+                                                    onClick={() => setCart([])}
+                                                >
+                                                    Clear All
+                                                </Button>
+                                                <Button
+                                                    className="bg-red-600 hover:bg-red-700 text-white font-black italic px-10 h-12 rounded-full uppercase tracking-tighter"
+                                                    onClick={placeOrder}
+                                                >
+                                                    Place Bulk Order
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </main>
             </div>
-
-            {/* Cart Sidebar */}
-            {cart.length > 0 && (
-                <div className="fixed bottom-4 right-4">
-                    <Card className="w-80 shadow-2xl">
-                        <CardHeader>
-                            <CardTitle>Cart ({cart.length} items)</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ScrollArea className="h-48">
-                                {cart.map((item, idx) => (
-                                    <div key={idx} className="flex justify-between items-center mb-2">
-                                        <span className="text-sm truncate w-32">{item.name}</span>
-                                        <span className="font-semibold">₹{Math.round((item.discount_price || item.mrp) * (1 - profile.discount_percentage / 100))}</span>
-                                    </div>
-                                ))}
-                            </ScrollArea>
-                        </CardContent>
-                        <CardFooter className="flex gap-2">
-                            <Button variant="outline" onClick={() => setCart([])}>Clear</Button>
-                            <Button className="flex-1 bg-red-600 hover:bg-red-700" onClick={placeOrder}>
-                                Place Order
-                            </Button>
-                        </CardFooter>
-                    </Card>
-                </div>
-            )}
         </div>
     )
 }

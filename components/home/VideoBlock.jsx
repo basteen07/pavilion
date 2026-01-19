@@ -22,7 +22,8 @@ export function VideoBlock() {
                 <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-black"></div>
             </div>
 
-            <div className="container relative z-10 text-center space-y-8">
+            <div className="w-full px-4 md:px-8 lg:px-12 relative z-10 text-center space-y-8">
+
                 <h2 className="text-sm font-black uppercase tracking-[0.4em] text-red-500 mb-4 tracking-[0.3em]">Cinematic Showcase</h2>
                 <h3 className="text-5xl lg:text-7xl font-black text-white tracking-tighter leading-none max-w-4xl mx-auto">
                     Performance. Power. <br /><span className="text-red-600 italic">Precision.</span>

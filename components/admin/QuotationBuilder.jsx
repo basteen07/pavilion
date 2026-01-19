@@ -1,5 +1,6 @@
-import { useState, useMemo, useEffect, useRef, useCallback, Fragment } from 'react'
+﻿import { useState, useMemo, useEffect, useRef, useCallback, Fragment } from 'react'
 import { useQuery, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
+import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
@@ -12,9 +13,8 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
-import { ShoppingCart, RotateCcw, Save, Eye, Building2, Plus, Download, Send, FileText, Trash2, Filter, Search, X, ChevronRight, PenLine, AlertTriangle, Loader2, Check, ArrowRight, Settings } from 'lucide-react'
+import { ShoppingCart, RotateCcw, Save, Eye, Building2, Plus, Download, Send, FileText, Trash2, Filter, Search, X, ChevronRight, ChevronDown, PenLine, AlertTriangle, Loader2, Check, ArrowRight, Settings, UserCircle2 } from 'lucide-react'
 import jsPDF from 'jspdf'
-// Manual positioning with jsPDF is safer.
 import { apiCall } from '@/lib/api-client'
 import { Badge } from '@/components/ui/badge'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
@@ -24,6 +24,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { cn } from "@/lib/utils"
 import { useAuth } from '@/components/providers/AuthProvider'
 import { Switch } from '@/components/ui/switch'
+import { QuotationPreviewModal } from '@/components/admin/QuotationPreviewModal'
 
 // --- Utility: Get Image ---
 const getFirstImage = (images) => {
@@ -37,8 +38,10 @@ const getFirstImage = (images) => {
     }
 }
 
-export function QuotationBuilder({ onClose, onSuccess }) {
+export function QuotationBuilder({ onClose, onSuccess, id }) {
     const queryClient = useQueryClient()
+    const searchParams = useSearchParams()
+    const urlCustomerId = searchParams.get('customer_id')
     const { user } = useAuth()
     const isSuperAdmin = user?.role === 'superadmin'
 
@@ -85,6 +88,9 @@ export function QuotationBuilder({ onClose, onSuccess }) {
     const [searchTerm, setSearchTerm] = useState('')
     const [selectedProducts, setSelectedProducts] = useState([])
     const [expandedGroups, setExpandedGroups] = useState({})
+
+    // View Toggle
+    const [showDetailed, setShowDetailed] = useState(false)
 
     // Filters
     const [activeFilters, setActiveFilters] = useState([])
@@ -170,6 +176,14 @@ export function QuotationBuilder({ onClose, onSuccess }) {
         return groups;
     }, [products, activeFilters]);
 
+    // Default Terms & Conditions
+    const DEFAULT_TERMS = `1. Prices are valid for 30 days from the quotation date.
+2. Payment terms: 50% advance, balance before delivery.
+3. Delivery: 7-14 working days from order confirmation.
+4. All prices are exclusive of GST unless otherwise stated.
+5. Goods once sold cannot be returned or exchanged.
+6. This quotation is subject to stock availability.`;
+
     // --- PDF Generation Logic ---
     const handleDownloadPDF = async () => {
         const doc = new jsPDF()
@@ -178,64 +192,76 @@ export function QuotationBuilder({ onClose, onSuccess }) {
         // Add Logo - Top Left
         try {
             const logoUrl = '/pavilion-sports.png'
-            doc.addImage(logoUrl, 'PNG', 15, 12, 45, 12)
+            doc.addImage(logoUrl, 'PNG', 15, 12, 40, 10)
         } catch (e) {
             console.error('Logo add error:', e)
         }
 
-        doc.setFontSize(26)
-        doc.setTextColor(220, 38, 38)
-        doc.text('QUOTATION', 140, 22)
-
-        doc.setFontSize(10)
-        doc.setTextColor(120)
-        doc.text(`#${quotationDetails.quotation_number}`, 140, 28)
-
-        // Company Details
-        doc.setFontSize(10)
+        // Header - smaller and more corporate
+        doc.setFontSize(16)
         doc.setTextColor(40)
         doc.setFont('helvetica', 'bold')
-        doc.text('Pavilion Sports', 15, 30)
+        doc.text('Quotation', 145, 18)
+        doc.setFontSize(9)
         doc.setFont('helvetica', 'normal')
         doc.setTextColor(100)
-        doc.text('123 Street Name, City, State, ZIP', 15, 35)
-        doc.text('GST: 27AAAAA0000A1Z5', 15, 40)
-        doc.text('Email: sales@pavilionsports.com', 15, 45)
+        doc.text(`#${quotationDetails.quotation_number}`, 145, 24)
 
-        // Customer Details - WITH WRAPPING
-        let currentY = 60
+        // Company Details
+        doc.setFontSize(8)
+        doc.setTextColor(100)
+        doc.text('Pavilion Sports | 123 Street, City | sales@pavilionsports.com', 15, 28)
+
+        // Meta Info Row
+        let currentY = 38
+        doc.setFontSize(8)
+        doc.setTextColor(100)
+        doc.text(`Date: ${quotationDetails.issue_date}`, 15, currentY)
+        doc.text(`Valid Until: ${quotationDetails.valid_until}`, 70, currentY)
+        doc.text(`Payment: ${quotationDetails.payment_terms || 'Net 30 Days'}`, 130, currentY)
+
+        // Customer Details - Compact
+        currentY += 10
+        doc.setFillColor(248, 248, 248)
+        doc.rect(15, currentY - 4, 180, 18, 'F')
+        doc.setFontSize(8)
+        doc.setTextColor(100)
+        doc.text('BILL TO:', 20, currentY)
         doc.setFont('helvetica', 'bold')
         doc.setTextColor(40)
-        doc.text('QUOTATION FOR:', 15, currentY)
-        currentY += 5
+        doc.text(customer?.company_name || customer?.name || 'Walking Customer', 20, currentY + 5)
         doc.setFont('helvetica', 'normal')
-        doc.text(customer?.company_name || 'Walking Customer', 15, currentY)
-        currentY += 5
+        doc.setTextColor(100)
+        const address = customer?.address ? doc.splitTextToSize(customer.address, 80)[0] : '';
+        doc.text(address, 20, currentY + 10)
+        doc.text(customer?.phone || '', 120, currentY + 5)
+        doc.text(customer?.email || '', 120, currentY + 10)
 
-        // Wrap Address
-        const splitAddress = doc.splitTextToSize(customer?.address || 'N/A', 80)
-        doc.text(splitAddress, 15, currentY)
-        // Advance currentY by number of lines in address
-        currentY += (splitAddress.length * 5)
+        currentY += 22
 
-        doc.text(`Phone: ${customer?.phone || 'N/A'}`, 15, currentY)
-        currentY += 5
-        doc.text(`Email: ${customer?.email || 'N/A'}`, 15, currentY)
-
-        // Dates - Fixed Position Right Side (Unchanged Y relative to top, safe from address overlap)
-        doc.text(`Date: ${quotationDetails.issue_date}`, 150, 65)
-        doc.text(`Valid Until: ${quotationDetails.valid_until}`, 150, 70)
-
-        // Group by SUB-CATEGORY Only (Simpler Grouping)
+        // Group items by Category > Sub-Category > Brand
         const groups = quotationItems.reduce((acc, item) => {
-            const groupName = item.sub_category_name || item.category_name || 'General Items';
-            if (!acc[groupName]) acc[groupName] = [];
-            acc[groupName].push(item);
+            const cat = item.category_name || 'General';
+            const subCat = item.sub_category_name || '';
+            const brand = item.brand_name || item.brand || '';
+            const groupKey = [cat, subCat, brand].filter(Boolean).join(' › ');
+            if (!acc[groupKey]) acc[groupKey] = [];
+            acc[groupKey].push(item);
             return acc;
         }, {});
 
-        // Reset Y for Items if address pushed it too far down, else start at fixed 95 or below address
-        currentY = Math.max(currentY + 15, 95)
+        // Table Header - Simplified columns
+        doc.setFillColor(55, 65, 81)
+        doc.rect(15, currentY, 180, 7, 'F')
+        doc.setTextColor(255)
+        doc.setFontSize(8)
+        doc.setFont('helvetica', 'bold')
+        doc.text('Product', 20, currentY + 5)
+        doc.text('Qty', 120, currentY + 5)
+        doc.text('Price', 138, currentY + 5)
+        doc.text('GST', 160, currentY + 5)
+        doc.text('Total', 178, currentY + 5)
+        currentY += 10
 
         Object.entries(groups).forEach(([groupName, items]) => {
             if (currentY > 250) {
@@ -243,129 +269,112 @@ export function QuotationBuilder({ onClose, onSuccess }) {
                 currentY = 20
             }
 
-            // Group Header (Sub-Category Name)
-            doc.setFillColor(245, 245, 245)
-            doc.rect(15, currentY, 180, 8, 'F')
-            doc.setFont('helvetica', 'bold')
-            doc.setTextColor(220, 38, 38)
-            doc.setFontSize(10)
-            doc.text(groupName.toUpperCase(), 20, currentY + 6)
-            currentY += 12
-
-            // Table Header
-            doc.setFillColor(220, 38, 38)
-            doc.rect(15, currentY, 180, 8, 'F')
-            doc.setTextColor(255, 255, 255)
-            doc.setFontSize(9)
-            doc.text('Item Details', 20, currentY + 6)
-            doc.text('MRP', 100, currentY + 6)
-            doc.text('Your Price', 125, currentY + 6)
-            doc.text('Qty', 155, currentY + 6)
-            doc.text('Total', 175, currentY + 6)
-
-            currentY += 12
+            // Group Header - Compact
+            if (Object.keys(groups).length > 1) {
+                doc.setFillColor(243, 244, 246)
+                doc.rect(15, currentY, 180, 5, 'F')
+                doc.setFont('helvetica', 'bold')
+                doc.setTextColor(100)
+                doc.setFontSize(7)
+                doc.text(groupName.toUpperCase(), 20, currentY + 3.5)
+                currentY += 7
+            }
 
             items.forEach((item) => {
-                if (currentY > 260) {
+                if (currentY > 265) {
                     doc.addPage()
                     currentY = 20
                 }
 
-                doc.setFont('helvetica', 'bold')
+                doc.setFont('helvetica', 'normal')
                 doc.setTextColor(40)
-                doc.text(item.name, 20, currentY)
-                doc.setFont('helvetica', 'normal')
-                doc.setTextColor(120)
-                doc.text(`SKU: ${item.sku}`, 20, currentY + 5)
-
-                // Short Description
-                if (item.short_description) {
-                    doc.setFontSize(8)
-                    doc.setTextColor(100)
-                    doc.setFont('helvetica', 'italic')
-                    const splitDesc = doc.splitTextToSize(item.short_description, 75)
-                    doc.text(splitDesc, 20, currentY + 9)
-                }
-
-                doc.setFontSize(8)
-                doc.setFont('helvetica', 'normal')
-                doc.setTextColor(120)
-                doc.text(`Brand: ${item.brand || '-'}`, 20, currentY + 14)
-
-                // View Product Link
-                doc.setTextColor(37, 99, 235) // Blue
-                doc.textWithLink('View Product', 20, currentY + 19, { url: `${window.location.origin}/product/${item.slug}` })
-
                 doc.setFontSize(9)
-                doc.setTextColor(40)
-                doc.text(`Rs. ${parseFloat(item.mrp || 0).toLocaleString()}`, 100, currentY)
-                doc.text(`Rs. ${parseFloat(item.custom_price).toLocaleString()}`, 125, currentY)
-                doc.text(item.quantity.toString(), 155, currentY)
-                doc.text(`Rs. ${(parseFloat(item.custom_price) * item.quantity).toLocaleString()}`, 175, currentY)
 
-                currentY += 25 // Increased for link
+                // Product name (truncated if needed)
+                const productName = item.name.length > 45 ? item.name.substring(0, 42) + '...' : item.name;
+                doc.text(productName, 20, currentY)
+
+                // View product link
+                doc.setFontSize(7)
+                doc.setTextColor(59, 130, 246)
+                doc.textWithLink('View', 20, currentY + 4, { url: `${window.location.origin}/product/${item.slug}` })
+
+                doc.setTextColor(40)
+                doc.setFontSize(8)
+                doc.text(item.quantity.toString(), 122, currentY)
+                doc.text(`₹${parseFloat(item.custom_price).toLocaleString()}`, 135, currentY)
+                doc.text(`${item.gst_rate || '18'}%`, 162, currentY)
+                doc.setFont('helvetica', 'bold')
+                doc.text(`₹${(parseFloat(item.custom_price) * item.quantity).toLocaleString()}`, 175, currentY)
+
+                currentY += 10
             })
-            currentY += 10 // Space between groups
+            currentY += 3
         })
 
-        // Totals
+        // Totals - Only if enabled
         if (quotationDetails.show_total) {
             if (currentY > 240) {
                 doc.addPage()
                 currentY = 20
             }
 
+            currentY += 5
             doc.setDrawColor(200)
-            doc.line(15, currentY, 195, currentY)
-            currentY += 10
+            doc.line(120, currentY, 195, currentY)
+            currentY += 8
 
-            const totalsX = 140
             doc.setFont('helvetica', 'normal')
-            doc.setTextColor(40)
-            doc.text('Subtotal:', totalsX, currentY)
-            doc.text(`Rs. ${subtotal.toLocaleString()}`, 175, currentY)
-
-            currentY += 7
-            doc.text(`Discount (${quotationDetails.discount_type}):`, totalsX, currentY)
-            doc.setTextColor(220, 38, 38)
-            doc.text(`-Rs. ${discountAmount.toLocaleString()}`, 175, currentY)
-
-            currentY += 7
-            doc.setTextColor(40)
-            doc.text(`Tax (${quotationDetails.tax_rate}%):`, totalsX, currentY)
-            doc.text(`Rs. ${tax.toLocaleString()}`, 175, currentY)
-
-            currentY += 10
-            doc.setFontSize(12)
-            doc.setFont('helvetica', 'bold')
-            doc.text('Total Amount:', totalsX, currentY)
-            doc.text(`Rs. ${total.toLocaleString()}`, 175, currentY)
-        }
-
-        // Terms and Conditions
-        if (quotationDetails.terms_and_conditions) {
-            currentY += 20
-            if (currentY > 250) {
-                doc.addPage()
-                currentY = 20
-            }
-            doc.setFontSize(10)
-            doc.setFont('helvetica', 'bold')
-            doc.setTextColor(40)
-            doc.text('TERMS & CONDITIONS:', 15, currentY)
-            currentY += 7
-            doc.setFont('helvetica', 'normal')
-            doc.setFontSize(9)
             doc.setTextColor(100)
-            const splitTerms = doc.splitTextToSize(quotationDetails.terms_and_conditions, 180)
-            doc.text(splitTerms, 15, currentY)
+            doc.setFontSize(9)
+            doc.text('Subtotal:', 130, currentY)
+            doc.setTextColor(40)
+            doc.text(`₹${subtotal.toLocaleString()}`, 175, currentY)
+
+            if (discountAmount > 0) {
+                currentY += 6
+                doc.setTextColor(100)
+                doc.text('Discount:', 130, currentY)
+                doc.setTextColor(220, 38, 38)
+                doc.text(`-₹${discountAmount.toLocaleString()}`, 175, currentY)
+            }
+
+            currentY += 6
+            doc.setTextColor(100)
+            doc.text(`GST (${quotationDetails.tax_rate}%):`, 130, currentY)
+            doc.setTextColor(40)
+            doc.text(`₹${tax.toLocaleString()}`, 175, currentY)
+
+            currentY += 8
+            doc.setFontSize(11)
+            doc.setFont('helvetica', 'bold')
+            doc.text('Total:', 130, currentY)
+            doc.setTextColor(220, 38, 38)
+            doc.text(`₹${total.toLocaleString()}`, 175, currentY)
         }
+
+        // Terms and Conditions - Always show (default or custom)
+        const termsToShow = quotationDetails.terms_and_conditions || DEFAULT_TERMS;
+        currentY += 15
+        if (currentY > 250) {
+            doc.addPage()
+            currentY = 20
+        }
+        doc.setFontSize(8)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(100)
+        doc.text('TERMS & CONDITIONS:', 15, currentY)
+        currentY += 5
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(7)
+        doc.setTextColor(120)
+        const splitTerms = doc.splitTextToSize(termsToShow, 180)
+        doc.text(splitTerms, 15, currentY)
 
         // Footer
-        doc.setFontSize(8)
-        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(7)
         doc.setTextColor(150)
-        doc.text('This is a computer generated quotation.', 105, 285, { align: 'center' })
+        doc.text('This is a computer-generated quotation. No signature required.', 105, 287, { align: 'center' })
 
         doc.save(`Quotation_${quotationDetails.quotation_number}.pdf`)
     }
@@ -380,22 +389,53 @@ export function QuotationBuilder({ onClose, onSuccess }) {
     }, [observerTarget, hasNextPage, fetchNextPage]);
 
 
-    // --- Logic: Apply Customer Discount ---
+    // --- Logic: Handle URL Customer ID or Quotation ID (Edit Mode) ---
+    const quoteId = id || searchParams.get('id');
+
     useEffect(() => {
-        if (selectedCustomer && customers) {
-            const customer = customers.find(c => c.id === selectedCustomer);
-            if (customer && customer.type) {
-                const type = customerTypes.find(t => t.name === customer.type);
-                if (type && parseFloat(type.discount_percentage) > 0) {
-                    // Only apply if discount hasn't been manually tampered (simple check: if 0)
-                    if (quotationDetails.discount_value == 0) {
-                        setQuotationDetails(prev => ({ ...prev, discount_value: type.discount_percentage, discount_type: 'percentage' }))
-                        toast.info(`Applied ${type.name} discount: ${type.discount_percentage}%`, { duration: 2000 })
+        // Edit Mode: Fetch Quotation
+        if (quoteId) {
+            const fetchQuote = async () => {
+                try {
+                    const quote = await apiCall(`/quotations/${quoteId}`);
+                    if (quote) {
+                        setSelectedCustomer(quote.customer_id);
+                        setQuotationItems(quote.items.map(item => ({
+                            ...item,
+                            name: item.product_name, // Mapping back for UI
+                            mrp: item.mrp,
+                            custom_price: item.unit_price,
+                            gst_rate: '18%', // Default if missing
+                        })));
+                        setQuotationDetails({
+                            quotation_number: quote.quotation_number,
+                            issue_date: new Date(quote.created_at).toISOString().split('T')[0],
+                            valid_until: new Date(quote.valid_until).toISOString().split('T')[0],
+                            shipping_cost: quote.shipping_cost || 0,
+                            discount_type: quote.discount_type || 'percentage',
+                            discount_value: quote.discount_value || 0,
+                            tax_rate: (quote.tax / (quote.subtotal - quote.discount_amount + quote.shipping_cost) * 100).toFixed(0) || 18, // Approximate fallback
+                            additional_notes: quote.notes || '',
+                            terms_and_conditions: quote.terms_conditions || '',
+                            show_total: true,
+                            tags: '',
+                        });
                     }
+                } catch (e) {
+                    toast.error("Failed to load quotation for editing");
                 }
-            }
+            };
+            fetchQuote();
+        } else if (urlCustomerId && customers.length > 0 && !selectedCustomer) {
+            setSelectedCustomer(urlCustomerId);
         }
-    }, [selectedCustomer, customers, customerTypes])
+    }, [quoteId, urlCustomerId, customers]); // Depend on 'customers' to ensure list is loaded
+
+    // --- Logic: Apply Customer Pricing Rule ---
+    useEffect(() => {
+        // Only run this if NOT in edit mode initially, or handle carefully
+        // We probably don't want to auto-recalc prices when loading an existing quote unless customer changes
+    }, [selectedCustomer, customers])
 
 
     // --- Handlers ---
@@ -417,11 +457,61 @@ export function QuotationBuilder({ onClose, onSuccess }) {
             toast.error("Already added")
             return
         }
+        processAddProduct(product);
+        toast.success(`Added ${product.name}`)
+    }
+
+    function addSelectedProducts() {
+        selectedProducts.forEach(product => {
+            if (!quotationItems.find(i => i.product_id === product.id)) {
+                processAddProduct(product);
+            }
+        });
+        setSelectedProducts([])
+        setShowProductModal(false)
+        toast.success(`Added selected products`)
+    }
+
+    function processAddProduct(product) {
+        const customer = customers.find(c => c.id === selectedCustomer);
+
+        // Use data directly from customer object (already joined from API)
+        // OR fallback to customerTypes lookup
+        const custType = customerTypes.find(t => String(t.id) === String(customer?.customer_type_id));
+
+        // Get base_price_type and percentage from customer (from API JOIN) or custType
+        const customerTypeBase = customer?.base_price_type || custType?.base_price_type || 'mrp';
+        const percentage = parseFloat(customer?.percentage || custType?.percentage || 0);
+
+        let customPrice = parseFloat(product.shop_price || product.mrp_price);
+        let discount = 0;
+
+        // Apply pricing logic based on customer type
+        if (customerTypeBase === 'dealer') {
+            // Dealer: base is dealer_price, ADD markup percentage
+            const basePrice = parseFloat(product.dealer_price || product.shop_price || product.mrp_price);
+            customPrice = basePrice * (1 + percentage / 100);
+            // For dealer, discount is the markup percentage (stored as positive for markup)
+            discount = percentage;
+        } else {
+            // MRP: base is MRP, SUBTRACT discount percentage
+            const basePrice = parseFloat(product.mrp_price);
+            customPrice = basePrice * (1 - percentage / 100);
+            // For MRP, discount is the discount percentage
+            discount = percentage;
+        }
+
+        // If no customer type, fallback to dealer price if available
+        if (!customer?.base_price_type && !custType && product.dealer_price) {
+            customPrice = parseFloat(product.dealer_price);
+            discount = ((parseFloat(product.mrp_price) - customPrice) / parseFloat(product.mrp_price) * 100).toFixed(2);
+        }
 
         const newItem = {
             product_id: product.id,
             name: product.name,
-            slug: product.slug, sku: product.sku,
+            slug: product.slug,
+            sku: product.sku,
             brand: product.brand_name,
             category_name: product.category_name,
             sub_category_name: product.sub_category_name,
@@ -429,66 +519,59 @@ export function QuotationBuilder({ onClose, onSuccess }) {
             image: getFirstImage(product.images),
             mrp: parseFloat(product.mrp_price) || 0,
             dealer_price: parseFloat(product.dealer_price) || 0,
-            discount: product.dealer_price ?
-                ((parseFloat(product.mrp_price) - parseFloat(product.dealer_price)) / parseFloat(product.mrp_price) * 100).toFixed(2) : 0,
-            custom_price: parseFloat(product.dealer_price || product.selling_price || product.mrp_price),
+            discount: discount,
+            custom_price: customPrice.toFixed(2),
             quantity: 1,
             short_description: product.short_description || '',
+            gst_rate: product.gst_rate || '18%',
+            is_detailed: false,
+            customer_type_base: customerTypeBase
         }
         setQuotationItems(prev => [...prev, newItem])
-        toast.success(`Added ${product.name}`)
-    }
-
-    function addSelectedProducts() {
-        const newItems = selectedProducts.map(product => {
-            if (quotationItems.find(i => i.product_id === product.id)) return null;
-            return {
-                product_id: product.id,
-                name: product.name,
-                slug: product.slug, sku: product.sku,
-                brand: product.brand_name,
-                category_name: product.category_name,
-                sub_category_name: product.sub_category_name,
-                brand_name: product.brand_name,
-                image: getFirstImage(product.images),
-                mrp: parseFloat(product.mrp_price) || 0,
-                dealer_price: parseFloat(product.dealer_price) || 0,
-                discount: product.dealer_price ?
-                    ((parseFloat(product.mrp_price) - parseFloat(product.dealer_price)) / parseFloat(product.mrp_price) * 100).toFixed(2) : 0,
-                custom_price: parseFloat(product.dealer_price || product.selling_price || product.mrp_price),
-                quantity: 1,
-                short_description: product.short_description || '',
-            }
-        }).filter(Boolean)
-
-        setQuotationItems([...quotationItems, ...newItems])
-        setSelectedProducts([])
-        setShowProductModal(false)
-        toast.success(`Added ${newItems.length} products`)
     }
 
     function updateItem(index, field, value) {
         const newItems = [...quotationItems]
-        newItems[index][field] = value
-        // Recalculate price if discount changes
+        const item = newItems[index];
+        item[field] = value;
+
+        // Recalculate price if discount/markup changes
         if (field === 'discount') {
-            const disc = parseFloat(value) || 0;
-            const mrp = parseFloat(newItems[index].mrp) || 0;
-            newItems[index].custom_price = (mrp * (1 - disc / 100)).toFixed(2);
+            const perc = parseFloat(value) || 0;
+            if (item.customer_type_base === 'dealer') {
+                const base = parseFloat(item.dealer_price) || 0;
+                item.custom_price = (base * (1 + perc / 100)).toFixed(2);
+            } else {
+                const base = parseFloat(item.mrp) || 0;
+                item.custom_price = (base * (1 - perc / 100)).toFixed(2);
+            }
         }
-        // Recalculate discount if custom_price changes
+        // Recalculate discount/markup if custom_price changes
         if (field === 'custom_price') {
             const price = parseFloat(value) || 0;
-            const mrp = parseFloat(newItems[index].mrp) || 0;
-            if (mrp > 0) {
-                newItems[index].discount = ((mrp - price) / mrp * 100).toFixed(2);
+            if (item.customer_type_base === 'dealer') {
+                const base = parseFloat(item.dealer_price) || 0;
+                if (base > 0) item.discount = (((price / base) - 1) * 100).toFixed(2);
+            } else {
+                const base = parseFloat(item.mrp) || 0;
+                if (base > 0) item.discount = ((base - price) / base * 100).toFixed(2);
             }
         }
         setQuotationItems(newItems)
     }
 
+    function toggleItemDetail(index) {
+        const newItems = [...quotationItems];
+        newItems[index].is_detailed = !newItems[index].is_detailed;
+        setQuotationItems(newItems);
+    }
+
     function removeItem(index) {
         setQuotationItems(quotationItems.filter((_, i) => i !== index))
+    }
+
+    function removeSelectedItems() {
+        // Future implementation if managing selection state independent of checkbox
     }
 
     // Filter Handlers
@@ -538,8 +621,6 @@ export function QuotationBuilder({ onClose, onSuccess }) {
     const subtotal = quotationItems.reduce((sum, item) => sum + (parseFloat(item.custom_price || 0) * parseInt(item.quantity || 1)), 0)
 
     // Apply Global discount
-    // Note: Items may have individual discounts applied to their price already.
-    // The Global discount is ON TOP of the subtotal (Customer Level Discount usually).
     const discountAmount = quotationDetails.discount_type === 'percentage'
         ? subtotal * (parseFloat(quotationDetails.discount_value || 0) / 100)
         : parseFloat(quotationDetails.discount_value || 0);
@@ -564,6 +645,17 @@ export function QuotationBuilder({ onClose, onSuccess }) {
             return acc;
         }, {});
     }, [quotationItems]);
+
+    // Preview Data Object
+    const previewData = {
+        ...quotationDetails,
+        customer_snapshot: customers.find(c => c.id === selectedCustomer),
+        items: quotationItems,
+        subtotal,
+        discount_amount: discountAmount,
+        gst: tax,
+        total_amount: total
+    }
 
     // --- Save ---
     async function handleSave(status = 'Sent') {
@@ -592,9 +684,21 @@ export function QuotationBuilder({ onClose, onSuccess }) {
                 ...quotationDetails,
                 subtotal, gst: tax, total_amount: total
             }
-            const res = await apiCall('/quotations', { method: 'POST', body: JSON.stringify(payload) })
-            toast.success(status === 'Draft' ? 'Draft saved!' : 'Quotation created!')
-            status === 'Sent' ? setSuccessData(res) : onSuccess()
+
+            let res;
+            if (quoteId) {
+                // Update
+                res = await apiCall(`/quotations/${quoteId}`, { method: 'PUT', body: JSON.stringify(payload) })
+                toast.success('Quotation updated!')
+            } else {
+                // Create
+                res = await apiCall('/quotations', { method: 'POST', body: JSON.stringify(payload) })
+                toast.success(status === 'Draft' ? 'Draft saved!' : 'Quotation created!')
+            }
+
+            // Redirect or callback
+            status === 'Sent' ? setSuccessData(res) : onSuccess && onSuccess();
+
         } catch (error) { toast.error(error.message) } finally { setIsSaving(false) }
     }
 
@@ -606,8 +710,7 @@ export function QuotationBuilder({ onClose, onSuccess }) {
                     <FileText className="w-4 h-4" /> <span>Create order</span>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="ghost" onClick={() => setDiscardDialogOpen(true)} className="text-gray-600 hover:bg-gray-200">Discard</Button>
-                    {/* Preview Button (kept simple for brevity in this plan but implementation remains same) */}
+                    <Button variant="ghost" onClick={onClose} className="text-gray-600 hover:bg-gray-200">Back to List</Button>
                     <Button variant="outline" onClick={() => setIsPreviewOpen(true)} className="gap-2"><Eye className="w-4 h-4" /> Preview</Button>
                     <Button variant="outline" onClick={() => handleSave('Draft')} disabled={isSaving} className="border-gray-300 bg-white shadow-sm hover:bg-gray-50">Save as Draft</Button>
                     <Button className="bg-[#1a1a1a] hover:bg-[#333] text-white shadow-sm" onClick={() => handleSave('Sent')} disabled={isSaving}>
@@ -616,12 +719,118 @@ export function QuotationBuilder({ onClose, onSuccess }) {
                 </div>
             </div>
 
+            {/* NEW LAYOUT: Customer Section at Top (Reduced Width) */}
+            <Card className="max-w-[1100px] mx-auto mb-6 border-none shadow-sm rounded-xl">
+                <CardHeader className="bg-white border-b border-gray-100 py-3 px-4 flex flex-row items-center justify-between">
+                    <CardTitle className="text-sm font-bold">Customer Details</CardTitle>
+                    {selectedCustomer && (
+                        <Button variant="ghost" size="sm" onClick={() => { setSelectedCustomer(''); setQuotationDetails(prev => ({ ...prev, discount_value: 0 })) }} className="h-6 text-red-500 hover:text-red-700 hover:bg-red-50">
+                            Clear Selection
+                        </Button>
+                    )}
+                </CardHeader>
+                <CardContent className="bg-white py-4 px-4">
+                    {!selectedCustomer ? (
+                        <div className="flex flex-col items-start justify-center py-2 max-w-md">
+                            <h3 className="text-sm font-bold text-gray-900 mb-1 flex items-center gap-2"><UserCircle2 className="w-4 h-4 text-blue-500" /> Select Customer</h3>
+                            <p className="text-xs text-gray-500 mb-3">Please select a customer to start building your quotation.</p>
+
+                            <Popover open={customerSearchOpen} onOpenChange={setCustomerSearchOpen}>
+                                <PopoverTrigger asChild>
+                                    <div className="relative cursor-pointer w-[400px]">
+                                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                                        <Input className="pl-9 cursor-pointer hover:border-blue-400 shadow-sm" placeholder="Search customer..." readOnly />
+                                    </div>
+                                </PopoverTrigger>
+                                <PopoverContent className="p-0 w-[400px]" align="center">
+                                    <Command>
+                                        <CommandInput placeholder="Search customer..." />
+                                        <CommandList>
+                                            <CommandEmpty>No customer found.</CommandEmpty>
+                                            <CommandGroup>
+                                                {customers.map((c) => (
+                                                    <CommandItem key={c.id} onSelect={() => { setSelectedCustomer(c.id); setCustomerSearchOpen(false) }}>
+                                                        <Check className={cn("mr-2 h-4 w-4", selectedCustomer === c.id ? "opacity-100" : "opacity-0")} />
+                                                        <div className="flex flex-col w-full">
+                                                            <div className="flex justify-between w-full"><span>{c.company_name || c.name}</span><Badge variant="secondary" className="text-[10px] h-4 px-1">{c.customer_type_name || 'Regular'}</Badge></div>
+                                                            <span className="text-xs text-gray-500">{c.email}</span>
+                                                        </div>
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </CommandList>
+                                        <div className="p-2 border-t text-center">
+                                            <Button size="sm" variant="link" className="text-blue-600 h-auto p-0" onClick={() => { setCustomerSearchOpen(false); setIsCustomerModalOpen(true) }}>+ Create new customer</Button>
+                                        </div>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+                    ) : (
+                        (() => {
+                            const customer = customers.find(c => c.id === selectedCustomer);
+                            const custType = customerTypes.find(t => String(t.id) === String(customer?.customer_type_id));
+                            const baseType = custType?.base_price_type || 'mrp';
+                            const percentage = custType?.percentage || 0;
+                            return (
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                    <div className="space-y-1">
+                                        <div className="text-[10px] font-bold text-gray-400 uppercase">Customer</div>
+                                        <div className="font-bold text-lg text-blue-600 truncate">{customer?.company_name || customer?.name}</div>
+                                        <div className="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5 rounded w-fit font-bold uppercase tracking-wider">
+                                            {customer?.customer_type_name || 'General'} pricing applied
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <div className="text-[10px] font-bold text-gray-400 uppercase">Pricing Logic</div>
+                                        <div className="flex items-center gap-2">
+                                            <div className={`text-xs px-2 py-1 rounded font-bold uppercase ${baseType === 'dealer' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                                                Base: {baseType === 'dealer' ? 'Dealer Price' : 'MRP'}
+                                            </div>
+                                            <div className={`text-xs px-2 py-1 rounded font-bold ${baseType === 'dealer' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'}`}>
+                                                {baseType === 'dealer' ? '+' : '-'}{percentage}%
+                                            </div>
+                                        </div>
+                                        <div className="text-[10px] text-gray-500">
+                                            {baseType === 'dealer'
+                                                ? `Proposed = Dealer Price + ${percentage}% markup`
+                                                : `Proposed = MRP - ${percentage}% discount`
+                                            }
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <div className="text-[10px] font-bold text-gray-400 uppercase">Contact Info</div>
+                                        <div className="text-sm font-medium text-gray-700">{customer?.email}</div>
+                                        <div className="text-sm font-medium text-gray-700">{customer?.phone}</div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <div className="text-[10px] font-bold text-gray-400 uppercase">Billing Address</div>
+                                        <div className="text-sm text-gray-600 leading-relaxed line-clamp-2">
+                                            {customer?.address || 'No address provided'}
+                                        </div>
+                                        {customer?.gst_number && (
+                                            <div className="text-xs font-bold text-gray-500 pt-1">GST: {customer?.gst_number}</div>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })()
+                    )}
+                </CardContent>
+            </Card>
+
             <div className="max-w-[1100px] mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
-                    {/* Products Card */}
-                    <Card className="border-none shadow-sm rounded-xl overflow-hidden">
+                    {/* Products Card - NOW DISABLED IF NO CUSTOMER */}
+                    <Card className={cn("border-none shadow-sm rounded-xl overflow-hidden transition-all", !selectedCustomer && "opacity-60 pointer-events-none grayscale")}>
                         <CardHeader className="bg-white pb-4 border-b border-gray-100">
-                            <div className="flex justify-between items-center"><CardTitle className="text-base font-bold">Products</CardTitle></div>
+                            <div className="flex justify-between items-center">
+                                <CardTitle className="text-base font-bold">Products</CardTitle>
+                                <div className="flex items-center gap-2">
+                                    <Label className="text-xs font-medium text-gray-500">Detailed View</Label>
+                                    <Switch checked={showDetailed} onCheckedChange={setShowDetailed} className="scale-75" />
+                                </div>
+                            </div>
                             <div className="flex gap-2 mt-4">
                                 <div className="relative flex-1">
                                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
@@ -646,44 +855,77 @@ export function QuotationBuilder({ onClose, onSuccess }) {
                             ) : (
                                 <div className="divide-y divide-gray-100">
                                     {quotationItems.map((item, idx) => (
-                                        <div key={idx} className="flex items-center gap-4 p-4 hover:bg-gray-50 group">
+                                        <div key={idx} className="flex items-center gap-4 p-4 hover:bg-gray-50 group border-b border-gray-100 last:border-0 relative">
+                                            {/* Row Checkbox & Delete Overlay */}
+                                            <div className="flex items-center gap-3">
+                                                <Checkbox className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600" />
+                                            </div>
+
                                             <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2">
-                                                    <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
-                                                    <span className="text-[10px] text-gray-400 font-mono">#{item.sku}</span>
-                                                </div>
-                                                <div className="flex items-center gap-3 mt-1">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[10px] text-gray-400 font-bold uppercase">Your Price</span>
-                                                        <span className="text-sm font-bold text-gray-900">₹{parseFloat(item.custom_price).toLocaleString()}</span>
+                                                <div className="flex items-start gap-3">
+                                                    <div onClick={() => toggleItemDetail(idx)} className="cursor-pointer">
+                                                        {item.is_detailed ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
                                                     </div>
-                                                    <div className="flex flex-col border-l border-gray-100 pl-3">
-                                                        <span className="text-[10px] text-gray-400 font-bold uppercase">MRP</span>
-                                                        <span className="text-xs text-gray-500">₹{parseFloat(item.mrp).toLocaleString()}</span>
-                                                    </div>
-                                                    {isSuperAdmin && (
-                                                        <div className="flex flex-col border-l border-gray-100 pl-3">
-                                                            <span className="text-[10px] text-blue-400 font-bold uppercase">Dealer</span>
-                                                            <span className="text-xs text-blue-600 font-medium">₹{parseFloat(item.dealer_price || 0).toLocaleString()}</span>
+
+                                                    {item.is_detailed && (
+                                                        <div className="w-16 h-16 rounded bg-gray-100 shrink-0 overflow-hidden border">
+                                                            <img src={item.image} className="w-full h-full object-cover" />
                                                         </div>
                                                     )}
-                                                    <div className="flex items-center gap-2 ml-2 border-l border-gray-100 pl-3">
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[10px] text-gray-400 font-bold uppercase">{item.brand || 'No Brand'}</span>
+                                                            <p className="text-sm font-bold text-gray-900 truncate leading-tight">{item.name}</p>
+                                                        </div>
+                                                        {item.is_detailed && item.short_description && (
+                                                            <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.short_description}</p>
+                                                        )}
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className="text-[10px] text-gray-400 font-mono">#{item.sku}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-4 mt-2 pl-7">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] text-gray-400 font-bold uppercase">{item.customer_type_base === 'dealer' ? 'Proposed Price' : 'Your Price'}</span>
+                                                        <span className="text-sm font-bold text-gray-900">{parseFloat(item.custom_price).toLocaleString()}</span>
+                                                    </div>
+                                                    <div className="flex flex-col border-l border-gray-100 pl-4">
+                                                        <span className="text-[10px] text-gray-400 font-bold uppercase">{item.customer_type_base === 'dealer' ? 'Dealer Price' : 'MRP'}</span>
+                                                        <span className={`text-xs text-gray-500 ${item.customer_type_base === 'dealer' ? '' : 'line-through'}`}>
+                                                            {parseFloat(item.customer_type_base === 'dealer' ? item.dealer_price : item.mrp).toLocaleString()}
+                                                        </span>
+                                                    </div>
+                                                    {item.customer_type_base === 'dealer' && (
+                                                        <div className="flex flex-col border-l border-gray-100 pl-4">
+                                                            <span className="text-[10px] text-gray-400 font-bold uppercase">MRP</span>
+                                                            <span className="text-xs text-gray-500 line-through">{parseFloat(item.mrp).toLocaleString()}</span>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="flex items-center gap-2 ml-2 border-l border-gray-100 pl-4">
                                                         <span className="text-[10px] text-gray-400 font-bold uppercase pt-0.5">Qty</span>
-                                                        <Input className="w-12 h-7 text-xs p-1 text-center font-bold" value={item.quantity} onChange={(e) => updateItem(idx, 'quantity', e.target.value)} />
+                                                        <Input className="w-14 h-8 text-xs p-1 text-center font-bold bg-white" value={item.quantity} onChange={(e) => updateItem(idx, 'quantity', e.target.value)} />
                                                     </div>
                                                 </div>
                                             </div>
-                                            {/* Item Discount */}
-                                            <div className="flex flex-col items-end gap-1">
-                                                <div className="flex items-center bg-gray-100 rounded px-2 py-1">
-                                                    <span className="text-[10px] text-gray-500 mr-2 font-bold uppercase">Disc%</span>
-                                                    <Input className="h-5 w-10 p-0 text-center text-xs bg-transparent border-none focus-visible:ring-0 font-bold" value={item.discount} onChange={(e) => updateItem(idx, 'discount', e.target.value)} />
+
+                                            {/* Item Discount/Markup */}
+                                            <div className="flex flex-col items-end gap-1 min-w-[100px]">
+                                                <div className={`flex items-center rounded px-2 py-1 ${item.customer_type_base === 'dealer' ? 'bg-green-50' : 'bg-gray-100'}`}>
+                                                    <span className={`text-[10px] mr-2 font-bold uppercase ${item.customer_type_base === 'dealer' ? 'text-green-600' : 'text-gray-500'}`}>
+                                                        {item.customer_type_base === 'dealer' ? 'Markup%' : 'Disc%'}
+                                                    </span>
+                                                    <Input className="h-6 w-12 p-0 text-center text-xs bg-transparent border-none focus-visible:ring-0 font-bold" value={item.discount} onChange={(e) => updateItem(idx, 'discount', e.target.value)} />
                                                 </div>
+                                                <div className="text-[10px] text-gray-400 mt-1 font-medium">GST: {item.gst_rate || '18%'}</div>
                                             </div>
-                                            <div className="text-right min-w-[80px]">
+
+                                            <div className="text-right min-w-[100px]">
                                                 <p className="text-[10px] text-gray-400 font-bold uppercase">Total</p>
-                                                <p className="text-base font-bold text-gray-900">₹{(parseFloat(item.custom_price) * parseInt(item.quantity)).toLocaleString()}</p>
-                                                <Button size="icon" variant="ghost" className="h-6 w-6 text-gray-400 opacity-0 group-hover:opacity-100 absolute right-2 top-2 hover:text-red-600 transition-all" onClick={() => removeItem(idx)}><X className="w-3 h-3" /></Button>
+                                                <p className="text-base font-bold text-gray-900">{(parseFloat(item.custom_price) * parseInt(item.quantity)).toLocaleString()}</p>
+                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:bg-red-50 absolute right-2 top-2" onClick={() => removeItem(idx)}><Trash2 className="w-4 h-4" /></Button>
                                             </div>
                                         </div>
                                     ))}
@@ -696,7 +938,7 @@ export function QuotationBuilder({ onClose, onSuccess }) {
                     <Card className="border-none shadow-sm rounded-xl">
                         <CardHeader className="bg-white border-b border-gray-100 pb-3"><CardTitle className="text-base font-bold">Payment</CardTitle></CardHeader>
                         <CardContent className="bg-white pt-4 space-y-3">
-                            <div className="flex justify-between text-sm"><span className="text-gray-600">Subtotal</span><span className="font-medium">₹{subtotal.toFixed(2)}</span></div>
+                            <div className="flex justify-between text-sm"><span className="text-gray-600">Subtotal</span><span className="font-medium">{subtotal.toFixed(2)}</span></div>
                             <div className="flex justify-between text-sm items-center"><span className="text-blue-600 cursor-pointer">Shipping</span><div className="flex items-center gap-2 w-32"><span className="text-gray-400 text-xs">+</span><Input className="h-7 text-right text-xs" placeholder="0" value={quotationDetails.shipping_cost} onChange={(e) => setQuotationDetails({ ...quotationDetails, shipping_cost: e.target.value })} /></div></div>
 
                             {/* Customer Discount Display */}
@@ -708,9 +950,9 @@ export function QuotationBuilder({ onClose, onSuccess }) {
                                 </div>
                             </div>
 
-                            <div className="flex justify-between text-sm items-center"><div className="flex items-center gap-1 text-gray-600"><span>Tax Rate</span><div className="flex items-center bg-gray-100 rounded px-1"><Input className="h-5 w-8 p-0 text-center text-xs bg-transparent border-none focus-visible:ring-0" value={quotationDetails.tax_rate} onChange={(e) => setQuotationDetails({ ...quotationDetails, tax_rate: e.target.value })} /><span className="text-xs text-gray-500">%</span></div></div><span className="font-medium">₹{tax.toFixed(2)}</span></div>
+                            <div className="flex justify-between text-sm items-center"><div className="flex items-center gap-1 text-gray-600"><span>Tax Rate</span><div className="flex items-center bg-gray-100 rounded px-1"><Input className="h-5 w-8 p-0 text-center text-xs bg-transparent border-none focus-visible:ring-0" value={quotationDetails.tax_rate} onChange={(e) => setQuotationDetails({ ...quotationDetails, tax_rate: e.target.value })} /><span className="text-xs text-gray-500">%</span></div></div><span className="font-medium">{tax.toFixed(2)}</span></div>
                             <Separator />
-                            <div className="flex justify-between text-base font-bold pt-2"><span>Total</span><span>₹{total.toFixed(2)}</span></div>
+                            <div className="flex justify-between text-base font-bold pt-2"><span>Total</span><span>{total.toFixed(2)}</span></div>
 
                             <div className="pt-4 border-t mt-4 space-y-4">
                                 <div className="flex items-center justify-between">
@@ -774,524 +1016,408 @@ export function QuotationBuilder({ onClose, onSuccess }) {
                         </CardContent>
                     </Card>
 
-                    <Card className="border-none shadow-sm rounded-xl">
-                        <CardHeader className="bg-white border-b border-gray-100 pb-3"><CardTitle className="text-sm font-bold">Customer</CardTitle></CardHeader>
-                        <CardContent className="bg-white pt-4 space-y-4">
-                            {!selectedCustomer ? (
-                                <Popover open={customerSearchOpen} onOpenChange={setCustomerSearchOpen}>
-                                    <PopoverTrigger asChild>
-                                        <div className="relative cursor-pointer"><Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" /><Input className="pl-9 cursor-pointer hover:border-blue-400" placeholder="Search or create a customer" readOnly /></div>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="p-0 w-[300px]" align="start">
-                                        <Command>
-                                            <CommandInput placeholder="Search customer..." />
-                                            <CommandList>
-                                                <CommandEmpty>No customer found.</CommandEmpty>
-                                                <CommandGroup>
-                                                    {customers.map((c) => (
-                                                        <CommandItem key={c.id} onSelect={() => { setSelectedCustomer(c.id); setCustomerSearchOpen(false) }}>
-                                                            <Check className={cn("mr-2 h-4 w-4", selectedCustomer === c.id ? "opacity-100" : "opacity-0")} />
-                                                            <div className="flex flex-col w-full">
-                                                                <div className="flex justify-between w-full"><span>{c.company_name || c.name}</span><Badge variant="secondary" className="text-[10px] h-4 px-1">{c.type || 'Regular'}</Badge></div>
-                                                                <span className="text-xs text-gray-500">{c.email}</span>
+                    <div className="space-y-6">
+                        <Card className="border-none shadow-sm rounded-xl">
+                            <CardHeader className="bg-white border-b border-gray-100 pb-3">
+                                <CardTitle className="text-sm font-bold">Quotation Metadata</CardTitle>
+                            </CardHeader>
+                            <CardContent className="bg-white pt-4 space-y-4">
+                                <div className="grid grid-cols-1 gap-4">
+                                    <div className="space-y-1">
+                                        <Label className="text-[10px] font-bold text-gray-400 uppercase">Quotation Number</Label>
+                                        <Input
+                                            value={quotationDetails.quotation_number}
+                                            readOnly
+                                            className="h-9 bg-gray-50 border-gray-200 text-sm font-medium"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* PRODUCT MODAL */}
+                                <Dialog open={showProductModal} onOpenChange={setShowProductModal}>
+                                    <DialogContent className="max-w-5xl h-[85vh] p-0 gap-0 overflow-hidden flex flex-col bg-white">
+                                        <div className="px-6 py-4 flex items-center justify-between border-b border-gray-200 bg-white z-10">
+                                            <DialogTitle className="text-lg font-bold">Select products</DialogTitle>
+                                            <button onClick={() => setShowProductModal(false)} className="text-gray-500 hover:text-gray-700">
+                                                <X className="w-5 h-5" />
+                                            </button>
+                                        </div>
+                                        <div className="px-6 py-3 border-b border-gray-200 bg-white space-y-3">
+                                            <div className="relative">
+                                                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 shadow-sm" />
+                                                <Input
+                                                    placeholder="Search products by name or SKU"
+                                                    className="pl-9 border-blue-500 ring-2 ring-blue-50/50"
+                                                    value={searchTerm}
+                                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                                />
+                                            </div>
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <Popover open={filterPopoverOpen} onOpenChange={setFilterPopoverOpen}>
+                                                    <PopoverTrigger asChild>
+                                                        <Button variant="outline" size="sm" className="h-7 text-xs bg-white border-dashed border-gray-300 text-gray-600">
+                                                            Add filter +
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-[200px] p-0" align="start">
+                                                        <Command>
+                                                            <CommandInput placeholder="Filter by..." />
+                                                            <CommandList>
+                                                                <CommandGroup>
+                                                                    <CommandItem onSelect={() => addFilter('category')}>Category</CommandItem>
+                                                                    <CommandItem onSelect={() => addFilter('sub-category')}>Sub-Category</CommandItem>
+                                                                    <CommandItem onSelect={() => addFilter('brand')}>Brand</CommandItem>
+                                                                    <CommandItem onSelect={() => addFilter('price')}>Pricing</CommandItem>
+                                                                </CommandGroup>
+                                                            </CommandList>
+                                                        </Command>
+                                                    </PopoverContent>
+                                                </Popover>
+
+                                                {activeFilters.map((f) => (
+                                                    <div key={f.type} className="flex items-center bg-blue-50 border border-blue-100 rounded-full px-2 py-0.5 gap-1 shadow-sm">
+                                                        <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">
+                                                            {f.type === 'category' ? 'Category' : f.type === 'sub-category' ? 'Sub-Cat' : f.type}:
+                                                        </span>
+                                                        {f.type === 'category' && (
+                                                            <Select value={f.value} onValueChange={(val) => updateFilterValue('category', val)}>
+                                                                <SelectTrigger className="h-5 py-0 px-1 border-none bg-transparent shadow-none text-xs font-medium focus:ring-0">
+                                                                    <SelectValue placeholder="Select" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                                                            </Select>
+                                                        )}
+                                                        {f.type === 'sub-category' && (
+                                                            <Select value={f.value} onValueChange={(val) => updateFilterValue('sub-category', val)}>
+                                                                <SelectTrigger className="h-5 py-0 px-1 border-none bg-transparent shadow-none text-xs font-medium focus:ring-0">
+                                                                    <SelectValue placeholder="Select" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    {(getFilterValue('category')
+                                                                        ? subCategories.filter(sc => sc.category_id === getFilterValue('category'))
+                                                                        : subCategories
+                                                                    ).map(sc => <SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>)}
+                                                                </SelectContent>
+                                                            </Select>
+                                                        )}
+                                                        {f.type === 'brand' && (
+                                                            <Select value={f.value} onValueChange={(val) => updateFilterValue('brand', val)}>
+                                                                <SelectTrigger className="h-5 py-0 px-1 border-none bg-transparent shadow-none text-xs font-medium focus:ring-0">
+                                                                    <SelectValue placeholder="Select" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>{brands.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}</SelectContent>
+                                                            </Select>
+                                                        )}
+                                                        {f.type === 'price' && (
+                                                            <div className="flex items-center gap-1 text-[10px] font-medium">
+                                                                <Input
+                                                                    type="number"
+                                                                    className="h-4 w-12 p-0 text-center bg-transparent border-none focus-visible:ring-0"
+                                                                    placeholder="Min"
+                                                                    value={f.value?.min || ''}
+                                                                    onChange={(e) => updateFilterValue('price', { ...f.value, min: e.target.value })}
+                                                                />
+                                                                <span>-</span>
+                                                                <Input
+                                                                    type="number"
+                                                                    className="h-4 w-12 p-0 text-center bg-transparent border-none focus-visible:ring-0"
+                                                                    placeholder="Max"
+                                                                    value={f.value?.max || ''}
+                                                                    onChange={(e) => updateFilterValue('price', { ...f.value, max: e.target.value })}
+                                                                />
                                                             </div>
-                                                        </CommandItem>
-                                                    ))}
-                                                </CommandGroup>
-                                            </CommandList>
-                                            <div className="p-2 border-t text-center"><Button size="sm" variant="link" className="text-blue-600 h-auto p-0" onClick={() => { setCustomerSearchOpen(false); setIsCustomerModalOpen(true) }}>+ Create new customer</Button></div>
-                                        </Command>
-                                    </PopoverContent>
-                                </Popover>
-                            ) : (
-                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 text-sm space-y-3">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <div className="font-bold text-blue-600">{customers.find(c => c.id === selectedCustomer)?.company_name || 'Customer'}</div>
-                                            <div className="bg-blue-100 text-blue-700 text-[10px] px-1 rounded w-fit my-1 font-medium">{customers.find(c => c.id === selectedCustomer)?.type}</div>
-                                        </div>
-                                        <X className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500 transition-colors" onClick={() => { setSelectedCustomer(''); setQuotationDetails(prev => ({ ...prev, discount_value: 0 })) }} />
-                                    </div>
-
-                                    <div className="space-y-2 border-t border-gray-200 pt-3">
-                                        <div className="flex items-start gap-2">
-                                            <div className="text-[10px] font-bold text-gray-400 uppercase w-16 pt-0.5">Contact:</div>
-                                            <div className="text-xs text-gray-600 font-medium">
-                                                <div>{customers.find(c => c.id === selectedCustomer)?.email}</div>
-                                                <div>{customers.find(c => c.id === selectedCustomer)?.phone}</div>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-start gap-2">
-                                            <div className="text-[10px] font-bold text-gray-400 uppercase w-16 pt-0.5">Address:</div>
-                                            <div className="text-xs text-gray-600 leading-relaxed truncate-3-lines">
-                                                {customers.find(c => c.id === selectedCustomer)?.address || 'Address not available'}
-                                            </div>
-                                        </div>
-                                        {customers.find(c => c.id === selectedCustomer)?.gst_number && (
-                                            <div className="flex items-start gap-2">
-                                                <div className="text-[10px] font-bold text-gray-400 uppercase w-16 pt-0.5">GSTIN:</div>
-                                                <div className="text-xs text-blue-600 font-bold uppercase">
-                                                    {customers.find(c => c.id === selectedCustomer)?.gst_number}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-
-            {/* PRODUCT MODAL */}
-            <Dialog open={showProductModal} onOpenChange={setShowProductModal}>
-                <DialogContent className="max-w-5xl h-[85vh] p-0 gap-0 overflow-hidden flex flex-col bg-white">
-                    <div className="px-6 py-4 flex items-center justify-between border-b border-gray-200 bg-white z-10">
-                        <DialogTitle className="text-lg font-bold">Select products</DialogTitle>
-                        <button onClick={() => setShowProductModal(false)} className="text-gray-500 hover:text-gray-700">
-                            <X className="w-5 h-5" />
-                        </button>
-                    </div>
-                    <div className="px-6 py-3 border-b border-gray-200 bg-white space-y-3">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 shadow-sm" />
-                            <Input
-                                placeholder="Search products by name or SKU"
-                                className="pl-9 border-blue-500 ring-2 ring-blue-50/50"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                            <Popover open={filterPopoverOpen} onOpenChange={setFilterPopoverOpen}>
-                                <PopoverTrigger asChild>
-                                    <Button variant="outline" size="sm" className="h-7 text-xs bg-white border-dashed border-gray-300 text-gray-600">
-                                        Add filter +
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[200px] p-0" align="start">
-                                    <Command>
-                                        <CommandInput placeholder="Filter by..." />
-                                        <CommandList>
-                                            <CommandGroup>
-                                                <CommandItem onSelect={() => addFilter('category')}>Category</CommandItem>
-                                                <CommandItem onSelect={() => addFilter('sub-category')}>Sub-Category</CommandItem>
-                                                <CommandItem onSelect={() => addFilter('brand')}>Brand</CommandItem>
-                                                <CommandItem onSelect={() => addFilter('price')}>Pricing</CommandItem>
-                                            </CommandGroup>
-                                        </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
-
-                            {activeFilters.map((f) => (
-                                <div key={f.type} className="flex items-center bg-blue-50 border border-blue-100 rounded-full px-2 py-0.5 gap-1 shadow-sm">
-                                    <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">
-                                        {f.type === 'category' ? 'Category' : f.type === 'sub-category' ? 'Sub-Cat' : f.type}:
-                                    </span>
-                                    {f.type === 'category' && (
-                                        <Select value={f.value} onValueChange={(val) => updateFilterValue('category', val)}>
-                                            <SelectTrigger className="h-5 py-0 px-1 border-none bg-transparent shadow-none text-xs font-medium focus:ring-0">
-                                                <SelectValue placeholder="Select" />
-                                            </SelectTrigger>
-                                            <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                    )}
-                                    {f.type === 'sub-category' && (
-                                        <Select value={f.value} onValueChange={(val) => updateFilterValue('sub-category', val)}>
-                                            <SelectTrigger className="h-5 py-0 px-1 border-none bg-transparent shadow-none text-xs font-medium focus:ring-0">
-                                                <SelectValue placeholder="Select" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {(getFilterValue('category')
-                                                    ? subCategories.filter(sc => sc.category_id === getFilterValue('category'))
-                                                    : subCategories
-                                                ).map(sc => <SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
-                                    )}
-                                    {f.type === 'brand' && (
-                                        <Select value={f.value} onValueChange={(val) => updateFilterValue('brand', val)}>
-                                            <SelectTrigger className="h-5 py-0 px-1 border-none bg-transparent shadow-none text-xs font-medium focus:ring-0">
-                                                <SelectValue placeholder="Select" />
-                                            </SelectTrigger>
-                                            <SelectContent>{brands.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                    )}
-                                    {f.type === 'price' && (
-                                        <div className="flex items-center gap-1 text-[10px] font-medium">
-                                            <Input
-                                                type="number"
-                                                className="h-4 w-12 p-0 text-center bg-transparent border-none focus-visible:ring-0"
-                                                placeholder="Min"
-                                                value={f.value?.min || ''}
-                                                onChange={(e) => updateFilterValue('price', { ...f.value, min: e.target.value })}
-                                            />
-                                            <span>-</span>
-                                            <Input
-                                                type="number"
-                                                className="h-4 w-12 p-0 text-center bg-transparent border-none focus-visible:ring-0"
-                                                placeholder="Max"
-                                                value={f.value?.max || ''}
-                                                onChange={(e) => updateFilterValue('price', { ...f.value, max: e.target.value })}
-                                            />
-                                        </div>
-                                    )}
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-3 w-3 p-0 hover:bg-blue-100 rounded-full"
-                                        onClick={() => removeFilter(f.type)}
-                                    >
-                                        <X className="w-2 h-2 text-blue-400" />
-                                    </Button>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    <div className="flex-1 overflow-auto bg-gray-50 relative">
-                        {/* Grouped Products Display */}
-                        <div className="bg-white">
-                            {Object.entries(groupedProducts).length === 0 && !isFetchingNextPage && (
-                                <div className="p-10 text-center text-gray-500">No products found</div>
-                            )}
-
-                            {Object.entries(groupedProducts).map(([groupName, groupProducts]) => {
-                                const isExpanded = expandedGroups[groupName];
-                                const displayedProducts = isExpanded ? groupProducts : groupProducts.slice(0, 10);
-                                const hasMore = groupProducts.length > 10;
-
-                                return (
-                                    <div key={groupName} className="border-b last:border-b-0">
-                                        <div className="h-[44px] px-6 flex items-center justify-between sticky top-0 z-10 bg-gray-50 border-b border-gray-200">
-                                            <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                                                {groupName}
-                                                <Badge variant="outline" className="text-[10px] font-normal">{groupProducts.length} items</Badge>
-                                            </h3>
-                                        </div>
-                                        <Table containerClassName="overflow-visible">
-                                            <TableHeader>
-                                                <TableRow className="bg-white hover:bg-white border-b-2">
-                                                    <TableHead className="sticky top-[44px] bg-white z-20 w-[50px] pl-6 shadow-[0_1px_0_0_rgba(0,0,0,0.1)]"></TableHead>
-                                                    <TableHead className="sticky top-[44px] bg-white z-20 shadow-[0_1px_0_0_rgba(0,0,0,0.1)]">Product</TableHead>
-                                                    <TableHead className="sticky top-[44px] bg-white z-20 shadow-[0_1px_0_0_rgba(0,0,0,0.1)]">Category</TableHead>
-                                                    <TableHead className="sticky top-[44px] bg-white z-20 text-right shadow-[0_1px_0_0_rgba(0,0,0,0.1)]">MRP</TableHead>
-                                                    {isSuperAdmin && (
-                                                        <TableHead className="sticky top-[44px] bg-white z-20 text-right shadow-[0_1px_0_0_rgba(0,0,0,0.1)] text-blue-600">Dealer</TableHead>
-                                                    )}
-                                                    <TableHead className="sticky top-[44px] bg-white z-20 text-right shadow-[0_1px_0_0_rgba(0,0,0,0.1)]">Your Price</TableHead>
-                                                    <TableHead className="sticky top-[44px] bg-white z-20 w-[50px] shadow-[0_1px_0_0_rgba(0,0,0,0.1)]"></TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {displayedProducts.map((product) => {
-                                                    const isSelected = selectedProducts.find(p => p.id === product.id)
-                                                    return (
-                                                        <TableRow
-                                                            key={product.id}
-                                                            className={cn(
-                                                                "hover:bg-gray-50 cursor-pointer",
-                                                                isSelected && "bg-blue-50/50"
-                                                            )}
+                                                        )}
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-3 w-3 p-0 hover:bg-blue-100 rounded-full"
+                                                            onClick={() => removeFilter(f.type)}
                                                         >
-                                                            <TableCell className="pl-6">
-                                                                <Checkbox checked={isSelected} onCheckedChange={() => handleToggleProduct(product)} />
-                                                            </TableCell>
-                                                            <TableCell onClick={() => handleToggleProduct(product)}>
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="w-10 h-10 rounded border bg-gray-100 overflow-hidden shrink-0">
-                                                                        <img
-                                                                            src={getFirstImage(product.images)}
-                                                                            className="w-full h-full object-cover"
-                                                                            onError={(e) => e.target.style.display = 'none'}
-                                                                        />
-                                                                    </div>
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <div className="font-medium text-sm text-gray-900 truncate">{product.name}</div>
-                                                                        <div className="text-xs text-gray-500 font-mono">{product.sku}</div>
-                                                                    </div>
+                                                            <X className="w-2 h-2 text-blue-400" />
+                                                        </Button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex-1 overflow-auto bg-gray-50 relative" id="scroll-container">
+                                            <div className="min-w-[800px] pb-20">
+                                                {Object.entries(groupedProducts).map(([groupName, groupProducts]) => {
+                                                    const isExpanded = expandedGroups[groupName];
+                                                    const displayedProducts = isExpanded || groupName === 'All Products' ? groupProducts : groupProducts.slice(0, 10);
+                                                    const hasMore = groupProducts.length > 10;
+
+                                                    return (
+                                                        <div key={groupName} className="mb-2">
+                                                            {Object.keys(groupedProducts).length > 1 && (
+                                                                <div className="sticky top-0 z-10 bg-gray-100/95 backdrop-blur px-6 py-2 border-y border-gray-200 shadow-sm flex justify-between items-center group cursor-pointer" onClick={() => setExpandedGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }))}>
+                                                                    <h3 className="font-bold text-gray-700 text-xs uppercase tracking-wider flex items-center gap-2">
+                                                                        {groupName === 'Others' ? 'Uncategorized' : groupName}
+                                                                        <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-white">{groupProducts.length}</Badge>
+                                                                    </h3>
+                                                                    <ChevronRight className={cn("w-4 h-4 text-gray-400 transition-transform", isExpanded && "rotate-90")} />
                                                                 </div>
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                <div className="text-sm text-gray-600">{product.category_name}</div>
-                                                                {product.sub_category_name && (
-                                                                    <div className="text-xs text-gray-400">{product.sub_category_name}</div>
-                                                                )}
-                                                            </TableCell>
-                                                            <TableCell className="text-right">
-                                                                <div className="text-xs text-gray-400">₹{parseFloat(product.mrp_price).toLocaleString()}</div>
-                                                            </TableCell>
-                                                            {isSuperAdmin && (
-                                                                <TableCell className="text-right">
-                                                                    <div className="text-sm font-bold text-blue-600">₹{parseFloat(product.dealer_price || 0).toLocaleString()}</div>
-                                                                </TableCell>
                                                             )}
-                                                            <TableCell className="text-right">
-                                                                <div className="font-bold text-gray-900">₹{parseFloat(product.selling_price || product.mrp_price).toLocaleString()}</div>
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="ghost"
-                                                                    className="h-8 w-8 p-0"
-                                                                    onClick={(e) => { e.stopPropagation(); addSingleProduct(product); }}
-                                                                >
-                                                                    <Plus className="w-4 h-4" />
-                                                                </Button>
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    )
+
+                                                            <Table>
+                                                                <TableHeader className="bg-white">
+                                                                    <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b">
+                                                                        <TableHead className="bg-white w-[50px] pl-6">Sel</TableHead>
+                                                                        <TableHead className="bg-white w-[300px]">
+                                                                            <div className="flex items-center gap-1">Product <span className="text-[10px] font-normal text-gray-400">(Name, SKU)</span></div>
+                                                                        </TableHead>
+                                                                        <TableHead className="bg-white text-right">Category</TableHead>
+                                                                        <TableHead className="bg-white text-right">MRP</TableHead>
+                                                                        {isSuperAdmin && (
+                                                                            <TableHead className="bg-white text-right text-blue-600">Dealer</TableHead>
+                                                                        )}
+                                                                        <TableHead className="bg-white text-right border-l-2 border-blue-100 bg-blue-50/50">
+                                                                            <div className="flex flex-col items-end">
+                                                                                <span className="text-blue-700">Rec. Price</span>
+                                                                                <span className="text-[9px] font-normal text-blue-500">Based on Type</span>
+                                                                            </div>
+                                                                        </TableHead>
+                                                                        <TableHead className="bg-white text-right">Your Price</TableHead>
+                                                                        <TableHead className="bg-white w-[50px]"></TableHead>
+                                                                    </TableRow>
+                                                                </TableHeader>
+                                                                <TableBody>
+                                                                    {displayedProducts.map((product) => {
+                                                                        const isSelected = selectedProducts.find(p => p.id === product.id)
+                                                                        return (
+                                                                            <TableRow
+                                                                                key={product.id}
+                                                                                className={cn(
+                                                                                    "hover:bg-gray-50 cursor-pointer",
+                                                                                    isSelected && "bg-blue-50/50"
+                                                                                )}
+                                                                                onClick={() => handleToggleProduct(product)}
+                                                                            >
+                                                                                <TableCell className="pl-6">
+                                                                                    <Checkbox checked={!!isSelected} onCheckedChange={() => handleToggleProduct(product)} onClick={(e) => e.stopPropagation()} />
+                                                                                </TableCell>
+                                                                                <TableCell>
+                                                                                    <div className="flex items-center gap-3">
+                                                                                        <div className="w-10 h-10 rounded border bg-gray-100 overflow-hidden shrink-0">
+                                                                                            <img
+                                                                                                src={getFirstImage(product.images)}
+                                                                                                className="w-full h-full object-cover"
+                                                                                                onError={(e) => e.target.style.display = 'none'}
+                                                                                            />
+                                                                                        </div>
+                                                                                        <div className="flex-1 min-w-0">
+                                                                                            <div className="font-medium text-sm text-gray-900 truncate">{product.name}</div>
+                                                                                            <div className="text-xs text-gray-500 font-mono">{product.sku}</div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </TableCell>
+                                                                                <TableCell className="text-right">
+                                                                                    <div className="text-sm text-gray-600">{product.category_name}</div>
+                                                                                    {product.sub_category_name && (
+                                                                                        <div className="text-xs text-gray-400">{product.sub_category_name}</div>
+                                                                                    )}
+                                                                                </TableCell>
+                                                                                <TableCell className="text-right">
+                                                                                    <div className="text-xs text-gray-600">{parseFloat(product.mrp_price).toLocaleString()}</div>
+                                                                                </TableCell>
+                                                                                {isSuperAdmin && (
+                                                                                    <TableCell className="text-right">
+                                                                                        <div className="text-xs font-bold text-gray-600">{parseFloat(product.dealer_price || 0).toLocaleString()}</div>
+                                                                                    </TableCell>
+                                                                                )}
+                                                                                <TableCell className="text-right border-l-2 border-blue-100 bg-blue-50/20">
+                                                                                    <div className="font-bold text-blue-700">
+                                                                                        {(() => {
+                                                                                            const customer = customers.find(c => c.id === selectedCustomer);
+                                                                                            const custType = customerTypes.find(t => String(t.id) === String(customer?.customer_type_id));
+                                                                                            let customPrice = parseFloat(product.shop_price || product.mrp_price);
+
+                                                                                            if (custType) {
+                                                                                                const baseType = custType.base_price_type || 'mrp';
+                                                                                                const percentage = parseFloat(customer.discount_percentage || customer.percentage || custType.percentage || custType.discount_percentage || 0);
+                                                                                                if (baseType === 'dealer') {
+                                                                                                    const basePrice = parseFloat(product.dealer_price || product.shop_price || product.mrp_price);
+                                                                                                    customPrice = basePrice * (1 + percentage / 100);
+                                                                                                } else {
+                                                                                                    const basePrice = parseFloat(product.mrp_price);
+                                                                                                    customPrice = basePrice * (1 - percentage / 100);
+                                                                                                }
+                                                                                            }
+                                                                                            return `${customPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                                                                                        })()}
+                                                                                    </div>
+                                                                                </TableCell>
+                                                                                <TableCell className="text-right">
+                                                                                    <div className="font-bold text-gray-900">{parseFloat(product.shop_price || product.mrp_price).toLocaleString()}</div>
+                                                                                </TableCell>
+                                                                                <TableCell>
+                                                                                    <Button
+                                                                                        size="sm"
+                                                                                        variant="ghost"
+                                                                                        className="h-8 w-8 p-0"
+                                                                                        onClick={(e) => { e.stopPropagation(); addSingleProduct(product); }}
+                                                                                    >
+                                                                                        <Plus className="w-4 h-4" />
+                                                                                    </Button>
+                                                                                </TableCell>
+                                                                            </TableRow>
+                                                                        )
+                                                                    })}
+                                                                </TableBody>
+                                                            </Table>
+                                                            {hasMore && !isExpanded && (
+                                                                <div className="p-4 bg-white text-center border-t">
+                                                                    <Button
+                                                                        variant="secondary"
+                                                                        size="sm"
+                                                                        className="w-full max-w-[200px] text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700"
+                                                                        onClick={() => setExpandedGroups({ ...expandedGroups, [groupName]: true })}
+                                                                    >
+                                                                        View More Products (+{groupProducts.length - 10})
+                                                                    </Button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
                                                 })}
-                                            </TableBody>
-                                        </Table>
-                                        {hasMore && !isExpanded && (
-                                            <div className="p-4 bg-white text-center border-t">
+                                            </div>
+                                            <div ref={observerTarget} className="h-16 w-full flex items-center justify-center">
+                                                {isFetchingNextPage && (
+                                                    <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="p-4 border-t border-gray-200 bg-white flex justify-between items-center z-20 relative shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                                            <div className="text-sm text-gray-500 ml-2 font-medium bg-gray-100 px-3 py-1 rounded-full">
+                                                {selectedProducts.length} products selected
+                                            </div>
+                                            <div className="flex gap-3">
+                                                <Button variant="outline" className="px-6" onClick={() => setShowProductModal(false)}>
+                                                    Cancel
+                                                </Button>
                                                 <Button
-                                                    variant="secondary"
-                                                    size="sm"
-                                                    className="w-full max-w-[200px] text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700"
-                                                    onClick={() => setExpandedGroups({ ...expandedGroups, [groupName]: true })}
+                                                    className="px-6 bg-[#1a1a1a] hover:bg-[#333] text-white"
+                                                    disabled={selectedProducts.length === 0}
+                                                    onClick={addSelectedProducts}
                                                 >
-                                                    View More Products (+{groupProducts.length - 10})
+                                                    Add Selected
                                                 </Button>
                                             </div>
+                                        </div>
+                                    </DialogContent >
+                                </Dialog >
+
+                                {/* New Customer Dialog & Manage Types */}
+                                < Dialog open={isCustomerModalOpen} onOpenChange={setIsCustomerModalOpen} >
+                                    <DialogContent className="sm:max-w-[600px] bg-white">
+                                        {!manageTypesOpen ? (
+                                            <>
+                                                <DialogHeader><DialogTitle>Add New Customer</DialogTitle><DialogDescription>Create a new customer profile.</DialogDescription></DialogHeader>
+                                                <div className="grid grid-cols-2 gap-4 py-4">
+                                                    <Input value={newCustomer.company_name} onChange={e => setNewCustomer({ ...newCustomer, company_name: e.target.value })} placeholder="Company Name *" className="col-span-2" />
+                                                    <Input value={newCustomer.email} onChange={e => setNewCustomer({ ...newCustomer, email: e.target.value })} placeholder="Email *" />
+                                                    <Input value={newCustomer.phone} onChange={e => setNewCustomer({ ...newCustomer, phone: e.target.value })} placeholder="Phone" />
+                                                    <div className="col-span-1 flex gap-2 items-end">
+                                                        <div className="flex-1">
+                                                            <Label className="text-xs mb-1 block">Customer Type</Label>
+                                                            <Select value={newCustomer.customer_type_id} onValueChange={(val) => setNewCustomer({ ...newCustomer, customer_type_id: val })}>
+                                                                <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                                                                <SelectContent>
+                                                                    {customerTypes.map(t => (
+                                                                        <SelectItem key={t.id} value={t.id}>
+                                                                            {t.name} ({t.base_price_type === 'dealer' ? '+' : '-'}{t.percentage}%)
+                                                                        </SelectItem>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </div>
+                                                        <Button variant="outline" size="icon" onClick={() => setManageTypesOpen(true)} title="Manage Types"><Settings className="w-4 h-4" /></Button>
+                                                    </div>
+                                                    <Input value={newCustomer.gst_number} onChange={e => setNewCustomer({ ...newCustomer, gst_number: e.target.value })} placeholder="GST Number" />
+                                                    <div className="space-y-2 col-span-2">
+                                                        <Label className="text-xs font-semibold uppercase text-gray-500">Address</Label>
+                                                        <Textarea value={newCustomer.address} onChange={e => setNewCustomer({ ...newCustomer, address: e.target.value })} placeholder="Full Address..." className="bg-gray-50 border-gray-200" />
+                                                    </div>
+                                                    <div className="col-span-2 grid grid-cols-2 gap-4 pt-2 border-t border-gray-100">
+                                                        <div className="col-span-2 text-xs font-bold text-gray-400 uppercase">Primary Contact Person</div>
+                                                        <Input value={newCustomer.primary_contact_name} onChange={e => setNewCustomer({ ...newCustomer, primary_contact_name: e.target.value })} placeholder="Contact Name" />
+                                                        <Input value={newCustomer.primary_contact_phone} onChange={e => setNewCustomer({ ...newCustomer, primary_contact_phone: e.target.value })} placeholder="Contact Phone" />
+                                                    </div>
+                                                    <Button onClick={async () => {
+                                                        if (!newCustomer.company_name) return toast.error("Name required");
+                                                        try {
+                                                            const contacts = [{
+                                                                name: newCustomer.primary_contact_name || newCustomer.company_name,
+                                                                phone: newCustomer.primary_contact_phone || newCustomer.phone,
+                                                                email: newCustomer.email,
+                                                                is_primary: true
+                                                            }];
+                                                            const res = await apiCall('/customers', {
+                                                                method: 'POST',
+                                                                body: JSON.stringify({
+                                                                    ...newCustomer,
+                                                                    name: newCustomer.company_name,
+                                                                    contacts: contacts
+                                                                })
+                                                            });
+                                                            toast.success("Customer created!");
+                                                            queryClient.invalidateQueries(['customers']);
+                                                            setSelectedCustomer(res.id);
+                                                            setIsCustomerModalOpen(false);
+                                                        } catch (e) { toast.error(e.message) }
+                                                    }} className="col-span-2 bg-black text-white hover:bg-gray-800">Create Customer</Button>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <DialogHeader><DialogTitle>Manage Customer Types</DialogTitle><DialogDescription>Add or remove customer types.</DialogDescription></DialogHeader>
+                                                <div className="space-y-4 py-4">
+                                                    <div className="flex gap-2">
+                                                        <Input placeholder="Type Name (e.g. VIP)" value={newTypeName} onChange={e => setNewTypeName(e.target.value)} />
+                                                        <Input placeholder="Disc %" type="number" className="w-20" value={newTypeDiscount} onChange={e => setNewTypeDiscount(e.target.value)} />
+                                                        <Button onClick={createCustomerType}><Plus className="w-4 h-4" /></Button>
+                                                    </div>
+                                                    <div className="border rounded-md divide-y">
+                                                        {customerTypes.map(t => (
+                                                            <div key={t.id} className="flex justify-between items-center p-2 text-sm">
+                                                                <span>{t.name} <span className="text-gray-500">({t.discount_percentage}%)</span></span>
+                                                                {t.name !== 'Regular' && <Button size="sm" variant="ghost" onClick={() => deleteCustomerType(t.id)}><Trash2 className="w-3 h-3 text-red-500" /></Button>}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                    <Button variant="outline" onClick={() => setManageTypesOpen(false)}>Back</Button>
+                                                </div>
+                                            </>
                                         )}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                        <div ref={observerTarget} className="h-16 w-full flex items-center justify-center">
-                            {isFetchingNextPage && (
-                                <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
-                            )}
-                        </div>
-                    </div>
-                    <div className="p-4 border-t border-gray-200 bg-white flex justify-between items-center">
-                        <div className="text-sm text-gray-500 ml-2 font-medium bg-gray-100 px-3 py-1 rounded-full">
-                            {selectedProducts.length} products selected
-                        </div>
-                        <div className="flex gap-3">
-                            <Button variant="outline" className="px-6" onClick={() => setShowProductModal(false)}>
-                                Cancel
-                            </Button>
-                            <Button
-                                className="px-6 bg-[#1a1a1a] hover:bg-[#333] text-white"
-                                disabled={selectedProducts.length === 0}
-                                onClick={addSelectedProducts}
-                            >
-                                Add Selected
-                            </Button>
-                        </div>
-                    </div>
-                </DialogContent>
-            </Dialog>
+                                    </DialogContent>
+                                </Dialog >
 
-            {/* New Customer Dialog & Manage Types */}
-            < Dialog open={isCustomerModalOpen} onOpenChange={setIsCustomerModalOpen} >
-                <DialogContent className="sm:max-w-[600px] bg-white">
-                    {!manageTypesOpen ? (
-                        <>
-                            <DialogHeader><DialogTitle>Add New Customer</DialogTitle><DialogDescription>Create a new customer profile.</DialogDescription></DialogHeader>
-                            <div className="grid grid-cols-2 gap-4 py-4">
-                                <Input value={newCustomer.company_name} onChange={e => setNewCustomer({ ...newCustomer, company_name: e.target.value })} placeholder="Company Name *" className="col-span-2" />
-                                <Input value={newCustomer.email} onChange={e => setNewCustomer({ ...newCustomer, email: e.target.value })} placeholder="Email *" />
-                                <Input value={newCustomer.phone} onChange={e => setNewCustomer({ ...newCustomer, phone: e.target.value })} placeholder="Phone" />
-                                <div className="col-span-1 flex gap-2 items-end">
-                                    <div className="flex-1">
-                                        <Label className="text-xs mb-1 block">Customer Type</Label>
-                                        <Select value={newCustomer.type} onValueChange={(val) => setNewCustomer({ ...newCustomer, type: val })}>
-                                            <SelectTrigger><SelectValue /></SelectTrigger>
-                                            <SelectContent>{customerTypes.map(t => <SelectItem key={t.id} value={t.name}>{t.name} ({t.discount_percentage}%)</SelectItem>)}</SelectContent>
-                                        </Select>
-                                    </div>
-                                    <Button variant="outline" size="icon" onClick={() => setManageTypesOpen(true)} title="Manage Types"><Settings className="w-4 h-4" /></Button>
-                                </div>
-                                <Input value={newCustomer.gst_number} onChange={e => setNewCustomer({ ...newCustomer, gst_number: e.target.value })} placeholder="GST Number" />
-                                <div className="space-y-2 col-span-2">
-                                    <Label className="text-xs font-semibold uppercase text-gray-500">Address</Label>
-                                    <Textarea value={newCustomer.address} onChange={e => setNewCustomer({ ...newCustomer, address: e.target.value })} placeholder="Full Address..." className="bg-gray-50 border-gray-200" />
-                                </div>
-                                <div className="col-span-2 grid grid-cols-2 gap-4 pt-2 border-t border-gray-100">
-                                    <div className="col-span-2 text-xs font-bold text-gray-400 uppercase">Primary Contact Person</div>
-                                    <Input value={newCustomer.primary_contact_name} onChange={e => setNewCustomer({ ...newCustomer, primary_contact_name: e.target.value })} placeholder="Contact Name" />
-                                    <Input value={newCustomer.primary_contact_phone} onChange={e => setNewCustomer({ ...newCustomer, primary_contact_phone: e.target.value })} placeholder="Contact Phone" />
-                                </div>
-                                <Button onClick={async () => {
-                                    if (!newCustomer.company_name) return toast.error("Name required");
-                                    try {
-                                        const res = await apiCall('/customers', { method: 'POST', body: JSON.stringify({ ...newCustomer, name: newCustomer.company_name }) });
-                                        toast.success("Customer created!"); queryClient.invalidateQueries(['customers']); setSelectedCustomer(res.id); setIsCustomerModalOpen(false);
-                                    } catch (e) { toast.error(e.message) }
-                                }} className="col-span-2 bg-black text-white hover:bg-gray-800">Create Customer</Button>
-                            </div>
-                        </>
-                    ) : (
-                        <>
-                            <DialogHeader><DialogTitle>Manage Customer Types</DialogTitle><DialogDescription>Add or remove customer types.</DialogDescription></DialogHeader>
-                            <div className="space-y-4 py-4">
-                                <div className="flex gap-2">
-                                    <Input placeholder="Type Name (e.g. VIP)" value={newTypeName} onChange={e => setNewTypeName(e.target.value)} />
-                                    <Input placeholder="Disc %" type="number" className="w-20" value={newTypeDiscount} onChange={e => setNewTypeDiscount(e.target.value)} />
-                                    <Button onClick={createCustomerType}><Plus className="w-4 h-4" /></Button>
-                                </div>
-                                <div className="border rounded-md divide-y">
-                                    {customerTypes.map(t => (
-                                        <div key={t.id} className="flex justify-between items-center p-2 text-sm">
-                                            <span>{t.name} <span className="text-gray-500">({t.discount_percentage}%)</span></span>
-                                            {t.name !== 'Regular' && <Button size="sm" variant="ghost" onClick={() => deleteCustomerType(t.id)}><Trash2 className="w-3 h-3 text-red-500" /></Button>}
-                                        </div>
-                                    ))}
-                                </div>
-                                <Button variant="outline" onClick={() => setManageTypesOpen(false)}>Back</Button>
-                            </div>
-                        </>
-                    )}
-                </DialogContent>
-            </Dialog >
+                                {/* Discard Dialog */}
+                                < AlertDialog open={discardDialogOpen} onOpenChange={setDiscardDialogOpen} >
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Discard changes?</AlertDialogTitle>
+                                            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => { onClose && onClose() }} className="bg-red-600">Discard</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog >
 
-            {/* Discard Dialog & Preview Dialog (Same as before) - Including them implicitly via existing structure or placeholders to save space if needed, but I will include them to be complete */}
-            < AlertDialog open={discardDialogOpen} onOpenChange={setDiscardDialogOpen} >
-                <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Discard changes?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={onClose} className="bg-red-600">Discard</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
-            </AlertDialog >
-            <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
-                    <DialogHeader>
-                        <DialogTitle>Quotation Preview</DialogTitle>
-                    </DialogHeader>
-                    <div className="p-8 bg-white border rounded shadow-sm relative overflow-hidden">
-                        {/* Background Watermark */}
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.04] rotate-[-15deg]">
-                            <img src="/pavilion-sports.png" alt="" className="w-3/4 object-contain" />
-                        </div>
-
-                        <div className="flex justify-between mb-8 relative z-10">
-                            <div className="flex items-start gap-4">
-                                <img src="/pavilion-sports.png" alt="Logo" className="h-12 object-contain" />
-                                <div>
-                                    <h1 className="text-2xl font-bold text-[#dc2626]">QUOTATION</h1>
-                                    <p className="text-sm text-gray-500">#{quotationDetails.quotation_number}</p>
-                                </div>
-                            </div>
-                            <div className="text-right">
-                                <h2 className="font-bold text-gray-900">Pavilion Sports</h2>
-                                <p className="text-sm text-gray-500">123 Street Name, City, State, ZIP</p>
-                                <p className="text-sm text-gray-500">GST: 27AAAAA0000A1Z5</p>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-8 mb-8 relative z-10">
-                            <div>
-                                <h3 className="text-xs font-bold text-gray-400 uppercase mb-2">Quotation For</h3>
-                                <div className="text-sm">
-                                    <p className="font-bold">{customers.find(c => c.id === selectedCustomer)?.company_name || 'Walking Customer'}</p>
-                                    <p>{customers.find(c => c.id === selectedCustomer)?.address || 'N/A'}</p>
-                                    <p>Phone: {customers.find(c => c.id === selectedCustomer)?.phone || 'N/A'}</p>
-                                    <p>Email: {customers.find(c => c.id === selectedCustomer)?.email || 'N/A'}</p>
-                                </div>
-                            </div>
-                            <div className="text-right">
-                                <div className="space-y-1">
-                                    <p className="text-sm"><span className="text-gray-500">Date:</span> {quotationDetails.issue_date}</p>
-                                    <p className="text-sm"><span className="text-gray-500">Valid Until:</span> {quotationDetails.valid_until}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="relative z-10">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow className="bg-[#dc2626] hover:bg-[#dc2626]">
-                                        <TableHead className="text-white font-bold">Item</TableHead>
-                                        <TableHead className="text-right text-white font-bold">MRP</TableHead>
-                                        <TableHead className="text-right text-white font-bold">Your Price</TableHead>
-                                        <TableHead className="text-center text-white font-bold">Qty</TableHead>
-                                        <TableHead className="text-right text-white font-bold">Total</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {Object.entries(groupedItemsByHierarchy).map(([category, subGroups]) => (
-                                        <Fragment key={category}>
-                                            <TableRow className="bg-gray-100 hover:bg-gray-100">
-                                                <TableCell colSpan={5} className="py-2 text-[10px] font-bold text-gray-900 uppercase tracking-wider pl-4">
-                                                    {category}
-                                                </TableCell>
-                                            </TableRow>
-                                            {Object.entries(subGroups).map(([subBrand, items]) => (
-                                                <Fragment key={subBrand}>
-                                                    <TableRow className="hover:bg-transparent border-none">
-                                                        <TableCell colSpan={5} className="py-1 text-[10px] font-bold text-[#dc2626] pl-6">
-                                                            {subBrand}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                    {items.map((item, i) => (
-                                                        <TableRow key={`${category}-${subBrand}-${i}`}>
-                                                            <TableCell className="pl-8">
-                                                                <div className="font-medium text-gray-900">{item.name}</div>
-                                                                <div className="text-xs text-gray-500">SKU: {item.sku}</div>
-                                                                <a
-                                                                    href={`${window.location.origin}/product/${item.slug}`}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="text-[10px] text-[#dc2626] hover:underline font-medium block mt-1"
-                                                                >
-                                                                    View Product
-                                                                </a>
-                                                            </TableCell>
-                                                            <TableCell className="text-right text-gray-400 text-xs">₹{parseFloat(item.mrp || 0).toLocaleString()}</TableCell>
-                                                            <TableCell className="text-right font-medium">₹{parseFloat(item.custom_price).toLocaleString()}</TableCell>
-                                                            <TableCell className="text-center">{item.quantity}</TableCell>
-                                                            <TableCell className="text-right font-bold">₹{(parseFloat(item.custom_price) * item.quantity).toLocaleString()}</TableCell>
-                                                        </TableRow>
-                                                    ))}
-                                                </Fragment>
-                                            ))}
-                                        </Fragment>
-                                    ))}
-                                </TableBody>
-                            </Table>
-
-                            {quotationDetails.show_total && (
-                                <div className="mt-8 flex justify-end relative z-10">
-                                    <div className="w-64 space-y-2">
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-gray-500">Subtotal</span>
-                                            <span className="font-medium">₹{subtotal.toLocaleString()}</span>
-                                        </div>
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-gray-500">Discount ({quotationDetails.discount_type === 'percentage' ? `${quotationDetails.discount_value}%` : `₹${quotationDetails.discount_value}`})</span>
-                                            <span className="text-red-600 font-medium">-₹{discountAmount.toLocaleString()}</span>
-                                        </div>
-                                        <div className="flex justify-between text-base font-bold pt-2 border-t border-gray-200">
-                                            <span>Total Amount</span>
-                                            <span className="text-[#dc2626]">₹{total.toLocaleString()}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {quotationDetails.terms_and_conditions && (
-                                <div className="mt-8 relative z-10 border-t border-gray-100 pt-4">
-                                    <h3 className="text-xs font-bold text-gray-400 uppercase mb-2">Terms & Conditions</h3>
-                                    <p className="text-sm text-gray-600 whitespace-pre-wrap">{quotationDetails.terms_and_conditions}</p>
-                                </div>
-                            )}
-
-                            {quotationDetails.additional_notes && (
-                                <div className="mt-8 relative z-10 border-t border-gray-100 pt-4">
-                                    <h3 className="text-xs font-bold text-gray-400 uppercase mb-2">Additional Notes</h3>
-                                    <p className="text-sm text-gray-600 italic whitespace-pre-wrap">{quotationDetails.additional_notes}</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>Close</Button>
-                        <Button className="bg-red-600 hover:bg-red-700 text-white gap-2" onClick={handleDownloadPDF}>
-                            <Download className="w-4 h-4" /> Download PDF
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                                {/* Preview Modal Integration */}
+                                <QuotationPreviewModal
+                                    open={isPreviewOpen}
+                                    onOpenChange={setIsPreviewOpen}
+                                    quotation={previewData}
+                                    onDownload={handleDownloadPDF}
+                                />
+                            </CardContent >
+                        </Card >
+                    </div >
+                </div >
+            </div >
         </div >
-    )
+    );
 }

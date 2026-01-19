@@ -140,9 +140,10 @@ code {
 
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-inter), sans-serif;
-    /* Inter for body */
+    font-family: var(--font-inter), "Poppins", sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
   }
 
   h1,
@@ -150,12 +151,28 @@ code {
   h3,
   h4,
   h5,
-  h6,
-  .heading-xl,
-  .heading-lg,
-  .heading-md {
-    font-family: var(--font-poppins), sans-serif;
-    /* Poppins for headings */
+  h6 {
+    font-family: var(--font-manrope), sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: theme('colors.gray.900');
+  }
+
+  h1 {
+    @apply text-4xl lg:text-5xl mb-4;
+  }
+
+  h2 {
+    @apply text-2xl lg:text-3xl mb-3;
+  }
+
+  h3 {
+    @apply text-xl lg:text-2xl mb-2;
+  }
+
+  section {
+    @apply py-12 md:py-16;
+    /* Reduced from py-20 */
   }
 }
 
@@ -257,14 +274,15 @@ code {
   }
 
   .heading-xl {
-    @apply text-5xl md:text-6xl font-bold tracking-tight;
+    @apply font-black tracking-tight;
   }
 
   .heading-lg {
-    @apply text-3xl md:text-4xl font-bold tracking-tight;
+    @apply font-black tracking-tight;
   }
 
   .heading-md {
-    @apply text-2xl md:text-3xl font-semibold tracking-tight;
+    @apply font-black tracking-tight;
   }
+
 }

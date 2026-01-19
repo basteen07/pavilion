@@ -28,7 +28,8 @@ const reviews = [
 export function Testimonials() {
     return (
         <section className="py-24 bg-gray-900 border-y border-white/5">
-            <div className="container">
+            <div className="w-full px-4 md:px-8 lg:px-12">
+
                 <div className="text-center mb-20">
                     <h2 className="text-sm font-black uppercase tracking-[0.3em] text-red-500 mb-4">Voice of the Field</h2>
                     <h3 className="text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">Trusted by Professionals</h3>

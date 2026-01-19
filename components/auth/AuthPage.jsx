@@ -16,6 +16,7 @@ export function AuthPage({ mode = 'login' }) {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [fullName, setFullName] = useState('')
+    const [companyName, setCompanyName] = useState('')
     const [phone, setPhone] = useState('')
     const [mfaCode, setMfaCode] = useState('')
     const [mfaRequired, setMfaRequired] = useState(false)
@@ -27,11 +28,17 @@ export function AuthPage({ mode = 'login' }) {
 
         try {
             if (mode === 'register') {
-                await apiCall('/auth/register', {
+                await apiCall('/b2b/register', {
                     method: 'POST',
-                    body: JSON.stringify({ email, password, full_name: fullName, phone, account_type: 'admin' })
+                    body: JSON.stringify({
+                        email,
+                        password,
+                        name: fullName,
+                        company_name: companyName,
+                        phone
+                    })
                 })
-                toast.success('Registration successful! Please login.')
+                toast.success('B2B Registration request submitted! Your account is pending admin approval.')
                 router.push('/login')
             } else {
                 const data = await apiCall('/auth/login', {
@@ -48,7 +55,7 @@ export function AuthPage({ mode = 'login' }) {
                     toast.success('Login successful!')
 
                     // Redirect based on role
-                    if (data.user.role === 'b2b_customer') {
+                    if (data.user.role === 'b2b_user') {
                         router.push('/b2b')
                     } else {
                         router.push('/admin')
@@ -77,22 +84,37 @@ export function AuthPage({ mode = 'login' }) {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {mode === 'register' && (
                             <>
-                                <div>
-                                    <Label htmlFor="fullName">Full Name</Label>
-                                    <Input
-                                        id="fullName"
-                                        value={fullName}
-                                        onChange={(e) => setFullName(e.target.value)}
-                                        required
-                                    />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="fullName">Full Name</Label>
+                                        <Input
+                                            id="fullName"
+                                            value={fullName}
+                                            onChange={(e) => setFullName(e.target.value)}
+                                            placeholder="Enter your full name"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="companyName">Company Name</Label>
+                                        <Input
+                                            id="companyName"
+                                            value={companyName}
+                                            onChange={(e) => setCompanyName(e.target.value)}
+                                            placeholder="Enter your business name"
+                                            required
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <Label htmlFor="phone">Phone</Label>
+                                <div className="space-y-2">
+                                    <Label htmlFor="phone">Phone Number</Label>
                                     <Input
                                         id="phone"
                                         type="tel"
                                         value={phone}
                                         onChange={(e) => setPhone(e.target.value)}
+                                        placeholder="Enter your contact number"
+                                        required
                                     />
                                 </div>
                             </>

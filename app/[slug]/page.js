@@ -6,6 +6,8 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Calendar, ArrowLeft } from 'lucide-react';
 import { useEffect } from 'react';
+import { CategoryLanding } from '@/components/product/CategoryLanding';
+
 
 export default function DynamicRootPage({ params }) {
     const { slug } = params;
@@ -33,12 +35,40 @@ export default function DynamicRootPage({ params }) {
                 return null;
             }
         },
-        // Only run if CMS page isn't found (optimization), or run parallel?
-        // Parallel is fine.
         retry: false
     });
 
-    const isLoading = cmsLoading || blogLoading;
+    // 3. Fetch Category
+
+    const { data: category, isLoading: catLoading } = useQuery({
+        queryKey: ['category-by-slug', slug],
+        queryFn: async () => {
+            try {
+                const cats = await apiCall('/categories');
+                return cats.find(c => c.slug === slug);
+            } catch (e) {
+                return null;
+            }
+        },
+        retry: false
+    });
+
+    // 4. Fetch Parent Collection
+    const { data: collection, isLoading: collLoading } = useQuery({
+        queryKey: ['collection-by-slug', slug],
+        queryFn: async () => {
+            try {
+                const colls = await apiCall('/collections');
+                return colls.find(c => c.slug === slug);
+            } catch (e) {
+                return null;
+            }
+        },
+        retry: false
+    });
+
+    const isLoading = cmsLoading || blogLoading || catLoading || collLoading;
+
 
     // Handle Metadata (Client Side)
     useEffect(() => {
@@ -116,24 +146,24 @@ export default function DynamicRootPage({ params }) {
                         className="prose prose-lg prose-red max-w-none"
                         dangerouslySetInnerHTML={{ __html: blogPost.content }}
                     />
-
-                    {blogPost.tags && blogPost.tags.length > 0 && (
-                        <div className="mt-12 pt-8 border-t">
-                            <div className="flex flex-wrap gap-2">
-                                {blogPost.tags.map((tag, i) => (
-                                    <span key={i} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
-                                        #{tag}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                    )}
                 </div>
             </article>
         );
     }
 
+    // --- RENDER CATEGORY LANDING ---
+
+    if (category) {
+        return <CategoryLanding type="category" data={category} />;
+    }
+
+    // --- RENDER COLLECTION LANDING ---
+    if (collection) {
+        return <CategoryLanding type="collection" data={collection} />;
+    }
+
     // --- 404 NOT FOUND ---
+
     return (
         <div className="container py-20 text-center">
             <h1 className="text-4xl font-bold mb-4">404 - Page Not Found</h1>

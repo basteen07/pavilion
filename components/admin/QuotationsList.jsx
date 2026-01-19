@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { FileText, Download, Search, Send, Loader2, Trash2, Filter, X } from 'lucide-react'
+import { FileText, Download, Search, Send, Loader2, Trash2, Filter, X, Eye, PenLine } from 'lucide-react'
 import { apiCall } from '@/lib/api-client'
 import { format } from 'date-fns'
 import jsPDF from 'jspdf'
@@ -15,8 +15,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Label } from "@/components/ui/label"
+import { QuotationPreviewModal } from '@/components/admin/QuotationPreviewModal'
 
-export function QuotationsList({ onCreate }) {
+export function QuotationsList({ onCreate, onEdit }) {
     const [page, setPage] = useState(1)
     const [search, setSearch] = useState('')
     const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -30,6 +31,8 @@ export function QuotationsList({ onCreate }) {
     const queryClient = useQueryClient()
     const [actionLoading, setActionLoading] = useState(null)
     const [filterOpen, setFilterOpen] = useState(false)
+    const [previewOpen, setPreviewOpen] = useState(false)
+    const [selectedQuoteForPreview, setSelectedQuoteForPreview] = useState(null)
 
     // Debounce search
     useEffect(() => {
@@ -86,6 +89,30 @@ export function QuotationsList({ onCreate }) {
     const allSelected = quotations.length > 0 && selectedIds.size === quotations.length
 
     // --- Actions ---
+
+    async function handleView(quoteId) {
+        setActionLoading(quoteId)
+        try {
+            const quote = await apiCall(`/quotations/${quoteId}`)
+            if (quote.error) throw new Error(quote.error)
+
+            const previewData = {
+                ...quote,
+                customer_snapshot: quote.customer_snapshot || quote.customer || {},
+                items: quote.items || [],
+                subtotal: parseFloat(quote.subtotal || 0),
+                discount_amount: parseFloat(quote.discount_amount || 0),
+                gst: parseFloat(quote.gst || 0),
+                total_amount: parseFloat(quote.total_amount || 0)
+            }
+            setSelectedQuoteForPreview(previewData)
+            setPreviewOpen(true)
+        } catch (e) {
+            toast.error("Failed to load details")
+        } finally {
+            setActionLoading(null)
+        }
+    }
 
     async function handleSend(quoteId) {
         setActionLoading(quoteId)
@@ -416,16 +443,36 @@ export function QuotationsList({ onCreate }) {
                                                 <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
                                             ) : (
                                                 <>
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        className="h-8 w-8 text-gray-500 hover:bg-gray-100"
+                                                        onClick={() => handleView(quote.id)}
+                                                        title="View Quotation"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </Button>
                                                     {quote.status === 'Draft' && (
-                                                        <Button
-                                                            size="icon"
-                                                            variant="ghost"
-                                                            className="h-8 w-8 text-blue-600 hover:bg-blue-50"
-                                                            onClick={() => handleSend(quote.id)}
-                                                            title="Mark as Sent"
-                                                        >
-                                                            <Send className="w-4 h-4" />
-                                                        </Button>
+                                                        <>
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="h-8 w-8 text-blue-600 hover:bg-blue-50"
+                                                                onClick={() => handleSend(quote.id)}
+                                                                title="Mark as Sent"
+                                                            >
+                                                                <Send className="w-4 h-4" />
+                                                            </Button>
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="h-8 w-8 text-amber-600 hover:bg-amber-50"
+                                                                onClick={() => onEdit(quote.id)}
+                                                                title="Edit Draft"
+                                                            >
+                                                                <PenLine className="w-4 h-4" />
+                                                            </Button>
+                                                        </>
                                                     )}
                                                     <Button
                                                         size="icon"
@@ -501,6 +548,16 @@ export function QuotationsList({ onCreate }) {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Preview Modal */}
+            {selectedQuoteForPreview && (
+                <QuotationPreviewModal
+                    open={previewOpen}
+                    onOpenChange={setPreviewOpen}
+                    quotation={selectedQuoteForPreview}
+                    onDownload={() => handleDownload(selectedQuoteForPreview.id)}
+                />
+            )}
         </div>
     )
 }

@@ -28,8 +28,9 @@ const usps = [
 
 export function USPSection() {
     return (
-        <section className="py-24 bg-white">
-            <div className="container">
+        <section className="py-16 bg-white border-t border-gray-100">
+            <div className="w-full px-4 md:px-8 lg:px-12">
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
                     <div className="relative">
                         <div className="absolute -top-10 -left-10 w-40 h-40 bg-red-100 rounded-full blur-3xl opacity-50"></div>

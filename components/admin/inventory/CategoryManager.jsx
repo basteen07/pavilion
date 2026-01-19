@@ -125,7 +125,8 @@ export function CategoryManager() {
         const data = {
             name: formData.get('name'),
             image_url: categoryImage,
-            parent_collection_id: selectedParentCollection || null
+            parent_collection_id: selectedParentCollection || null,
+            display_order: formData.get('display_order') ? parseInt(formData.get('display_order')) : 0
         }
 
         if (editingCategory) {
@@ -142,7 +143,8 @@ export function CategoryManager() {
         const data = {
             name: formData.get('name'),
             image_url: subCategoryImage,
-            category_id: selectedCategory.id
+            category_id: selectedCategory.id,
+            display_order: formData.get('display_order') ? parseInt(formData.get('display_order')) : 0
         }
 
         if (editingSubCategory) {
@@ -177,7 +179,12 @@ export function CategoryManager() {
                                         {cat.image_url && <img src={cat.image_url} alt="" className="w-full h-full object-cover" />}
                                     </div>
                                     <div className="flex flex-col">
-                                        <span className="font-medium">{cat.name}</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-medium">{cat.name}</span>
+                                            {cat.display_order !== 0 && (
+                                                <span className="text-xs bg-gray-100 text-gray-500 px-1 rounded">Ord: {cat.display_order}</span>
+                                            )}
+                                        </div>
                                         <div className="flex items-center gap-2">
                                             {cat.parent_collection_name && (
                                                 <span className="text-xs text-gray-400">{cat.parent_collection_name}</span>
@@ -234,7 +241,12 @@ export function CategoryManager() {
                                             {sub.image_url && <img src={sub.image_url} alt="" className="w-full h-full object-cover" />}
                                         </div>
                                         <div className="flex flex-col">
-                                            <span className="font-medium">{sub.name}</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-medium">{sub.name}</span>
+                                                {sub.display_order !== 0 && (
+                                                    <span className="text-xs bg-gray-100 text-gray-500 px-1 rounded">Ord: {sub.display_order}</span>
+                                                )}
+                                            </div>
                                             <span className="text-[10px] text-blue-500 font-bold uppercase tracking-tighter">
                                                 {sub.brand_count || 0} Brands Included
                                             </span>
@@ -268,6 +280,10 @@ export function CategoryManager() {
                         <div>
                             <Label htmlFor="cat-name">Name</Label>
                             <Input id="cat-name" name="name" defaultValue={editingCategory?.name} required className="mt-1" />
+                        </div>
+                        <div>
+                            <Label htmlFor="cat-order">Display Order (Lower comes first)</Label>
+                            <Input id="cat-order" name="display_order" type="number" defaultValue={editingCategory?.display_order || 0} className="mt-1" />
                         </div>
 
                         <div>
@@ -308,6 +324,10 @@ export function CategoryManager() {
                             <Input id="sub-name" name="name" defaultValue={editingSubCategory?.name} required className="mt-1" />
                         </div>
                         <div>
+                            <Label htmlFor="sub-order">Display Order (Lower comes first)</Label>
+                            <Input id="sub-order" name="display_order" type="number" defaultValue={editingSubCategory?.display_order || 0} className="mt-1" />
+                        </div>
+                        <div>
                             <Label className="mb-2 block">Sub-Category Image</Label>
                             <ImageUploader value={subCategoryImage} onChange={setSubCategoryImage} />
                         </div>
@@ -317,6 +337,6 @@ export function CategoryManager() {
                     </form>
                 </DialogContent>
             </Dialog>
-        </div>
+        </div >
     )
 }

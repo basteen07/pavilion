@@ -17,7 +17,8 @@ export function RecentBlogs() {
 
     return (
         <section className="py-24 bg-white">
-            <div className="container">
+            <div className="w-full px-4 md:px-8 lg:px-12">
+
                 <div className="flex justify-between items-end mb-16 px-4">
                     <div>
                         <h2 className="text-sm font-black uppercase tracking-[0.3em] text-red-600 mb-4">Latest Insights</h2>

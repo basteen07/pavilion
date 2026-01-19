@@ -6,8 +6,9 @@ import Link from 'next/link'
 import {
   ChevronRight, Star, Heart, ShoppingCart, Share2,
   Minus, Plus, Check, Truck, Shield, RefreshCw,
-  Clock, MessageCircle, Info, Award, Zap, ChevronLeft
+  Clock, MessageCircle, Info, Award, Zap, ChevronLeft, PhoneForwarded
 } from 'lucide-react'
+
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -19,6 +20,8 @@ import { useQuery } from '@tanstack/react-query'
 import { apiCall } from '@/lib/api-client'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useB2BCart } from '@/components/providers/B2BCartProvider'
+import { EnquiryModal } from '@/components/product/EnquiryModal'
+
 
 export default function ProductDetailPage({ productSlug }) {
   const router = useRouter()
@@ -26,6 +29,8 @@ export default function ProductDetailPage({ productSlug }) {
   const { addToCart } = useB2BCart()
   const [selectedImage, setSelectedImage] = useState(0)
   const [quantity, setQuantity] = useState(1)
+  const [enquiryOpen, setEnquiryOpen] = useState(false)
+
 
   const { data: product, isLoading: productLoading } = useQuery({
     queryKey: ['product', productSlug],
@@ -65,7 +70,8 @@ export default function ProductDetailPage({ productSlug }) {
   ]
 
   const discount = product.discount_percentage ? Math.round(product.discount_percentage) : 0
-  const finalPrice = product.selling_price || product.mrp_price
+  const finalPrice = product.mrp_price
+
 
   return (
     <>
@@ -140,11 +146,12 @@ export default function ProductDetailPage({ productSlug }) {
               <div className="p-8 rounded-[2.5rem] bg-gray-900 text-white mb-10 shadow-2xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-red-600 opacity-10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
                 <div className="relative z-10">
-                  <div className="flex items-baseline gap-4 mb-2">
-                    <span className="text-5xl font-black tracking-tighter">₹{finalPrice}</span>
-                    {discount > 0 && <span className="text-xl text-gray-500 line-through font-bold">₹{product.mrp_price}</span>}
+                  <div className="flex flex-col mb-1 flex-col">
+                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1">MRP Price</span>
+                    <span className="text-5xl font-black tracking-tighter">₹{finalPrice?.toLocaleString('en-IN')}</span>
                   </div>
                   <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-6">B2B Special Pricing Applicable</p>
+
 
                   <div className="grid grid-cols-2 gap-4">
                     {user?.role === 'b2b_user' ? (
@@ -167,10 +174,14 @@ export default function ProductDetailPage({ productSlug }) {
                       )
                     ) : (
                       <>
-                        <Button className="h-16 rounded-2xl bg-white text-gray-900 hover:bg-gray-100 font-black uppercase tracking-widest text-xs gap-3" onClick={() => router.push('/contact')}>
-                          <MessageCircle className="w-4 h-4" /> Enquiry
+                        <Button
+                          className="h-16 rounded-2xl bg-white text-gray-900 hover:bg-gray-100 font-black uppercase tracking-widest text-xs gap-3 shadow-xl"
+                          onClick={() => setEnquiryOpen(true)}
+                        >
+                          <PhoneForwarded className="w-5 h-5 text-red-600" /> Enquiry
                         </Button>
                       </>
+
                     )}
                   </div>
                 </div>
@@ -298,9 +309,11 @@ export default function ProductDetailPage({ productSlug }) {
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-red-600 mb-1">{p.brand_name}</p>
                     <h4 className="font-black text-lg text-gray-900 tracking-tight group-hover:text-red-600 transition-colors uppercase">{p.name}</h4>
                     <div className="flex items-center gap-3">
-                      <span className="text-xl font-black text-gray-900 tracking-tighter">₹{p.selling_price || p.mrp_price}</span>
-                      <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">SKU: {p.sku || 'N/A'}</span>
+                      <span className="text-[8px] font-black text-gray-400 uppercase tracking-tighter">MRP</span>
+                      <span className="text-xl font-black text-gray-900 tracking-tighter leading-none">₹{p.mrp_price?.toLocaleString('en-IN')}</span>
+                      <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest ml-auto">SKU: {p.sku || 'N/A'}</span>
                     </div>
+
                   </div>
                   <Button variant="outline" className="h-12 px-8 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] border-gray-200 group-hover:bg-red-600 group-hover:text-white group-hover:border-red-600 transition-all">
                     View Gear
@@ -311,7 +324,13 @@ export default function ProductDetailPage({ productSlug }) {
           </div>
         </section>
       )}
+      <EnquiryModal
+        open={enquiryOpen}
+        onOpenChange={setEnquiryOpen}
+        product={product}
+      />
     </>
   )
 }
+
 

@@ -31,6 +31,12 @@ export function SiteLayout({ children }) {
         queryFn: () => apiCall('/sub-categories')
     })
 
+    const { data: tags = [] } = useQuery({
+        queryKey: ['tags'],
+        queryFn: () => apiCall('/tags'),
+        staleTime: 1000 * 60 * 5 // Cache for 5 mins
+    })
+
     if (isAdmin) {
         return (
             <>
@@ -46,6 +52,7 @@ export function SiteLayout({ children }) {
                 brands={brands}
                 collections={collections}
                 subCategories={subCategories}
+                tags={tags}
             />
             <main className="flex-grow">
                 {children}

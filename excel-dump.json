@@ -1,0 +1,1271 @@
+[
+  [
+    null,
+    null,
+    null,
+    null,
+    null,
+    "Team Sports"
+  ],
+  [],
+  [
+    1,
+    "Bats",
+    7,
+    "Accessories",
+    "a",
+    "Cricket",
+    "b",
+    "Football",
+    null,
+    "FAS",
+    "Accessories"
+  ],
+  [
+    "CEW",
+    "English Willow",
+    "CKB",
+    "Kit Bag",
+    1,
+    "Bats",
+    "FBL",
+    "Ball ",
+    null,
+    "FGG",
+    "Goal Keeper Glove"
+  ],
+  [
+    "CKW",
+    "Kashmir Willow",
+    "CGR",
+    "Grips",
+    2,
+    "Gloves",
+    "FNT",
+    "Nets",
+    null,
+    "FSG",
+    "Shin Guard"
+  ],
+  [
+    "CBB",
+    "Tennis Ball Bats",
+    "CTA",
+    "Bat Protection Tape",
+    3,
+    "Pads",
+    "FAS",
+    "Accessories"
+  ],
+  [
+    "CKT",
+    "Cricket Kit",
+    "CAC",
+    "Others",
+    4,
+    "Cricket Balls"
+  ],
+  [],
+  [
+    2,
+    "Gloves",
+    8,
+    "Cricket Kit",
+    5,
+    "Protective Gears"
+  ],
+  [
+    "CBG",
+    "Batting Glove",
+    null,
+    "Kit",
+    6,
+    "Practice"
+  ],
+  [
+    "CWG",
+    "Wicket Keeping Glove",
+    null,
+    null,
+    7,
+    "Accessories"
+  ],
+  [
+    "CIG",
+    "Inner Gloves",
+    null,
+    null,
+    8,
+    "Cricket Kit"
+  ],
+  [],
+  [
+    null,
+    null,
+    "CAC",
+    "Others",
+    "c",
+    "Basketball",
+    "d",
+    "Volleyball"
+  ],
+  [
+    3,
+    "Pads",
+    null,
+    "Ball Gauge",
+    "BBL",
+    "Ball",
+    "VBL",
+    "Ball"
+  ],
+  [
+    "CBP",
+    "Batting Legguard",
+    null,
+    "Baseball Glove",
+    "BAC",
+    "Accessories",
+    "VNT",
+    "Nets"
+  ],
+  [
+    "CWP",
+    "Wicket Keeping Legguard",
+    null,
+    "Ball Hammer",
+    null,
+    null,
+    "VKP",
+    "Knee Pads"
+  ],
+  [
+    null,
+    null,
+    null,
+    "Bat Hammer",
+    null,
+    null,
+    "VAC",
+    "Volleyball Accessories"
+  ],
+  [
+    4,
+    "Cricket Balls",
+    null,
+    "Batting Tee",
+    "e",
+    "Throwball"
+  ],
+  [
+    "CLB",
+    "Leather Balls",
+    null,
+    "Bat Care Kit",
+    "TBL",
+    "Ball",
+    "f",
+    "Rugby"
+  ],
+  [
+    "CTB",
+    "Tennis Balls",
+    null,
+    "Bat Oil",
+    "TBL",
+    "Nets",
+    "RBL",
+    "Ball"
+  ],
+  [
+    null,
+    null,
+    null,
+    "Bowler Marker"
+  ],
+  [
+    5,
+    "Protective Gears",
+    null,
+    "Cricket Pad Cover",
+    "g",
+    "Handball"
+  ],
+  [
+    "CHT",
+    "Helmet",
+    null,
+    "Fielder Marker",
+    "HBL",
+    "Ball"
+  ],
+  [
+    "CTP",
+    "Thigh Pad",
+    null,
+    "Grip Cone",
+    "HNT",
+    "Nets"
+  ],
+  [
+    "CAG",
+    "Abdomen Guard",
+    null,
+    "Helmet Screw"
+  ],
+  [
+    "CEG",
+    "Elbow Guard",
+    null,
+    "Neck Protector"
+  ],
+  [
+    "CCG",
+    "Chest Guard",
+    null,
+    "Rope Ball"
+  ],
+  [
+    "CIT",
+    "Inner Thigh Pad",
+    null,
+    "Saucer Cone"
+  ],
+  [
+    "CSG",
+    "Shin Guard",
+    null,
+    "Sun Screen"
+  ],
+  [
+    "CFP",
+    "Mask",
+    null,
+    "Umpire Counter"
+  ],
+  [
+    null,
+    null,
+    null,
+    "Umpire Gauge"
+  ],
+  [
+    6,
+    "Practice",
+    null,
+    "Score Book"
+  ],
+  [
+    "CMT",
+    "Mat",
+    null,
+    "Toe Guard"
+  ],
+  [
+    "CST",
+    "Stumps"
+  ],
+  [
+    "CNT",
+    "Nets"
+  ],
+  [],
+  [],
+  [],
+  [],
+  [],
+  [
+    null,
+    "Individual Games"
+  ],
+  [],
+  [
+    "a",
+    "Badminton",
+    "b",
+    "Table Tennis",
+    "c",
+    "Squash"
+  ],
+  [
+    "BRT",
+    "Racket",
+    "TTR",
+    "Racket",
+    "SRT",
+    "Squash Racket",
+    "TTA",
+    "Table Tennis Accessories",
+    null,
+    null,
+    null,
+    "BBA",
+    "Ball Badminton Accessories"
+  ],
+  [
+    "BSC",
+    "Shuttlecock",
+    "TTU",
+    "Rubber",
+    "SBL",
+    "Ball",
+    null,
+    "Board Cover",
+    null,
+    null,
+    null,
+    null,
+    "Woolen Ball"
+  ],
+  [
+    "BNT",
+    "Nets",
+    "TTP",
+    "Ply",
+    "SQA",
+    "Squash Accessories",
+    null,
+    "Glu",
+    null,
+    null,
+    null,
+    null,
+    "String"
+  ],
+  [
+    "BSR",
+    "Strings",
+    "TTB",
+    "TT Ball",
+    null,
+    null,
+    null,
+    "Pouch"
+  ],
+  [
+    "BGP",
+    "Grip",
+    "TTT",
+    "TT Table",
+    null,
+    null,
+    null,
+    "Side Tape",
+    null,
+    null,
+    null,
+    "BNA",
+    "Badminton Accessories"
+  ],
+  [
+    "BNA",
+    "Badminton Accessories",
+    "TTA",
+    "Table Tennis Accessories",
+    null,
+    null,
+    null,
+    "Table Tennis Net & Clamp",
+    null,
+    null,
+    null,
+    null,
+    "Net Wire"
+  ],
+  [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    "Wooden Case",
+    null,
+    null,
+    null,
+    null,
+    "Post Fixed"
+  ],
+  [],
+  [
+    "d",
+    "Tennis",
+    "e",
+    "Racket Games"
+  ],
+  [
+    "TRT",
+    "Tennis Racket",
+    "RKB",
+    "Kitbag",
+    null,
+    null,
+    "RKB",
+    "Kitbag ( Will use  RKB forbelow 3 kits bags going forward)",
+    null,
+    null,
+    null,
+    "TNA",
+    "Tennis Accessories"
+  ],
+  [
+    "TBA",
+    "Tennis Ball",
+    "PPA",
+    "Pickleball Paddle",
+    null,
+    null,
+    "BKB",
+    "Badminton Kitbag",
+    null,
+    null,
+    null,
+    null,
+    "Tennis Trainer"
+  ],
+  [
+    "TSR",
+    "Strings",
+    "PAC",
+    "Pickleball Accessories",
+    null,
+    null,
+    "SKB",
+    "Squash Kitbag",
+    null,
+    null,
+    null,
+    null,
+    "Tennis Net"
+  ],
+  [
+    "TGP",
+    "Grip",
+    "BBR",
+    "Ball Badminton Racket",
+    null,
+    null,
+    "TKB",
+    "Tennis Kitbag",
+    null,
+    null,
+    null,
+    null,
+    "Tennis Net Tape"
+  ],
+  [
+    "TNA",
+    "Tennis Accessories",
+    "BBA",
+    "Ball Badminton Accessories",
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    "Tennis Net Wire"
+  ],
+  [],
+  [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    "SQA",
+    "Squash Accessories"
+  ],
+  [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    "Strings"
+  ],
+  [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    "Eyewear"
+  ],
+  [],
+  [],
+  [
+    null,
+    null,
+    null,
+    null,
+    null,
+    "Fitness/Training "
+  ],
+  [
+    "FAC",
+    "Fitness Accessories",
+    "TAC",
+    "Training Accessories",
+    "a",
+    "Fitness Equipment"
+  ],
+  [
+    null,
+    "Aerobic Stepper",
+    null,
+    "Aero Howler",
+    "FAC",
+    "Fitness Accessories"
+  ],
+  [
+    null,
+    "Ankle Weight",
+    null,
+    "Bowling Trainer",
+    null,
+    "Fitness Balls"
+  ],
+  [
+    null,
+    "Balance Board",
+    null,
+    "Katchet Board",
+    "WTD",
+    "Weights - Dumbbells "
+  ],
+  [
+    null,
+    "Chin Up Bar",
+    null,
+    "KatchMax",
+    "YGM",
+    "Yoga Mats"
+  ],
+  [
+    null,
+    "Double Exercise Wheel",
+    null,
+    "Parachute",
+    "b",
+    "Training Equipment"
+  ],
+  [
+    null,
+    "Dumbell Rod",
+    null,
+    "Pugg Goal",
+    "TAC",
+    "Training Accessories"
+  ],
+  [
+    null,
+    "Fitness Kitbag",
+    null,
+    "Sidearm",
+    null,
+    "Practice Bats"
+  ],
+  [
+    null,
+    "Foam Roller",
+    null,
+    "Stop Watch",
+    "TRB",
+    "Training Balls"
+  ],
+  [
+    null,
+    "Gym Belt",
+    null,
+    "Training Ladder",
+    "c",
+    "General Wellness"
+  ],
+  [
+    null,
+    "Hand Grip",
+    null,
+    "Whistle",
+    "GSS",
+    "Support & Splints"
+  ],
+  [
+    null,
+    "Head Band",
+    null,
+    "Cone"
+  ],
+  [
+    null,
+    "Hula Hoops",
+    null,
+    "Hurdles"
+  ],
+  [
+    null,
+    "Massage Ball",
+    null,
+    "Tug of War"
+  ],
+  [
+    null,
+    "Massage Twister",
+    null,
+    "Tennikoit Ring"
+  ],
+  [
+    null,
+    "Pull up Bar"
+  ],
+  [
+    null,
+    "Push-up Bar",
+    null,
+    "Practice Bats"
+  ],
+  [
+    null,
+    "Resistance Band",
+    "CPB",
+    "Batting Practice Bat"
+  ],
+  [
+    null,
+    "Resistance Tube",
+    "CCB",
+    "Catch Practice Bat"
+  ],
+  [
+    null,
+    "Skipping Rope"
+  ],
+  [
+    null,
+    "Sports Gloves"
+  ],
+  [
+    null,
+    "Trampoline"
+  ],
+  [
+    null,
+    "Yoga Brick"
+  ],
+  [],
+  [
+    null,
+    "Fitness Balls",
+    "TRB",
+    "Training Balls",
+    "GSS",
+    "Support & Splints"
+  ],
+  [
+    "FGB",
+    "Gym Ball",
+    null,
+    "Bowlers Wonder Ball",
+    null,
+    "Ankle Support"
+  ],
+  [
+    "FMB",
+    "Medicine Ball",
+    null,
+    "Bowling Machine Ball",
+    null,
+    "Back Support"
+  ],
+  [
+    "FSB",
+    "Slam Ball",
+    null,
+    "Base Ball",
+    null,
+    "Elbow Support"
+  ],
+  [
+    null,
+    null,
+    null,
+    "Golf Ball",
+    null,
+    "Ice Bag"
+  ],
+  [
+    null,
+    null,
+    null,
+    "Leather Training Ball",
+    null,
+    "Knee Pad"
+  ],
+  [
+    null,
+    null,
+    null,
+    "Plastic Ball",
+    null,
+    "Knee Support"
+  ],
+  [
+    null,
+    null,
+    null,
+    "Poly Coated Ball",
+    null,
+    "Shoulder Support"
+  ],
+  [
+    null,
+    null,
+    null,
+    "Prosoft Ball",
+    null,
+    "Sports Tape"
+  ],
+  [
+    null,
+    null,
+    null,
+    "Reaction Ball",
+    null,
+    "Sun Screen"
+  ],
+  [
+    null,
+    null,
+    null,
+    "Seam Ball",
+    null,
+    "Thumb Support"
+  ],
+  [
+    null,
+    null,
+    null,
+    "Soft Ball",
+    null,
+    "Waist Belt"
+  ],
+  [
+    null,
+    null,
+    null,
+    "Swing Ball",
+    null,
+    "Waist Trimmer Belt"
+  ],
+  [
+    null,
+    null,
+    null,
+    "Synthetic",
+    null,
+    "Wrist Support"
+  ],
+  [
+    null,
+    null,
+    null,
+    "Turf Ball"
+  ],
+  [
+    null,
+    null,
+    null,
+    "Wind Ball"
+  ],
+  [],
+  [],
+  [],
+  [
+    null,
+    null,
+    null,
+    null,
+    null,
+    "More"
+  ],
+  [
+    null,
+    null,
+    null,
+    null,
+    "a",
+    "Indoor Games"
+  ],
+  [
+    "CAR",
+    "Carrom",
+    null,
+    null,
+    "CAR",
+    "Carrom"
+  ],
+  [
+    null,
+    "Carrom Board",
+    null,
+    null,
+    "CHE",
+    "Chess"
+  ],
+  [
+    null,
+    "Carrom Coin",
+    null,
+    null,
+    "DAR",
+    "Dart"
+  ],
+  [
+    null,
+    "Carrom Striker",
+    null,
+    null,
+    "FTB",
+    "Fooseball Table"
+  ],
+  [
+    null,
+    "Carrom Powder"
+  ],
+  [
+    null,
+    "Carrom Stand",
+    null,
+    null,
+    "b",
+    "Outdoor Games"
+  ],
+  [
+    null,
+    null,
+    null,
+    null,
+    "SKT",
+    "Skates"
+  ],
+  [
+    "CHE",
+    "Chess",
+    null,
+    null,
+    "SSB",
+    "Skate Board"
+  ],
+  [
+    null,
+    "Chess Board",
+    null,
+    null,
+    "SCT",
+    "Scooter"
+  ],
+  [
+    null,
+    "Chess Coin",
+    null,
+    null,
+    "SSH",
+    "Sports Helmet"
+  ],
+  [
+    null,
+    "Chess Clock",
+    null,
+    null,
+    "SPK",
+    "Protective Kit"
+  ],
+  [
+    null,
+    null,
+    null,
+    null,
+    "SWE",
+    "Wave Board"
+  ],
+  [
+    "DAR",
+    "Dart",
+    null,
+    null,
+    "FOP",
+    "Foot Pump"
+  ],
+  [
+    null,
+    "Dart Board",
+    null,
+    null,
+    "TFE",
+    "Track & Field Equipment"
+  ],
+  [
+    null,
+    "Dart Pins",
+    null,
+    null,
+    "RCG",
+    "Recreational Games"
+  ],
+  [],
+  [
+    null,
+    null,
+    null,
+    null,
+    "c",
+    "Shoes"
+  ],
+  [
+    "TFE",
+    "Track & Field Equipment",
+    null,
+    null,
+    "SCR",
+    "Cricket Shoes",
+    null,
+    null,
+    null,
+    "SAC",
+    "Shoe Accessories"
+  ],
+  [
+    null,
+    "Post - Basketball, Football, Throwball, Volleyball,Kho Kho",
+    null,
+    null,
+    "SNM",
+    "Non Marking Shoes",
+    null,
+    null,
+    null,
+    null,
+    "Metal Spikes"
+  ],
+  [
+    null,
+    "Discuss",
+    null,
+    null,
+    "SGF",
+    "Golf Shoes",
+    null,
+    null,
+    null,
+    null,
+    "Soft Spikes"
+  ],
+  [
+    null,
+    "Hammer Throw",
+    null,
+    null,
+    "SJG",
+    "Jogging Shoe/Running Shoe"
+  ],
+  [
+    null,
+    "Height Measuring Stand",
+    null,
+    null,
+    "SBS",
+    "Basketball Shoe"
+  ],
+  [
+    null,
+    "Hurdles",
+    null,
+    null,
+    "SFB",
+    "Football Boot"
+  ],
+  [
+    null,
+    "Javelin",
+    null,
+    null,
+    "SRS",
+    "Running Spikes"
+  ],
+  [
+    null,
+    "Measuring Tape",
+    null,
+    null,
+    "SAC",
+    "Shoe Accessories"
+  ],
+  [
+    null,
+    "Relay Baton"
+  ],
+  [
+    null,
+    "Shotput",
+    null,
+    null,
+    "d",
+    "Clothing"
+  ],
+  [
+    null,
+    "Take Off Board",
+    null,
+    null,
+    "CTS",
+    "T-Shirts"
+  ],
+  [
+    null,
+    "Weight Machine",
+    null,
+    null,
+    "CTR",
+    "Trousers"
+  ],
+  [
+    null,
+    null,
+    null,
+    null,
+    "CSW",
+    "Sweater"
+  ],
+  [
+    "RCG",
+    "Recreational Games",
+    null,
+    null,
+    "CTT",
+    "Clothing T-shirt& Trousers set"
+  ],
+  [
+    null,
+    "Hop Ball",
+    null,
+    null,
+    "CSH",
+    "Shorts"
+  ],
+  [
+    null,
+    null,
+    null,
+    null,
+    "CSK",
+    "Skin Fit"
+  ],
+  [
+    "CSS",
+    "Clothing Accessories ",
+    null,
+    null,
+    "CSS",
+    "Clothing Accessories "
+  ],
+  [
+    null,
+    "Bips"
+  ],
+  [
+    null,
+    "Brief",
+    null,
+    null,
+    "e",
+    "Water Sports"
+  ],
+  [
+    null,
+    "Elbow Sleeves",
+    null,
+    null,
+    "SGG",
+    "Swimming Goggles"
+  ],
+  [
+    null,
+    "Socks",
+    null,
+    null,
+    "SCP",
+    "Swimming Caps"
+  ],
+  [
+    null,
+    null,
+    null,
+    null,
+    "SWR",
+    "Swimming Wear"
+  ],
+  [
+    "SWA",
+    "Swimming Accessories",
+    null,
+    null,
+    "SWA",
+    "Swimming Accessories"
+  ],
+  [
+    null,
+    "Arm Rings"
+  ],
+  [
+    null,
+    "Ear Plug",
+    null,
+    null,
+    "f",
+    "Even More"
+  ],
+  [
+    null,
+    "Flipper",
+    null,
+    null,
+    "MAB",
+    "Autograph Bats"
+  ],
+  [
+    null,
+    "Floating Fin",
+    null,
+    null,
+    "MCP",
+    "Caps"
+  ],
+  [
+    null,
+    "Hand Paddle",
+    null,
+    null,
+    "BOX",
+    "Boxing"
+  ],
+  [
+    null,
+    "Kick Board",
+    null,
+    null,
+    "MSB",
+    "Scoreboard"
+  ],
+  [
+    null,
+    "Mask",
+    null,
+    null,
+    "MEW",
+    "Eyewear"
+  ],
+  [
+    null,
+    "Noodles",
+    null,
+    null,
+    "SVC",
+    "Services"
+  ],
+  [
+    null,
+    "Paddle"
+  ],
+  [
+    null,
+    "Pullbuoy",
+    null,
+    null,
+    "g",
+    "Medals & Trophies "
+  ],
+  [
+    null,
+    "Rings",
+    null,
+    null,
+    "TRS",
+    "Trophies"
+  ],
+  [
+    null,
+    "Snorkel",
+    null,
+    null,
+    "MED",
+    "Medals"
+  ],
+  [
+    null,
+    "Life Jacket",
+    null,
+    null,
+    "BDP",
+    "Badges & Pins"
+  ],
+  [
+    null,
+    "Water Balls",
+    null,
+    null,
+    "SHD",
+    "Shield"
+  ],
+  [],
+  [
+    "BOX",
+    "Boxing"
+  ],
+  [
+    null,
+    "Boxing Gloves"
+  ],
+  [
+    null,
+    "Focus Pad"
+  ],
+  [
+    null,
+    "Hand Wraps"
+  ],
+  [
+    null,
+    "Head Guard"
+  ],
+  [
+    null,
+    "Mouth Guard"
+  ],
+  [
+    null,
+    "Punching Bag"
+  ]
+]

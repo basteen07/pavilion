@@ -18,33 +18,42 @@ import { toast } from 'sonner'
 import { X, Plus, Loader2, Printer, QrCode } from 'lucide-react'
 import QRCode from 'qrcode'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import TiptapEditor from '@/components/admin/TiptapEditor'
 
 // Validation Schema
 const productSchema = z.object({
     name: z.string().min(3, 'Name is required'),
     sku: z.string().min(2, 'SKU is required'),
-    mrp_price: z.coerce.number().min(0, 'Price must be positive'),
-    selling_price: z.coerce.number().min(0, 'Price must be positive'), // Added selling_price
-    dealer_price: z.coerce.number().min(0).optional(),
+    mrp_price: z.coerce.number().min(0.01, 'MRP is required'),
+    shop_price: z.coerce.number().min(0.01, 'Shop Price is required'),
+    dealer_price: z.coerce.number().min(0.01, 'Dealer Price is required'),
+    counter_price: z.coerce.number().min(0).optional(),
+    recommended_price: z.coerce.number().min(0).optional(),
     category_id: z.string().min(1, 'Category is required'),
     sub_category_id: z.string().optional(),
+    tag_id: z.string().optional(),
     brand_id: z.string().optional(),
     short_description: z.string().optional(),
     description: z.string().optional(),
-    a_plus_content: z.string().optional(), // Added A+ Content
-    buy_url: z.string().url().optional().or(z.literal('')), // Added Buy URL
-    tax_class: z.string().min(1, 'Tax Class is required'), // Added Tax Class
-    hsn_code: z.string().optional(), // Added HSN Code
+    a_plus_content: z.string().optional(),
+    buy_url: z.string().url().optional().or(z.literal('')),
+    gst_percentage: z.coerce.number().min(0).max(100).default(18),
+    hsn_code: z.string().optional(),
     is_featured: z.boolean().default(false),
     is_active: z.boolean().default(true),
-    is_discontinued: z.boolean().default(false), // Added Discontinued
-    is_quote_hidden: z.boolean().default(false), // Added No Quote
+    is_discontinued: z.boolean().default(false),
+    is_quote_hidden: z.boolean().default(false),
+    unit: z.string().default('1'),
     images: z.array(z.string()).default([]),
     videos: z.array(z.string()).default([]),
     variants: z.array(z.object({
         size: z.string(),
         color: z.string(),
-        price: z.coerce.number(),
+        mrp: z.coerce.number().optional(),
+        dealer_price: z.coerce.number().optional(),
+        counter_price: z.coerce.number().optional(),
+        recommended_price: z.coerce.number().optional(),
+        price: z.coerce.number(), // This is the shop price
         stock: z.coerce.number()
     })).default([])
 })
@@ -53,6 +62,7 @@ export function ProductForm({ product, onCancel, onSuccess }) {
     const queryClient = useQueryClient()
     const [newVideoUrl, setNewVideoUrl] = useState('')
     const [qrCodeUrl, setQrCodeUrl] = useState('')
+    const [showCustomUnit, setShowCustomUnit] = useState(false)
 
     const form = useForm({
         resolver: zodResolver(productSchema),
@@ -60,31 +70,42 @@ export function ProductForm({ product, onCancel, onSuccess }) {
             name: product?.name || '',
             sku: product?.sku || '',
             mrp_price: product?.mrp_price || 0,
-            selling_price: product?.selling_price || product?.mrp_price || 0, // Default to MRP if not set
+            shop_price: product?.shop_price || product?.mrp_price || 0,
             dealer_price: product?.dealer_price || 0,
+            counter_price: product?.counter_price || 0,
+            recommended_price: product?.recommended_price || 0,
             category_id: product?.category_id?.toString() || '',
             sub_category_id: product?.sub_category_id?.toString() || '',
+            tag_id: product?.tag_id?.toString() || '',
             brand_id: product?.brand_id?.toString() || '',
             short_description: product?.short_description || '',
             description: product?.description || '',
             a_plus_content: product?.a_plus_content || '',
             buy_url: product?.buy_url || '',
-            tax_class: product?.tax_class || 'Standard',
+            gst_percentage: product?.gst_percentage || 18,
             hsn_code: product?.hsn_code || '',
             is_featured: product?.is_featured || false,
             is_active: product?.is_active ?? true,
             is_discontinued: product?.is_discontinued || false,
             is_quote_hidden: product?.is_quote_hidden || false,
+            unit: product?.unit || '1',
             images: safeJSONParse(product?.images),
             videos: safeJSONParse(product?.videos),
             variants: safeJSONParse(product?.variants)
         }
     })
 
+    // Update showCustomUnit if initial unit is not 1 or pair
+    useEffect(() => {
+        if (product?.unit && product.unit !== '1' && product.unit !== 'pair') {
+            setShowCustomUnit(true)
+        }
+    }, [product?.unit])
+
     function safeJSONParse(value) {
         if (!value) return []
         if (Array.isArray(value)) return value
-        if (typeof value === 'object') return [value] // Should be array but if single obj
+        if (typeof value === 'object') return [value]
         try {
             return JSON.parse(value)
         } catch (e) {
@@ -102,8 +123,6 @@ export function ProductForm({ product, onCancel, onSuccess }) {
 
     const selectedCategoryId = watch('category_id')
     const selectedSubCategoryId = watch('sub_category_id')
-
-    // Watch Images for Uploader
     const currentImages = watch('images')
 
     // Queries
@@ -118,16 +137,17 @@ export function ProductForm({ product, onCancel, onSuccess }) {
         enabled: !!selectedCategoryId
     })
 
-    // Cascading Brand Query - Fetch ONLY brands for this sub-category
-    const { data: brands = [], isLoading: isLoadingBrands } = useQuery({
+    const { data: brands = [] } = useQuery({
         queryKey: ['brands', selectedSubCategoryId],
         queryFn: () => apiCall(`/brands?sub_category_id=${selectedSubCategoryId}`),
         enabled: !!selectedSubCategoryId
     })
 
-    // Reset SubCategory when Category changes (if user interacts manually)
-    // Note: We need to be careful not to reset on initial load if editing
-    // We can use a custom change handler for the Select instead of useEffect to avoid loops
+    const { data: tags = [] } = useQuery({
+        queryKey: ['tags', selectedSubCategoryId],
+        queryFn: () => apiCall(`/tags?subCategoryId=${selectedSubCategoryId}`),
+        enabled: !!selectedSubCategoryId
+    })
 
     const { isPending, mutate } = useMutation({
         mutationFn: (data) => {
@@ -135,6 +155,7 @@ export function ProductForm({ product, onCancel, onSuccess }) {
             const method = product ? 'PUT' : 'POST'
             if (data.sub_category_id === '') delete data.sub_category_id
             if (data.brand_id === '') delete data.brand_id
+            if (data.tag_id === '') delete data.tag_id
             if (product) data.id = product.id
 
             return apiCall(url, { method, body: JSON.stringify(data) })
@@ -166,17 +187,14 @@ export function ProductForm({ product, onCancel, onSuccess }) {
         mutate(data)
     }
 
-
-
     const generateQRCode = async () => {
         try {
             const url = await QRCode.toDataURL(JSON.stringify({
                 id: product?.id,
                 sku: watch('sku'),
                 name: watch('name'),
-                price: watch('selling_price')
+                price: watch('shop_price')
             }))
-            // Create a temporary window to print
             const printWindow = window.open('', '', 'width=600,height=600')
             printWindow.document.write(`
                 <html>
@@ -185,7 +203,7 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                         <h2>${watch('name')}</h2>
                         <p>SKU: ${watch('sku')}</p>
                         <img src="${url}" style="width:300px;height:300px;" />
-                        <p>Price: ₹${watch('selling_price')}</p>
+                        <p>Price: ₹${watch('shop_price')}</p>
                         <script>
                             window.onload = function() { window.print(); window.close(); }
                         </script>
@@ -211,7 +229,9 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                         <QrCode className="w-4 h-4 mr-2" />
                         Print Label
                     </Button>
-                    <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+                    <Button type="button" variant="outline" onClick={onCancel}>
+                        Back to List
+                    </Button>
                     <Button type="submit" className="bg-red-600" disabled={isPending}>
                         {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                         Save Product
@@ -274,10 +294,57 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <Label>Buy URL (External)</Label>
-                                <Input {...register('buy_url')} placeholder="https://..." />
-                                {errors.buy_url && <p className="text-red-500 text-xs">{errors.buy_url.message}</p>}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Unit</Label>
+                                    <div className="flex gap-2">
+                                        {!showCustomUnit ? (
+                                            <Select
+                                                value={watch('unit')}
+                                                onValueChange={(val) => {
+                                                    if (val === 'custom') {
+                                                        setShowCustomUnit(true)
+                                                        setValue('unit', '')
+                                                    } else {
+                                                        setValue('unit', val)
+                                                    }
+                                                }}
+                                            >
+                                                <SelectTrigger className="w-full">
+                                                    <SelectValue placeholder="Select Unit" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="1">1 (Single)</SelectItem>
+                                                    <SelectItem value="pair">Pair</SelectItem>
+                                                    <SelectItem value="custom" className="text-red-600 font-medium">Custom...</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        ) : (
+                                            <div className="flex w-full gap-2">
+                                                <Input
+                                                    {...register('unit')}
+                                                    placeholder="Enter custom unit..."
+                                                    autoFocus
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    onClick={() => {
+                                                        setShowCustomUnit(false)
+                                                        setValue('unit', '1')
+                                                    }}
+                                                >
+                                                    Cancel
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Buy URL (External)</Label>
+                                    <Input {...register('buy_url')} placeholder="https://..." />
+                                    {errors.buy_url && <p className="text-red-500 text-xs">{errors.buy_url.message}</p>}
+                                </div>
                             </div>
 
                             <div className="space-y-2">
@@ -291,8 +358,13 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                             </div>
 
                             <div className="space-y-2">
-                                <Label>A+ Content (Extra Info)</Label>
-                                <Textarea {...register('a_plus_content')} className="min-h-[150px]" placeholder="Rich content, HTML or Markdown..." />
+                                <Label>A+ Content (Premium Product Page)</Label>
+                                <div className="min-h-[400px]">
+                                    <TiptapEditor
+                                        value={watch('a_plus_content')}
+                                        onChange={(html) => setValue('a_plus_content', html)}
+                                    />
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
@@ -303,13 +375,45 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                         <CardContent className="pt-6 space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label>Tax Class *</Label>
-                                    <Input {...register('tax_class')} placeholder="e.g. GST 18%" />
-                                    {errors.tax_class && <p className="text-xs text-red-500">{errors.tax_class.message}</p>}
+                                    <Label>GST Rate *</Label>
+                                    <Select
+                                        value={watch('gst_percentage')?.toString()}
+                                        onValueChange={(val) => {
+                                            if (val === 'custom') {
+                                                setValue('gst_percentage', 0)
+                                            } else {
+                                                setValue('gst_percentage', parseInt(val))
+                                            }
+                                        }}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select GST Rate" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="0">0% (Exempt)</SelectItem>
+                                            <SelectItem value="5">5%</SelectItem>
+                                            <SelectItem value="12">12%</SelectItem>
+                                            <SelectItem value="18">18% (Standard)</SelectItem>
+                                            <SelectItem value="28">28%</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    {![0, 5, 12, 18, 28].includes(watch('gst_percentage')) && (
+                                        <div className="flex items-center gap-2 mt-2">
+                                            <Label className="text-xs">Custom %:</Label>
+                                            <Input
+                                                type="number"
+                                                min="0"
+                                                max="100"
+                                                className="w-20 h-8"
+                                                value={watch('gst_percentage')}
+                                                onChange={(e) => setValue('gst_percentage', parseFloat(e.target.value) || 0)}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="space-y-2">
                                     <Label>HSN Code</Label>
-                                    <Input {...register('hsn_code')} />
+                                    <Input {...register('hsn_code')} placeholder="e.g. 9506" />
                                 </div>
                             </div>
 
@@ -319,8 +423,9 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                     value={selectedCategoryId}
                                     onValueChange={(val) => {
                                         setValue('category_id', val)
-                                        setValue('sub_category_id', '') // Reset sub-cat
-                                        setValue('brand_id', '') // Reset brand
+                                        setValue('sub_category_id', '')
+                                        setValue('tag_id', '')
+                                        setValue('brand_id', '')
                                     }}
                                 >
                                     <SelectTrigger>
@@ -341,7 +446,8 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                     value={selectedSubCategoryId}
                                     onValueChange={(val) => {
                                         setValue('sub_category_id', val)
-                                        setValue('brand_id', '') // Reset brand
+                                        setValue('tag_id', '')
+                                        setValue('brand_id', '')
                                     }}
                                     disabled={!selectedCategoryId}
                                 >
@@ -351,6 +457,32 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                     <SelectContent>
                                         {subCategories.map(c => (
                                             <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>Tag (Child Category)</Label>
+                                <Select
+                                    value={watch('tag_id')}
+                                    onValueChange={(val) => {
+                                        setValue('tag_id', val)
+                                        const selectedTag = tags.find(t => t.id.toString() === val)
+                                        if (selectedTag?.brand_ids && selectedTag.brand_ids.length === 1) {
+                                            setValue('brand_id', selectedTag.brand_ids[0].toString())
+                                        } else {
+                                            setValue('brand_id', '')
+                                        }
+                                    }}
+                                    disabled={!selectedSubCategoryId}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder={!selectedSubCategoryId ? "Select Sub-Category first" : "Select Tag (Optional)"} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {tags.map(t => (
+                                            <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -367,7 +499,15 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                         <SelectValue placeholder={!selectedSubCategoryId ? "Select Sub-Category first" : "Select Brand"} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {brands.map(b => (
+                                        {brands.filter(b => {
+                                            const tagId = watch('tag_id')
+                                            if (!tagId) return true
+                                            const selectedTag = tags.find(t => t.id.toString() === tagId)
+                                            if (selectedTag?.brand_ids && selectedTag.brand_ids.length > 0) {
+                                                return selectedTag.brand_ids.includes(b.id.toString())
+                                            }
+                                            return true
+                                        }).map(b => (
                                             <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>
                                         ))}
                                     </SelectContent>
@@ -380,22 +520,31 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                 <TabsContent value="pricing">
                     <Card className="mb-6">
                         <CardContent className="pt-6">
-                            <h3 className="font-semibold mb-4">Base Pricing</h3>
-                            <div className="grid grid-cols-3 gap-4">
+                            <h3 className="font-semibold mb-4 text-red-600">Base Pricing (4 Types)</h3>
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                 <div className="space-y-2">
-                                    <Label>MRP (Base Price) *</Label>
+                                    <Label className="text-blue-700">Dealer Price</Label>
+                                    <Input type="number" {...register('dealer_price')} placeholder="0.00" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-orange-700">Counter Price</Label>
+                                    <Input type="number" {...register('counter_price')} placeholder="0.00" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-red-700">MRP *</Label>
                                     <Input type="number" {...register('mrp_price')} />
                                     {errors.mrp_price && <p className="text-red-500 text-xs">{errors.mrp_price.message}</p>}
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Selling Price *</Label>
-                                    <Input type="number" {...register('selling_price')} />
-                                    {errors.selling_price && <p className="text-red-500 text-xs">{errors.selling_price.message}</p>}
+                                    <Label className="text-green-700">Recommended Price</Label>
+                                    <Input type="number" {...register('recommended_price')} placeholder="0.00" />
                                 </div>
-                                <div className="space-y-2">
-                                    <Label>Dealer Price (Optional)</Label>
-                                    <Input type="number" {...register('dealer_price')} />
-                                </div>
+                            </div>
+                            <div className="mt-4 pt-4 border-t space-y-2">
+                                <Label className="text-gray-900 font-bold">Shop Price (Frontend Display Price) *</Label>
+                                <Input type="number" {...register('shop_price')} className="max-w-[200px] border-2 border-red-200" />
+                                <p className="text-[10px] text-gray-500">This is the price that customers will see on the website.</p>
+                                {errors.shop_price && <p className="text-red-500 text-xs">{errors.shop_price.message}</p>}
                             </div>
                         </CardContent>
                     </Card>
@@ -405,7 +554,7 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                             <div className="flex justify-between items-center mb-4">
                                 <div>
                                     <h3 className="font-semibold">Variants</h3>
-                                    <p className="text-sm text-gray-500">Manage sizes and colors if applicable</p>
+                                    <p className="text-sm text-gray-500">Manage sizes, colors and specific pricing per variant</p>
                                 </div>
                                 <Button type="button" size="sm" variant="outline" onClick={() => appendVariant({ size: '', color: '', price: 0, stock: 0 })}>
                                     <Plus className="w-4 h-4 mr-2" />
@@ -413,23 +562,64 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                 </Button>
                             </div>
 
-                            <div className="space-y-3">
+                            <div className="space-y-4">
                                 {variants.length === 0 && (
                                     <div className="text-center py-8 bg-gray-50 rounded border border-dashed">
                                         <p className="text-gray-500 text-sm">No variants added. Product will look like a single item.</p>
                                     </div>
                                 )}
                                 {variants.map((field, index) => (
-                                    <div key={field.id} className="flex gap-2 items-center bg-gray-50 p-3 rounded border">
-                                        <div className="flex-1 grid grid-cols-4 gap-2">
-                                            <Input placeholder="Size" {...register(`variants.${index}.size`)} />
-                                            <Input placeholder="Color" {...register(`variants.${index}.color`)} />
-                                            <Input type="number" placeholder="Price override" {...register(`variants.${index}.price`)} />
-                                            <Input type="number" placeholder="Stock Qty" {...register(`variants.${index}.stock`)} />
-                                        </div>
-                                        <Button type="button" size="icon" variant="ghost" onClick={() => removeVariant(index)}>
-                                            <X className="w-4 h-4 text-red-500" />
+                                    <div key={field.id} className="relative bg-gray-50 p-4 rounded-lg border group shadow-sm">
+                                        <Button
+                                            type="button"
+                                            size="icon"
+                                            variant="ghost"
+                                            onClick={() => removeVariant(index)}
+                                            className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-white border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            <X className="w-3 h-3 text-red-500" />
                                         </Button>
+
+                                        <div className="grid grid-cols-2 gap-4 mb-4">
+                                            <div className="space-y-1">
+                                                <Label className="text-[10px] uppercase font-bold text-gray-400">Size</Label>
+                                                <Input placeholder="Size" {...register(`variants.${index}.size`)} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-[10px] uppercase font-bold text-gray-400">Color</Label>
+                                                <Input placeholder="Color" {...register(`variants.${index}.color`)} />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-4 gap-2 mb-4">
+                                            <div className="space-y-1">
+                                                <Label className="text-[10px] uppercase font-bold text-gray-400">Dealer</Label>
+                                                <Input type="number" placeholder="Dealer" {...register(`variants.${index}.dealer_price`)} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-[10px] uppercase font-bold text-gray-400">Counter</Label>
+                                                <Input type="number" placeholder="Counter" {...register(`variants.${index}.counter_price`)} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-[10px] uppercase font-bold text-gray-400">MRP</Label>
+                                                <Input type="number" placeholder="MRP" {...register(`variants.${index}.mrp`)} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-[10px] uppercase font-bold text-gray-400">Rec.</Label>
+                                                <Input type="number" placeholder="Rec." {...register(`variants.${index}.recommended_price`)} />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4 border-t pt-3">
+                                            <div className="space-y-1">
+                                                <Label className="text-xs font-bold text-red-600">Shop Price *</Label>
+                                                <Input type="number" placeholder="Price" {...register(`variants.${index}.price`)} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-xs font-bold text-gray-600">Stock Qty</Label>
+                                                <Input type="number" placeholder="Stock" {...register(`variants.${index}.stock`)} />
+                                            </div>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -476,3 +666,4 @@ export function ProductForm({ product, onCancel, onSuccess }) {
         </form>
     )
 }
+

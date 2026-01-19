@@ -1,9 +1,12 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronRight, Filter, Grid, List, Star, Heart, ShoppingCart, MessageCircle, ExternalLink, QrCode } from 'lucide-react'
+import Image from 'next/image'
+
+import { ChevronRight, Filter, Grid, List, TableProperties, Star, Heart, ShoppingCart, MessageCircle, ExternalLink, QrCode, PhoneForwarded } from 'lucide-react'
+
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -13,17 +16,30 @@ import { SiteLayout } from '@/components/layout/SiteLayout'
 import { toast } from 'sonner'
 import { useQuery } from '@tanstack/react-query'
 import { apiCall } from '@/lib/api-client'
+import { EnquiryModal } from '@/components/product/EnquiryModal'
 
-export default function CategoryPage({ categorySlug, subcategorySlug }) {
+
+export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy = [] }) {
   const router = useRouter()
-  const [viewMode, setViewMode] = useState('list')
+  const searchParams = useSearchParams()
+  const [viewMode, setViewMode] = useState('table')
   const [sortBy, setSortBy] = useState('featured')
   const [selectedBrand, setSelectedBrand] = useState('all')
+  const [selectedTag, setSelectedTag] = useState('all')
   const [priceRange, setPriceRange] = useState([0, 200000])
+  const [enquiryOpen, setEnquiryOpen] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState(null)
+
+  const handleEnquire = (product) => {
+    setSelectedProduct(product)
+    setEnquiryOpen(true)
+  }
+
 
   // Reset filters when category/subcategory changes
   useEffect(() => {
     setSelectedBrand('all')
+    setSelectedTag('all')
     setPriceRange([0, 200000])
   }, [categorySlug, subcategorySlug])
 
@@ -49,13 +65,53 @@ export default function CategoryPage({ categorySlug, subcategorySlug }) {
     enabled: !!currentCategory?.id
   })
 
-  // Find current sub-category by matching slug to name
+  // Find current sub-category by matching slug or ID from URL
   const currentSubCategory = useMemo(() => {
-    if (!subcategorySlug || !subCategories.length) return null
-    return subCategories.find(sc =>
-      sc.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === subcategorySlug
-    )
-  }, [subcategorySlug, subCategories])
+    if (!subCategories.length) return null
+
+    // 1. Try matching by slug if provided in URL path
+    if (subcategorySlug) {
+      return subCategories.find(sc =>
+        sc.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === subcategorySlug
+      )
+    }
+
+    // 2. Try matching by "sub" ID from query param (used by Mega Menu)
+    const subId = searchParams.get('sub')
+    if (subId) {
+      return subCategories.find(sc => sc.id === subId)
+    }
+
+    return null
+  }, [subcategorySlug, subCategories, searchParams])
+
+  // Fetch tags for current sub-category
+  const { data: tags = [] } = useQuery({
+    queryKey: ['tags', currentSubCategory?.id],
+    queryFn: async () => {
+      if (!currentSubCategory?.id) return []
+      const result = await apiCall(`/tags?subCategoryId=${currentSubCategory.id}`)
+      return result || []
+    },
+    enabled: !!currentSubCategory?.id
+  })
+
+  // Sync from URL Search Params & Hierarchy
+  useEffect(() => {
+    const brandParam = searchParams.get('brand')
+    const tagParam = searchParams.get('tag')
+
+    if (brandParam) setSelectedBrand(brandParam)
+
+    // If we have a second slug in hierarchy, check if it's a tag
+    const potentialTagSlug = hierarchy[1]
+    if (potentialTagSlug && tags.length > 0) {
+      const foundTag = tags.find(t => t.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === potentialTagSlug)
+      if (foundTag) setSelectedTag(foundTag.id)
+    }
+
+    if (tagParam) setSelectedTag(tagParam)
+  }, [searchParams, hierarchy, tags])
 
   // Fetch contextual brands (only brands with products in selected category/subcategory)
   const { data: brands = [] } = useQuery({
@@ -70,9 +126,10 @@ export default function CategoryPage({ categorySlug, subcategorySlug }) {
     enabled: !!currentCategory?.id
   })
 
+
   // Fetch products with all filters applied
   const { data: productsData, isLoading: productsLoading } = useQuery({
-    queryKey: ['filtered-products', currentCategory?.id, currentSubCategory?.id, selectedBrand, priceRange, sortBy],
+    queryKey: ['filtered-products', currentCategory?.id, currentSubCategory?.id, selectedBrand, selectedTag, priceRange, sortBy],
     queryFn: async () => {
       const params = new URLSearchParams()
       params.append('limit', '500')
@@ -92,6 +149,13 @@ export default function CategoryPage({ categorySlug, subcategorySlug }) {
         params.append('brand', selectedBrand)
       }
 
+      // Tag filter (optional)
+      if (selectedTag && selectedTag !== 'all') {
+        params.append('tag', selectedTag)
+      }
+
+
+
       // Price range filter
       params.append('price_min', priceRange[0].toString())
       params.append('price_max', priceRange[1].toString())
@@ -107,18 +171,28 @@ export default function CategoryPage({ categorySlug, subcategorySlug }) {
 
   const products = productsData?.products || []
 
-  // Group products by brand for display
+  const isTagPage = selectedTag && selectedTag !== 'all';
+  const primaryKey = isTagPage ? 'brand_name' : 'tag_name';
+  const primaryFallback = isTagPage ? 'Other Brands' : 'General';
+
+  // Group products by Primary attribute (Brand or Tag)
   const groupedProducts = useMemo(() => {
     const groups = {}
     products.forEach(product => {
-      const brand = product.brand_name || 'Other Brands'
-      if (!groups[brand]) groups[brand] = []
-      groups[brand].push(product)
+      const val = product[primaryKey] || primaryFallback;
+      if (!groups[val]) groups[val] = []
+      groups[val].push(product);
     })
     return groups
-  }, [products])
+  }, [products, primaryKey, primaryFallback])
 
-  const sortedBrands = Object.keys(groupedProducts).sort()
+  const sortedGroups = useMemo(() => {
+    return Object.keys(groupedProducts).sort((a, b) => {
+      if (a === primaryFallback) return 1;
+      if (b === primaryFallback) return -1;
+      return a.localeCompare(b);
+    })
+  }, [groupedProducts, primaryFallback])
 
   // Loading state
   if (categoriesLoading) {
@@ -172,24 +246,45 @@ export default function CategoryPage({ categorySlug, subcategorySlug }) {
         </div>
       </section>
 
-      {/* Sub-Categories Grid (only show if on main category page) */}
+      {/* Refine Search Chips (only show if on main category page) */}
       {!subcategorySlug && subCategories.length > 0 && (
-        <section className="py-16 bg-white border-b">
+        <section className="py-12 bg-white border-b">
           <div className="container">
-            <h2 className="text-sm font-black uppercase tracking-[0.2em] text-red-600 mb-8">Refine Search</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.25em] text-red-600 mb-6 flex items-center gap-2">
+              <span className="w-8 h-[2px] bg-red-600"></span>
+              Refine Search
+            </h2>
+            <div className="flex flex-wrap gap-3">
               {subCategories.map((subCat) => {
                 const subCatSlug = subCat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+                const hasImage = subCat.image_url && subCat.image_url !== ''
                 return (
                   <Link
                     key={subCat.id}
-                    href={`/category/${categorySlug}/${subCatSlug}`}
-                    className="group p-6 rounded-3xl bg-gray-50 hover:bg-red-600 hover:text-white transition-all duration-500 text-center shadow-sm hover:shadow-xl"
+                    href={`/${categorySlug}/${subCatSlug}`}
+                    className="group flex items-center gap-3 pl-1.5 pr-5 py-1.5 rounded-full bg-white border border-gray-100 hover:border-red-600 hover:bg-red-50/50 transition-all duration-300 shadow-sm hover:shadow-md"
                   >
-                    <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                      <span className="text-2xl">🏆</span>
+                    <div className="w-9 h-9 rounded-full bg-gray-100 overflow-hidden flex-shrink-0 border-2 border-white shadow-sm">
+                      {hasImage ? (
+                        <Image
+                          src={subCat.image_url}
+                          alt={subCat.name}
+                          width={36}
+                          height={36}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-400 text-[10px] font-bold">
+                          {subCat.name[0]}
+                        </div>
+                      )}
                     </div>
-                    <span className="font-bold text-sm block">{subCat.name}</span>
+                    <div className="flex flex-col">
+                      <span className="font-black text-[11px] uppercase tracking-wider text-gray-900 group-hover:text-red-600 transition-colors leading-none">
+                        {subCat.name}
+                      </span>
+                      <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tight mt-0.5">Explore</span>
+                    </div>
                   </Link>
                 )
               })}
@@ -198,121 +293,145 @@ export default function CategoryPage({ categorySlug, subcategorySlug }) {
         </section>
       )}
 
+
       {/* Products Section */}
       <section className="py-20 bg-gray-50">
         <div className="container">
-          {/* Filter Bar */}
-          <div className="sticky top-24 z-30 mb-10 p-4 rounded-3xl bg-white/80 backdrop-blur-md shadow-lg border border-gray-100">
-            <div className="flex flex-col xl:flex-row justify-between items-center gap-6">
-              <div className="flex flex-col lg:flex-row items-center gap-4 w-full xl:w-auto">
-                <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full text-xs font-black uppercase tracking-widest text-gray-500 whitespace-nowrap">
-                  <Filter className="w-3 h-3" /> Filters
-                </div>
+          {/* Unified Compact Filter Bar */}
+          <div className="sticky top-20 z-30 mb-6 p-2 rounded-2xl bg-white/95 backdrop-blur-md shadow-lg border border-gray-100">
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Left Side: Category & Sub-Category */}
+              <div className="flex items-center gap-2">
+                <Select value={categorySlug} onValueChange={(val) => router.push(val === 'all' ? '/products' : `/${val}`)}>
+                  <SelectTrigger className="w-[140px] h-9 rounded-lg border-gray-200 bg-white font-bold text-[10px] uppercase tracking-wide">
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[200]">
+                    <SelectItem value="all" className="font-bold text-[10px] uppercase">All Categories</SelectItem>
+                    {allCategories.map(c => (
+                      <SelectItem key={c.id} value={c.slug} className="font-bold text-[10px] uppercase">{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-                <div className="flex items-center gap-4 w-full overflow-x-auto pb-2 lg:pb-0 no-scrollbar">
-                  {/* Main Category Dropdown */}
-                  <Select value={categorySlug} onValueChange={(val) => router.push(val === 'all' ? '/products' : `/category/${val}`)}>
-                    <SelectTrigger className="min-w-[160px] h-10 rounded-full border-gray-200 bg-white font-bold text-xs uppercase tracking-wide hover:border-red-600 transition-colors">
-                      <SelectValue placeholder="Category" />
-                    </SelectTrigger>
-                    <SelectContent className="z-[200]">
-                      <SelectItem value="all" className="font-bold text-xs uppercase">All Categories</SelectItem>
-                      {allCategories.map(c => (
-                        <SelectItem key={c.id} value={c.slug} className="font-bold text-xs uppercase">{c.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  {/* Sub-Category Dropdown */}
-                  <Select
-                    value={subcategorySlug || "all"}
-                    onValueChange={(val) => {
-                      if (val === 'all') {
-                        router.push(`/category/${categorySlug}`)
-                      } else {
-                        router.push(`/category/${categorySlug}/${val}`)
-                      }
-                    }}
-                    disabled={!subCategories.length}
-                  >
-                    <SelectTrigger className="w-[180px] h-10 rounded-full border-gray-200 bg-white font-bold text-xs uppercase tracking-wide hover:border-red-600 transition-colors">
-                      <SelectValue placeholder="Sub-Category" />
-                    </SelectTrigger>
-                    <SelectContent className="z-[200]">
-                      <SelectItem value="all" className="font-bold text-xs uppercase">All Sub-Categories</SelectItem>
-                      {subCategories.map(sc => {
-                        const slug = sc.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
-                        return (
-                          <SelectItem key={sc.id} value={slug} className="font-bold text-xs uppercase">{sc.name}</SelectItem>
-                        )
-                      })}
-                    </SelectContent>
-                  </Select>
-
-                  {/* Brand Dropdown */}
-                  <Select value={selectedBrand} onValueChange={setSelectedBrand}>
-                    <SelectTrigger className="w-[180px] h-10 rounded-full border-gray-200 bg-white font-bold text-xs uppercase tracking-wide hover:border-red-600 transition-colors">
-                      <SelectValue placeholder="Select Brand" />
-                    </SelectTrigger>
-                    <SelectContent className="z-[200]">
-                      <SelectItem value="all" className="font-bold text-xs uppercase">All Brands</SelectItem>
-                      {brands.map(b => (
-                        <SelectItem key={b.id} value={b.slug || b.id.toString()} className="font-bold text-xs uppercase">{b.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  {/* Price Range Slider */}
-                  <div className="flex items-center gap-4 px-4 h-10 bg-white rounded-full border border-gray-200 min-w-[300px]">
-                    <span className="text-xs font-bold text-gray-500 whitespace-nowrap">Price:</span>
-                    <Slider
-                      defaultValue={[0, 200000]}
-                      max={200000}
-                      step={1000}
-                      value={priceRange}
-                      onValueChange={setPriceRange}
-                      className="w-[120px]"
-                    />
-                    <span className="text-xs font-bold text-gray-900 whitespace-nowrap" suppressHydrationWarning>
-                      ₹{priceRange[0].toLocaleString('en-IN')} - ₹{priceRange[1].toLocaleString('en-IN')}
-                    </span>
-                  </div>
-
-                  {/* Sort Dropdown */}
-                  <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="w-[160px] h-10 rounded-full border-gray-200 bg-white font-bold text-xs uppercase tracking-wide hover:border-red-600 transition-colors">
-                      <SelectValue placeholder="Sort By" />
-                    </SelectTrigger>
-                    <SelectContent className="z-[200]">
-                      <SelectItem value="featured" className="font-bold text-xs uppercase">Featured</SelectItem>
-                      <SelectItem value="price_asc" className="font-bold text-xs uppercase">Price: Low - High</SelectItem>
-                      <SelectItem value="price_desc" className="font-bold text-xs uppercase">Price: High - Low</SelectItem>
-                      <SelectItem value="newest" className="font-bold text-xs uppercase">New Arrivals</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <Select
+                  value={subcategorySlug || "all"}
+                  onValueChange={(val) => {
+                    if (val === 'all') {
+                      router.push(`/${categorySlug}`)
+                    } else {
+                      router.push(`/${categorySlug}/${val}`)
+                    }
+                  }}
+                  disabled={!subCategories.length}
+                >
+                  <SelectTrigger className="w-[140px] h-9 rounded-lg border-gray-200 bg-white font-bold text-[10px] uppercase tracking-wide">
+                    <SelectValue placeholder="Sub-Category" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[200]">
+                    <SelectItem value="all" className="font-bold text-[10px] uppercase">All Sub-Categories</SelectItem>
+                    {subCategories.map(sc => {
+                      const slug = sc.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+                      return (
+                        <SelectItem key={sc.id} value={slug} className="font-bold text-[10px] uppercase">{sc.name}</SelectItem>
+                      )
+                    })}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
-                <div className="hidden md:flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest">
-                  {products.length} Products Found
+              {/* Tag & Brand */}
+              <div className="flex items-center gap-2">
+                {tags.length > 0 && (
+                  <Select value={selectedTag} onValueChange={setSelectedTag}>
+                    <SelectTrigger className="w-[140px] h-9 rounded-lg border-gray-200 bg-white font-bold text-[10px] uppercase tracking-wide">
+                      <SelectValue placeholder="Tag" />
+                    </SelectTrigger>
+                    <SelectContent className="z-[200]">
+                      <SelectItem value="all" className="font-bold text-[10px] uppercase">All Tags</SelectItem>
+                      {tags.map(t => (
+                        <SelectItem key={t.id} value={t.id} className="font-bold text-[10px] uppercase">{t.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+
+                <Select value={selectedBrand} onValueChange={setSelectedBrand}>
+                  <SelectTrigger className="w-[140px] h-9 rounded-lg border-gray-200 bg-white font-bold text-[10px] uppercase tracking-wide">
+                    <SelectValue placeholder="Brand" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[200]">
+                    <SelectItem value="all" className="font-bold text-[10px] uppercase">All Brands</SelectItem>
+                    {brands.map(b => (
+                      <SelectItem key={b.id} value={b.slug || b.id.toString()} className="font-bold text-[10px] uppercase">{b.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Price Filter */}
+              <div className="flex items-center gap-3 px-3 h-9 bg-gray-50 rounded-lg border border-gray-100">
+                <span className="text-[10px] font-black text-gray-400 uppercase">Price</span>
+                <Slider
+                  defaultValue={[0, 200000]}
+                  max={200000}
+                  step={1000}
+                  value={priceRange}
+                  onValueChange={setPriceRange}
+                  className="w-[80px]"
+                />
+                <span className="text-[10px] font-bold text-gray-900 whitespace-nowrap min-w-[100px]" suppressHydrationWarning>
+                  ₹{priceRange[0].toLocaleString('en-IN')} - {priceRange[1].toLocaleString('en-IN')}
+                </span>
+              </div>
+
+              {/* Spacer for XL screens */}
+              <div className="xl:flex-grow"></div>
+
+              {/* Right Side: Sort, Count, Switcher */}
+              <div className="flex items-center gap-3 ml-auto xl:ml-0">
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-[130px] h-9 bg-transparent border-none font-bold text-[10px] uppercase tracking-wide focus:ring-0">
+                    <SelectValue placeholder="Sort By" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[200]">
+                    <SelectItem value="featured" className="font-bold text-[10px] uppercase">Featured</SelectItem>
+                    <SelectItem value="price_asc" className="font-bold text-[10px] uppercase">Price: Low - High</SelectItem>
+                    <SelectItem value="price_desc" className="font-bold text-[10px] uppercase">Price: High - Low</SelectItem>
+                    <SelectItem value="newest" className="font-bold text-[10px] uppercase">New Arrivals</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <div className="h-4 w-px bg-gray-200 mx-1"></div>
+
+                <div className="text-[10px] font-black text-red-600 uppercase tracking-tighter whitespace-nowrap">
+                  {products.length} Products
                 </div>
-                <div className="flex p-1 bg-gray-100 rounded-full">
+
+                <div className="flex bg-gray-100 p-0.5 rounded-lg border border-gray-200">
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size="icon"
                     onClick={() => setViewMode('grid')}
-                    className={`rounded-full px-4 h-8 ${viewMode === 'grid' ? 'bg-white shadow-sm text-red-600' : 'text-gray-400 hover:text-gray-900'}`}
+                    className={`w-7 h-7 rounded-md ${viewMode === 'grid' ? 'bg-white shadow-sm text-red-600' : 'text-gray-400 hover:text-gray-900'}`}
                   >
-                    <Grid className="w-3 h-3" />
+                    <Grid className="w-3.5 h-3.5" />
                   </Button>
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size="icon"
                     onClick={() => setViewMode('list')}
-                    className={`rounded-full px-4 h-8 ${viewMode === 'list' ? 'bg-white shadow-sm text-red-600' : 'text-gray-400 hover:text-gray-900'}`}
+                    className={`w-7 h-7 rounded-md ${viewMode === 'list' ? 'bg-white shadow-sm text-red-600' : 'text-gray-400 hover:text-gray-900'}`}
                   >
-                    <List className="w-3 h-3" />
+                    <List className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setViewMode('table')}
+                    className={`w-7 h-7 rounded-md ${viewMode === 'table' ? 'bg-white shadow-sm text-red-600' : 'text-gray-400 hover:text-gray-900'}`}
+                  >
+                    <TableProperties className="w-3.5 h-3.5" />
                   </Button>
                 </div>
               </div>
@@ -330,22 +449,26 @@ export default function CategoryPage({ categorySlug, subcategorySlug }) {
               <p className="text-gray-500 mb-8">Try adjusting your filters or check back later for new arrivals.</p>
               <Button className="bg-red-600 hover:bg-red-700" onClick={() => router.push('/')}>Browse All Products</Button>
             </div>
+          ) : viewMode === 'table' ? (
+            <ProductTableView products={products} onEnquire={handleEnquire} selectedTag={selectedTag} />
           ) : (
+
             <div className="space-y-20">
-              {sortedBrands.map(brand => (
-                <div key={brand} id={`brand-${brand}`} className="space-y-8 scroll-mt-40">
+              {sortedGroups.map(groupName => (
+                <div key={groupName} id={`group-${groupName.toLowerCase().replace(/\s+/g, '-')}`} className="space-y-8 scroll-mt-40">
                   <div className="flex items-center gap-4">
-                    <h2 className="text-3xl font-black tracking-tight text-gray-900">{brand}</h2>
+                    <h2 className="text-3xl font-black tracking-tight text-gray-900 uppercase">{groupName}</h2>
                     <div className="h-px flex-grow bg-gray-200"></div>
                     <Badge variant="outline" className="rounded-full px-4 py-1 font-bold text-gray-500">
-                      {groupedProducts[brand].length} Items
+                      {groupedProducts[groupName].length} Items
                     </Badge>
                   </div>
 
-                  <div className={`grid gap-8 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1'}`}>
-                    {groupedProducts[brand].map(product => (
-                      <ProductCard key={product.id} product={product} viewMode={viewMode} />
+                  <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-6' : 'grid-cols-1'}`}>
+                    {groupedProducts[groupName].map(product => (
+                      <ProductCard key={product.id} product={product} viewMode={viewMode} onEnquire={handleEnquire} />
                     ))}
+
                   </div>
                 </div>
               ))}
@@ -353,11 +476,117 @@ export default function CategoryPage({ categorySlug, subcategorySlug }) {
           )}
         </div>
       </section>
+      <EnquiryModal
+        open={enquiryOpen}
+        onOpenChange={setEnquiryOpen}
+        product={selectedProduct}
+      />
     </>
+
   )
 }
 
-function ProductCard({ product, viewMode }) {
+function ProductTableView({ products, onEnquire, selectedTag }) {
+  const router = useRouter()
+  const isTagPage = selectedTag && selectedTag !== 'all'
+
+  // Dynamic Grouping Logic
+  const primaryKey = isTagPage ? 'brand_name' : 'tag_name'
+  const secondaryKey = isTagPage ? 'tag_name' : 'brand_name'
+  const primaryFallback = isTagPage ? 'Other Brands' : 'General'
+  const secondaryFallback = isTagPage ? 'General' : 'Other Brands'
+
+  const grouped = useMemo(() => {
+    const data = {}
+    products.forEach(p => {
+      const pVal = p[primaryKey] || primaryFallback
+      const sVal = p[secondaryKey] || secondaryFallback
+
+      if (!data[pVal]) data[pVal] = {}
+      if (!data[pVal][sVal]) data[pVal][sVal] = []
+      data[pVal][sVal].push(p)
+    })
+    return data
+  }, [products, primaryKey, secondaryKey])
+
+  const primaryGroups = Object.keys(grouped).sort((a, b) => {
+    if (a === primaryFallback) return 1
+    if (b === primaryFallback) return -1
+    return a.localeCompare(b)
+  })
+
+  return (
+    <div className="space-y-12">
+      {primaryGroups.map(pName => (
+        <div key={pName} className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+          {/* Primary Header (e.g., Brand or Tag) */}
+          <div className="bg-gray-900 py-2.5 px-6">
+            <h3 className="text-white font-black uppercase tracking-widest text-base">
+              {pName}
+            </h3>
+          </div>
+
+          <div className="overflow-x-auto">
+            {Object.keys(grouped[pName]).sort().map(sName => (
+              <div key={sName} className="border-b last:border-b-0">
+                {/* Secondary Header (e.g., Tag or Brand) */}
+                <div className="bg-gray-50/50 py-1.5 px-6 border-b border-gray-100 flex items-center justify-between">
+                  <span className="text-[10px] font-black text-red-600 uppercase tracking-wider">{sName}</span>
+                  <span className="text-[9px] font-bold text-gray-400 uppercase">{grouped[pName][sName].length} items</span>
+                </div>
+
+                <table className="w-full text-sm text-left">
+                  <thead className="text-[9px] text-gray-400 uppercase bg-white border-b sticky top-0">
+                    <tr>
+                      <th className="px-6 py-3 font-bold w-1/2">Product Name</th>
+                      <th className="px-6 py-3 font-bold font-black text-gray-900">MRP Price</th>
+                      <th className="px-6 py-3 font-bold text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50 text-xs">
+                    {grouped[pName][sName].map(product => (
+                      <tr key={product.id} className="hover:bg-red-50/30 transition-colors group">
+                        <td className="px-6 py-3">
+                          <div className="font-bold text-gray-900">{product.name}</div>
+                          {product.is_featured && <span className="text-[8px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-black uppercase ml-2">Popular</span>}
+                        </td>
+                        <td className="px-6 py-3 font-black text-gray-900">
+                          ₹{product.mrp_price?.toLocaleString('en-IN') || '-'}
+                        </td>
+                        <td className="px-6 py-3 text-right">
+                          <div className="flex items-center justify-end gap-3">
+                            <Link
+                              href={`/product/${product.slug}`}
+                              className="text-gray-400 hover:text-red-600 font-bold uppercase text-[9px] tracking-wide"
+                            >
+                              View
+                            </Link>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => onEnquire(product)}
+                              className="h-7 px-3 text-[9px] font-black uppercase tracking-wider border-gray-200 hover:border-red-600 hover:text-red-600"
+                            >
+                              Enquire
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+
+function ProductCard({ product, viewMode, onEnquire }) {
+
   const router = useRouter()
   const detailUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/product/${product.slug}`
 
@@ -409,27 +638,44 @@ function ProductCard({ product, viewMode }) {
         {/* Price & Action */}
         <div className="flex flex-col items-center md:items-end gap-4 min-w-[200px] w-full md:w-auto mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-gray-100">
           <div className="text-center md:text-right">
-            <span className="block text-2xl font-black text-gray-900 tracking-tighter">₹{product.selling_price?.toLocaleString('en-IN')}</span>
-            {product.discount_percentage > 0 && (
-              <span className="text-sm text-gray-400 line-through font-bold">MRP: ₹{product.mrp_price?.toLocaleString('en-IN')}</span>
+            {product.shop_price && product.shop_price < product.mrp_price ? (
+              <>
+                <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">MRP <span className="line-through">₹{product.mrp_price?.toLocaleString('en-IN')}</span></span>
+                <span className="block text-2xl font-black text-red-600 tracking-tighter leading-none">₹{product.shop_price?.toLocaleString('en-IN')}</span>
+              </>
+            ) : (
+              <>
+                <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">MRP</span>
+                <span className="block text-2xl font-black text-gray-900 tracking-tighter leading-none">₹{product.mrp_price?.toLocaleString('en-IN')}</span>
+              </>
             )}
           </div>
 
-          <div className="flex gap-2 w-full md:w-auto">
+
+          <div className="flex flex-wrap gap-2 w-full md:w-auto">
             <Button
-              className="flex-1 md:flex-none rounded-lg bg-gray-900 hover:bg-red-600 text-white font-bold text-xs h-10 px-6 gap-2 transition-colors"
+              variant="outline"
+              className="flex-1 md:flex-none rounded-lg border-gray-200 hover:border-gray-900 text-gray-900 font-black text-[10px] h-10 px-6 uppercase tracking-widest gap-2 transition-all"
               onClick={() => router.push(`/product/${product.slug}`)}
             >
-              View Details <ChevronRight className="w-3 h-3" />
+              View Details <ChevronRight className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              className="flex-1 md:flex-none rounded-lg bg-gray-900 hover:bg-red-600 text-white font-black text-xs h-10 px-6 gap-2 transition-all duration-300 uppercase tracking-widest"
+              onClick={() => onEnquire(product)}
+            >
+              Enquire <PhoneForwarded className="w-3.5 h-3.5" />
             </Button>
             <Button
               variant="outline"
-              className="rounded-lg border-gray-200 hover:border-red-600 hover:text-red-600 h-10 w-10 p-0"
+              className="rounded-lg border-gray-200 hover:border-red-600 hover:text-red-600 h-10 w-10 p-0 shadow-sm transition-all"
               onClick={() => window.open(`https://wa.me/911234567890?text=Hi, I am interested in ${product.name}`, '_blank')}
             >
               <MessageCircle className="w-4 h-4" />
             </Button>
           </div>
+
+
         </div>
       </div>
     )
@@ -458,17 +704,36 @@ function ProductCard({ product, viewMode }) {
         </h3>
 
         <div className="flex items-end justify-between pt-2">
-          <div>
-            <span className="block text-lg font-black text-gray-900">₹{product.selling_price?.toLocaleString('en-IN')}</span>
-            {product.discount_percentage > 0 && (
-              <span className="text-xs text-gray-400 line-through">₹{product.mrp_price?.toLocaleString('en-IN')}</span>
+          <div className="flex-grow">
+            {product.shop_price && product.shop_price < product.mrp_price ? (
+              <>
+                <span className="block text-[8px] font-black text-gray-400 uppercase tracking-tighter">MRP <span className="line-through">₹{product.mrp_price?.toLocaleString('en-IN')}</span></span>
+                <span className="block text-lg font-black text-red-600 leading-none">₹{product.shop_price?.toLocaleString('en-IN')}</span>
+              </>
+            ) : (
+              <>
+                <span className="block text-[8px] font-black text-gray-400 uppercase tracking-tighter">MRP</span>
+                <span className="block text-lg font-black text-gray-900 leading-none">₹{product.mrp_price?.toLocaleString('en-IN')}</span>
+              </>
             )}
           </div>
-          <Button size="icon" className="h-8 w-8 rounded-full bg-gray-100 hover:bg-red-600 hover:text-white text-gray-900 transition-colors" onClick={() => router.push(`/product/${product.slug}`)}>
-            <ChevronRight className="w-4 h-4" />
-          </Button>
+          <div className="flex gap-1.5 translate-y-1">
+            <Button
+              size="icon"
+              variant="outline"
+              className="h-8 w-8 rounded-full border-gray-100 hover:border-gray-400 hover:bg-gray-50 text-gray-400 hover:text-gray-900 transition-all shadow-sm"
+              onClick={() => router.push(`/product/${product.slug}`)}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+            <Button size="icon" className="h-8 w-8 rounded-full bg-gray-100 hover:bg-red-600 hover:text-white text-gray-900 transition-colors shadow-sm" onClick={() => onEnquire(product)}>
+              <PhoneForwarded className="w-3.5 h-3.5" />
+            </Button>
+          </div>
         </div>
+
       </div>
+
     </div>
   )
 }

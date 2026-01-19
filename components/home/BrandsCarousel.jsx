@@ -17,7 +17,8 @@ export function BrandsCarousel({ initialBrands = [] }) {
 
     return (
         <section className="py-20 bg-white overflow-hidden border-b border-gray-100">
-            <div className="container mb-12 text-center">
+            <div className="w-full px-4 md:px-8 lg:px-12 mb-12 text-center">
+
                 <h2 className="text-sm font-black uppercase tracking-[0.3em] text-red-600 mb-4 animate-fade-in">Our Trusted Partners</h2>
                 <h3 className="text-3xl lg:text-4xl font-black text-gray-900 tracking-tight animate-fade-in delay-75">Supplying Global Brands Since 1988</h3>
             </div>

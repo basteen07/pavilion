@@ -15,7 +15,8 @@ const feed = [
 export function InstagramFeed() {
     return (
         <section className="py-24 bg-gray-50 overflow-hidden">
-            <div className="container">
+            <div className="w-full px-4 md:px-8 lg:px-12">
+
                 <div className="flex flex-col items-center text-center mb-16 space-y-4">
                     <Instagram className="w-12 h-12 text-red-600 mb-2" />
                     <h2 className="text-sm font-black uppercase tracking-[0.3em] text-red-600">@pavilionsports</h2>

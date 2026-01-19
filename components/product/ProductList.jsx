@@ -148,7 +148,7 @@ export default function ProductList({ products = [], loading = false }) {
                                             <TableCell className="text-right pr-8">
                                                 <div className="flex items-center justify-end gap-3">
                                                     <span className="text-lg font-black text-gray-900 tracking-tighter">
-                                                        ₹{Number(product.selling_price || product.mrp_price).toLocaleString()}
+                                                        ₹{Number(product.shop_price || product.mrp_price).toLocaleString()}
                                                     </span>
                                                     {user?.role === 'b2b_user' && user?.b2b_status === 'approved' && (
                                                         <Button

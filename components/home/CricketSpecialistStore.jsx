@@ -37,8 +37,9 @@ export function CricketSpecialistStore() {
     ]
 
     return (
-        <section className="py-24 bg-white overflow-hidden">
-            <div className="container mx-auto px-4">
+        <section className="py-16 bg-white overflow-hidden">
+            <div className="w-full px-4 md:px-8 lg:px-12 mx-auto">
+
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row justify-between items-end gap-10 mb-20 animate-in fade-in slide-in-from-bottom-5 duration-1000">
                     <div className="max-w-3xl">
@@ -111,7 +112,7 @@ export function CricketSpecialistStore() {
                                 </div>
                             </div>
                             <Button
-                                onClick={() => router.push('/category/cricket?sub_category=4')}
+                                onClick={() => router.push('/cricket/bats')}
                                 className="bg-white text-gray-900 hover:bg-red-600 hover:text-white h-14 px-10 rounded-full font-black uppercase tracking-widest text-xs transition-all flex items-center gap-3"
                             >
                                 Shop Professional Bats <ChevronRight className="w-4 h-4" />
@@ -123,7 +124,7 @@ export function CricketSpecialistStore() {
                     <div className="lg:col-span-4 flex flex-col gap-8">
                         {/* Protective Gear Card */}
                         <div
-                            onClick={() => router.push('/category/cricket?sub_category=69,70')}
+                            onClick={() => router.push('/cricket/protective-gears')}
                             className="flex-1 group relative overflow-hidden rounded-[2.5rem] bg-gray-900 cursor-pointer shadow-xl"
                         >
                             <Image
@@ -145,7 +146,7 @@ export function CricketSpecialistStore() {
 
                         {/* Accessories Card */}
                         <div
-                            onClick={() => router.push('/category/cricket?sub_category=72')}
+                            onClick={() => router.push('/cricket/cricket-shoes')}
                             className="flex-1 group relative overflow-hidden rounded-[2.5rem] bg-gray-100 cursor-pointer shadow-xl"
                         >
                             <Image
@@ -174,7 +175,7 @@ export function CricketSpecialistStore() {
                             <h4 className="text-sm font-black uppercase tracking-[0.3em] text-red-600 mb-2 text-center md:text-left">Quick Navigation</h4>
                             <h5 className="text-3xl font-black text-gray-900 tracking-tight text-center md:text-left uppercase">Shop by Specialty</h5>
                         </div>
-                        <Link href="/category/cricket" className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 hover:text-red-600 transition-colors py-2 border-b-2 border-gray-200 hover:border-red-600">
+                        <Link href="/cricket" className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 hover:text-red-600 transition-colors py-2 border-b-2 border-gray-200 hover:border-red-600">
                             Explore Full Catalog
                         </Link>
                     </div>
@@ -190,7 +191,7 @@ export function CricketSpecialistStore() {
                         ].map((sub) => (
                             <div
                                 key={sub.id}
-                                onClick={() => router.push(`/category/cricket?sub_category=${sub.id}`)}
+                                onClick={() => router.push(`/cricket/${sub.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`)}
                                 className="group bg-white p-8 rounded-[2rem] shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all cursor-pointer text-center relative overflow-hidden"
                             >
                                 <div className="absolute inset-0 bg-red-600 translate-y-full group-hover:translate-y-0 transition-transform duration-500 opacity-[0.03]"></div>

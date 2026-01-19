@@ -72,7 +72,8 @@ export function HeroScroller({ initialBanners = [] }) {
                     </div>
 
                     <div className="absolute inset-0 z-20 flex items-center">
-                        <div className="container">
+                        <div className="w-full px-4 md:px-8 lg:px-12">
+
                             <div className="max-w-3xl space-y-6">
                                 <div className="animate-fade-in-up">
                                     <Badge className="bg-red-600 text-white border-none py-1.5 px-4 rounded-full text-xs font-bold uppercase tracking-widest animate-pulse">

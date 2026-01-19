@@ -167,6 +167,24 @@ async function handleRoute(request, { params }) {
       return import('@/lib/api/categories').then(m => m.deleteSubCategory(id));
     }
 
+    // Get tags
+    if (route === '/tags') {
+      const url = new URL(request.url);
+      const subCategoryId = url.searchParams.get('subCategoryId');
+      if (method === 'GET') return import('@/lib/api/categories').then(m => m.getTags(subCategoryId));
+      if (method === 'POST') return import('@/lib/api/categories').then(async m => m.createTag(await request.json()));
+    }
+
+    if (route.startsWith('/tags/') && method === 'PUT') {
+      const id = path[1];
+      return import('@/lib/api/categories').then(async m => m.updateTag(id, await request.json()));
+    }
+
+    if (route.startsWith('/tags/') && method === 'DELETE') {
+      const id = path[1];
+      return import('@/lib/api/categories').then(m => m.deleteTag(id));
+    }
+
     // Get brands
     if (route === '/brands') {
       if (method === 'GET') {
@@ -297,6 +315,22 @@ async function handleRoute(request, { params }) {
       if (method === 'DELETE') return import('@/lib/api/customers').then(m => m.deleteCustomer(id));
     }
 
+    // --- NEW: Customer Types API ---
+    if (route === '/customer-types') {
+      if (method === 'GET') return import('@/lib/api/customer-types').then(m => m.getCustomerTypes());
+      if (method === 'POST') return import('@/lib/api/customer-types').then(async m => m.createCustomerType(await request.json()));
+    }
+
+    if (route.startsWith('/customer-types/') && method === 'PUT') {
+      const id = path[1];
+      return import('@/lib/api/customer-types').then(async m => m.updateCustomerType(id, await request.json()));
+    }
+
+    if (route.startsWith('/customer-types/') && method === 'DELETE') {
+      const id = path[1];
+      return import('@/lib/api/customer-types').then(m => m.deleteCustomerType(id));
+    }
+
     // --- NEW: Quotations API ---
     if (route === '/quotations') {
       if (method === 'GET') {
@@ -397,42 +431,11 @@ async function handleRoute(request, { params }) {
       }));
     }
 
-    // Register (direct route for frontend compatibility)
-    if (route === '/register' && method === 'POST') {
-      const body = await request.json();
-      const { email, password, name, phone } = body;
-
-      if (!email || !password) {
-        return handleCORS(NextResponse.json({ error: 'Email and password required' }, { status: 400 }));
-      }
-
-      const existing = await query('SELECT id FROM users WHERE email = $1', [email]);
-      if (existing.rows.length > 0) {
-        return handleCORS(NextResponse.json({ error: 'Email already registered' }, { status: 400 }));
-      }
-
-      const roleResult = await query("SELECT id FROM roles WHERE name = 'normal_user'");
-      const roleId = roleResult.rows[0]?.id;
-
-      const passwordHash = await hashPassword(password);
-      const result = await query(
-        `INSERT INTO users (email, password_hash, name, phone, role_id, mfa_enabled, is_active) 
-         VALUES ($1, $2, $3, $4, $5, false, true) 
-         RETURNING id, email, name, phone`,
-        [email, passwordHash, name || null, phone || null, roleId]
-      );
-
-      return handleCORS(NextResponse.json({
-        success: true,
-        user: result.rows[0],
-        message: 'Registration successful. Please login.'
-      }));
-    }
-
     // Register
-    if (route === '/auth/register' && method === 'POST') {
+    if ((route === '/auth/register' || route === '/register') && method === 'POST') {
       const body = await request.json();
-      const { email, password, name, phone } = body;
+      const { email, password, name, full_name, phone } = body;
+      const userName = name || full_name;
 
       if (!email || !password) {
         return handleCORS(NextResponse.json({ error: 'Email and password required' }, { status: 400 }));
@@ -451,7 +454,7 @@ async function handleRoute(request, { params }) {
         `INSERT INTO users (email, password_hash, name, phone, role_id, mfa_enabled, is_active) 
          VALUES ($1, $2, $3, $4, $5, false, true) 
          RETURNING id, email, name, phone`,
-        [email, passwordHash, name || null, phone || null, roleId]
+        [email, passwordHash, userName || 'User', phone || null, roleId]
       );
 
       return handleCORS(NextResponse.json({
@@ -474,7 +477,7 @@ async function handleRoute(request, { params }) {
         `SELECT u.*, r.name as role_name 
          FROM users u 
          LEFT JOIN roles r ON u.role_id = r.id 
-         WHERE u.email = $1 AND u.is_active = true`,
+         WHERE u.email = $1`,
         [email]
       );
 
@@ -483,6 +486,14 @@ async function handleRoute(request, { params }) {
       }
 
       const user = result.rows[0];
+
+      if (!user.is_active) {
+        return handleCORS(NextResponse.json({
+          error: 'Account pending approval',
+          message: 'Your account is currently pending admin approval. You will receive an email once it is activated.'
+        }, { status: 403 }));
+      }
+
       const validPassword = await verifyPassword(password, user.password_hash);
 
       if (!validPassword) {
@@ -599,7 +610,7 @@ async function handleRoute(request, { params }) {
       const passwordHash = await hashPassword(password);
       const userResult = await query(
         `INSERT INTO users (email, password_hash, name, phone, role_id, mfa_enabled, is_active) 
-         VALUES ($1, $2, $3, $4, $5, false, true) 
+         VALUES ($1, $2, $3, $4, $5, false, false) 
          RETURNING id, email, name, phone`,
         [email, passwordHash, name || company_name || 'B2B User', phone || null, roleId]
       );
@@ -682,7 +693,7 @@ async function handleRoute(request, { params }) {
 
       for (const item of products) {
         await query(
-          `INSERT INTO order_items (order_id, product_id, product_name, quantity, unit_price, total_price)
+          `INSERT INTO order_items (order_id, product_id, product_name, quantity, unit_price, line_total)
            VALUES ($1, $2, $3, $4, $5, $6)`,
           [orderId, item.product_id, item.name, item.quantity, item.price, item.price * item.quantity]
         );
@@ -1189,6 +1200,13 @@ async function handleRoute(request, { params }) {
          RETURNING *`,
         [status, discount_percentage || 0, customer_id]
       );
+
+      // Update user account activity based on approval
+      if (result.rows.length > 0) {
+        const userId = result.rows[0].user_id;
+        const isActive = status === 'approved';
+        await query('UPDATE users SET is_active = $1 WHERE id = $2', [isActive, userId]);
+      }
 
       const customerData = await query(
         'SELECT u.email FROM b2b_customers c LEFT JOIN users u ON c.user_id = u.id WHERE c.id = $1',

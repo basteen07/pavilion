@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CategoryManager } from '@/components/admin/inventory/CategoryManager'
 import { BrandManager } from '@/components/admin/inventory/BrandManager'
+import { TagManager } from '@/components/admin/inventory/TagManager'
 import { ProductList } from '@/components/admin/inventory/ProductList'
 import { ProductForm } from '@/components/admin/inventory/ProductForm'
 import { CollectionManager } from '@/components/admin/inventory/CollectionManager'
@@ -41,12 +42,13 @@ export function InventoryManagement() {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-5 lg:w-[750px]">
+                <TabsList className="grid w-full grid-cols-6 lg:w-[850px]">
                     <TabsTrigger value="overview">Overview</TabsTrigger>
                     <TabsTrigger value="products">Products</TabsTrigger>
                     <TabsTrigger value="collections">Collections</TabsTrigger>
                     <TabsTrigger value="categories">Categories</TabsTrigger>
                     <TabsTrigger value="brands">Brands</TabsTrigger>
+                    <TabsTrigger value="tags">Tags</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="mt-6">
@@ -79,6 +81,10 @@ export function InventoryManagement() {
 
                 <TabsContent value="brands" className="mt-6">
                     <BrandManager />
+                </TabsContent>
+
+                <TabsContent value="tags" className="mt-6">
+                    <TagManager />
                 </TabsContent>
             </Tabs>
         </div>

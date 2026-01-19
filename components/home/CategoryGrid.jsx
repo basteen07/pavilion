@@ -14,8 +14,9 @@ export function CategoryGrid({ initialCollections = [] }) {
     })
 
     return (
-        <section className="py-24 bg-gray-50">
-            <div className="container">
+        <section className="py-16 bg-gray-50 border-y border-gray-100">
+            <div className="w-full px-4 md:px-8 lg:px-12">
+
                 <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-16">
                     <div className="max-w-2xl">
                         <h2 className="text-sm font-black uppercase tracking-[0.3em] text-red-600 mb-4">Shop by Sport</h2>
@@ -31,7 +32,7 @@ export function CategoryGrid({ initialCollections = [] }) {
                         collections.map((collection, idx) => (
                             <Link
                                 key={collection.id}
-                                href={`/collections/${collection.slug}`}
+                                href={`/${collection.slug}`}
                                 className={`group relative overflow-hidden rounded-3xl h-[400px] lg:h-[500px] shadow-xl hover:shadow-2xl transition-all duration-500 bg-gray-200 ${idx === 0 ? 'lg:col-span-2' : ''
                                     }`}
                             >

@@ -4,7 +4,8 @@ import { QueryProvider } from '@/components/providers/QueryProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
 import { B2BCartProvider } from '@/components/providers/B2BCartProvider'
 import { SiteLayout } from '@/components/layout/SiteLayout'
-import { Inter, Poppins } from 'next/font/google'
+import { Inter, Manrope } from 'next/font/google'
+
 import { query } from '@/lib/simple-db'
 import Script from 'next/script'
 
@@ -14,12 +15,13 @@ const inter = Inter({
   display: 'swap',
 })
 
-const poppins = Poppins({
-  weight: ['300', '400', '500', '600', '700', '800'],
+const manrope = Manrope({
+  weight: ['200', '300', '400', '500', '600', '700', '800'],
   subsets: ['latin'],
-  variable: '--font-poppins',
+  variable: '--font-manrope',
   display: 'swap',
 })
+
 
 async function getSiteSettings() {
   try {
@@ -58,7 +60,8 @@ export default async function RootLayout({ children }) {
   const settings = await getSiteSettings();
 
   return (
-    <html lang="en" className={`${inter.variable} ${poppins.variable}`}>
+    <html lang="en" className={`${inter.variable} ${manrope.variable}`}>
+
       <head>
         {/* Manual font links removed in favor of next/font */}
         {settings.head_scripts && (

@@ -1,0 +1,95 @@
+--- CATEGORIES ---
+[6c4d60e5-3bfb-47d8-be0d-6af7e364a055] Throwball
+  -> [105] Ball
+  -> [106] Nets
+[1023866a-befa-4040-ac6b-fcafb0c44230] Rugby
+  -> [107] Ball
+[fafb9070-832f-4031-bc8c-6f5ed0098ac2] Others
+  -> [110] Ball Gauge
+[44a84765-e75b-48cb-b1b4-f0792d5ce188] Cricket
+  -> [5] Gloves
+     Tags: Batting Glove, Wicket Keeping Glove, Inner Gloves
+  -> [90] Pads
+     Tags: Batting Legguard, Batting Legguard, Wicket Keeping Legguard
+  -> [91] Cricket Balls
+     Tags: Leather Balls, Tennis Balls
+  -> [92] Protective Gears
+     Tags: Helmet, Thigh Pad, Abdomen Guard, Elbow Guard, Chest Guard, Inner Thigh Pad, Shin Guard, Mask
+  -> [93] Practice
+     Tags: Mat, Stumps, Nets
+  -> [94] Accessories
+     Tags: Kit Bag, Grips, Bat Protection Tape, Others
+  -> [95] Cricket Kit
+     Tags: Kit
+  -> [4] Bats
+     Tags: English Willow Cricket Bats, Kashmir Willow Bats, Tennis Ball Bats, Cricket Kit, English Willow, Kashmir Willow
+[8991c917-eec7-4f92-8b54-b7e8630a86ff] Football
+  -> [97] Nets
+  -> [98] Accessories
+     Tags: Goal Keeper Glove, Shin Guard
+  -> [96] Ball
+[dc6d5409-457f-49ba-bf03-5d23a2a0b9b1] Basketball
+  -> [99] Ball
+  -> [100] Accessories
+     Tags: Ball Gauge, Baseball Glove, Ball Hammer
+[2da6fc64-c750-4b49-b9e8-2786745d2ee3] Volleyball
+  -> [101] Ball
+  -> [102] Nets
+  -> [103] Knee Pads
+  -> [104] Volleyball Accessories
+[04f8fd30-9fba-4595-a8ec-2f0ee544fc7f] Handball
+  -> [111] Ball
+  -> [108] Balls
+  -> [109] Nets
+[69f8f0c1-69ac-48e8-a504-406f840a6436] Badminton
+  -> [112] Racket
+  -> [113] Shuttlecock
+  -> [114] Nets
+  -> [115] Strings
+  -> [116] Grip
+  -> [117] Badminton Accessories
+[0d11b597-0290-4e21-b4a3-ac842d7e1698] Table Tennis
+  -> [118] Racket
+  -> [119] Rubber
+  -> [120] Ply
+  -> [121] TT Ball
+  -> [122] TT Table
+  -> [123] Table Tennis Accessories
+     Tags: Wooden Case
+[716d6d92-a299-4c1a-990e-23df701200fc] Squash
+  -> [124] Squash Racket
+  -> [125] Ball
+  -> [126] Squash Accessories
+     Tags: Eyewear
+[4804a83b-a890-443c-9de3-f3d8fd686b66] Tennis
+  -> [127] Tennis Racket
+  -> [128] Tennis Ball
+  -> [129] Strings
+  -> [130] Grip
+  -> [131] Tennis Accessories
+     Tags: Tennis Trainer, Tennis Net, Tennis Net Tape, Tennis Net Wire
+[a4705b36-5444-4ad2-8381-723a47f02adb] Racket Game
+  -> [132] Kitbag
+     Tags: Badminton Kitbag, Squash Kitbag, Tennis Kitbag
+  -> [133] Pickleball Paddle
+  -> [134] Pickleball Accessories
+  -> [135] Ball Badminton Racket
+  -> [136] Ball Badminton Accessories
+     Tags: Woolen Ball, String, Net Wire, Post Fixed
+[06e3cfed-4d2b-42a6-bd7d-0862b83815f8] Fitness Equipment
+  -> [137] Fitness Accessories
+     Tags: Aerobic Stepper, Ankle Weight, Balance Board, Chin Up Bar, Double Exercise Wheel, Dumbell Rod, Fitness Kitbag, Foam Roller, Gym Belt, Hand Grip, Head Band, Hula Hoops, Massage Ball, Massage Twister, Pull up Bar, Push-up Bar, Resistance Band, Resistance Tube, Skipping Rope, Sports Gloves, Trampoline, Yoga Brick
+  -> [138] Fitness Balls
+     Tags: Gym Ball, Medicine Ball, Slam Ball
+  -> [139] Weights - Dumbbells
+  -> [140] Yoga Mats
+[ecd0cc47-334c-421b-be16-c8ef925fd325] Training Equipment
+  -> [141] Training Accessories
+     Tags: Aero Howler, Bowling Trainer, Katchet Board, KatchMax, Parachute, Pugg Goal, Stop Watch, Training Ladder, Whistle, Cone, Hurdles, Tug of War, Tennikoit Ring
+  -> [142] Practice Bats
+     Tags: Batting Practice Bat, Catch Practice Bat
+  -> [143] Training Balls
+     Tags: Bowlers Wonder Ball, Bowling Machine Ball, Base Ball, Golf Ball, Leather Training Ball, Plastic Ball, Poly Coated Ball, Prosoft Ball, Reaction Ball, Seam Ball, Soft Ball, Swing Ball, Synthetic, Turf Ball
+[3bf0b879-941b-4dd3-9309-1369a90c8b5f] General Wellness
+  -> [144] Support & Splints
+     Tags: Ankle Support, Back Support, Elbow Support, Ice Bag, Knee Pad, Knee Support, Shoulder Support, Sports Tape, Sun Screen, Thumb Support, Waist Belt, Waist Trimmer Belt, Wrist Support

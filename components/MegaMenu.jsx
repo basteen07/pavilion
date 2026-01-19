@@ -1,278 +1,273 @@
 'use client'
 
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ChevronDown, ChevronRight, Zap } from 'lucide-react'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 
-export default function MegaMenu({ categories = [], brands = [], collections = [], subCategories = [], isScrolled = false }) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [activeCollectionId, setActiveCollectionId] = useState(null)
-  const [activeCategoryId, setActiveCategoryId] = useState(null)
-  const [activeSubCategoryId, setActiveSubCategoryId] = useState(null) // New State
+// Helper to filter items matching names
+const findCategory = (cats, name) => cats.find(c => c.name.toLowerCase() === name.toLowerCase())
+const filterCategories = (cats, names) => cats.filter(c => names.includes(c.name))
+
+export default function MegaMenu({ categories = [], subCategories = [], tags = [], brands = [], isScrolled = false }) {
+  const [openMenu, setOpenMenu] = useState(null)
   const timeoutRef = useRef(null)
 
-  // Initialize active states
-  useEffect(() => {
-    if (isOpen && collections.length > 0 && !activeCollectionId) {
-      setActiveCollectionId(collections[0].id)
-    }
-  }, [isOpen, collections, activeCollectionId])
-
-  useEffect(() => {
-    // When collection changes, auto-select first category? No, wait for user.
-    // Previous logic was auto-selecting first category. 
-    // Let's keep it but also clear sub-category.
-    if (activeCollectionId) {
-      setActiveCategoryId(null)
-      setActiveSubCategoryId(null)
-      // Optional: Auto-select first category if desired, but user flow implies step-by-step hover.
-      // Let's NOT auto-select category to allow cleaner flow. 
-      // Note: Previous code did this:
-      /*
-      const relatedCats = categories.filter(c => c.parent_collection_id === activeCollectionId)
-      if (relatedCats.length > 0) setActiveCategoryId(relatedCats[0].id)
-      */
-      // I will remove auto-selection of category/subcategory to make the "hover to reveal" interaction explicit.
-    }
-  }, [activeCollectionId])
-
-  useEffect(() => {
-    if (activeCategoryId) {
-      setActiveSubCategoryId(null)
-    }
-  }, [activeCategoryId])
-
-
-  // Get active data
-  const currentCategories = useMemo(() =>
-    categories.filter(c => c.parent_collection_id === activeCollectionId),
-    [categories, activeCollectionId])
-
-  const currentSubCategories = useMemo(() =>
-    subCategories.filter(sc => sc.category_id === activeCategoryId),
-    [subCategories, activeCategoryId])
-
-  const activeCollection = collections.find(c => c.id === activeCollectionId)
-  const activeCategory = categories.find(c => c.id === activeCategoryId)
-
-  // Brands logic: User said "when howver sub categories show the brand". 
-  // Should we filter brands? We don't have brand-subcategory link in frontend props easily.
-  // We'll show ALL brands or Featured brands, but titled "Brands" and only visible/highlighted when sub-cat is active?
-  // Or just show them in 4th column.
-  // "remove the featured brand" -> implicates removing the static "Featured Brands" header/list that was there by default.
-  // So Col 4 is hidden until SubCategory is hovered?
-  // Let's show Col 4 always effectively but populate it based on state.
-  // Actually, if we wait for sub-cat hover, the menu might look empty on the right. 
-  // Let's show it when Category is active? 
-  // User specific request: "when howver sub categories show the brand". 
-  // So I will make Col 4 appear or opacity-100 only when `activeSubCategoryId` is set? 
-  // Or just populate it.
-
-  const handleMouseEnter = () => {
+  const handleMouseEnter = (menuName) => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current)
-    setIsOpen(true)
+    setOpenMenu(menuName)
   }
 
   const handleMouseLeave = () => {
     timeoutRef.current = setTimeout(() => {
-      setIsOpen(false)
-    }, 200)
+      setOpenMenu(null)
+    }, 150)
   }
+
+  // --- DATA PREPARATION ---
+
+  // 1. CRICKET (Specialist)
+  const cricketCat = findCategory(categories, 'Cricket')
+  const cricketSubCats = cricketCat ? subCategories.filter(sc => sc.category_id === cricketCat.id) : []
+
+  // 2. TEAM SPORTS
+  const teamSportNames = ['Football', 'Basketball', 'Volleyball', 'Handball', 'Throwball', 'Rugby', 'Kabaddi'] // Add others as needed
+  const teamSportCats = categories.filter(c => teamSportNames.some(name => c.name.toLowerCase().includes(name.toLowerCase())))
+
+  // 3. INDIVIDUAL GAMES
+  const individualNames = ['Tennis', 'Badminton', 'Table Tennis', 'Squash', 'Pickleball', 'Boxing', 'Swimming', 'Skating', 'Athletics', 'Racket Game']
+  const individualCats = categories.filter(c => individualNames.some(name => c.name.toLowerCase().includes(name.toLowerCase())))
+
+  // 4. FITNESS
+  const fitnessNames = ['Fitness', 'Training', 'Wellness']
+  const fitnessCats = categories.filter(c => fitnessNames.some(name => c.name.toLowerCase().includes(name.toLowerCase())))
+
+  // 5. MORE
+  const excludedIds = [
+    cricketCat?.id,
+    ...teamSportCats.map(c => c.id),
+    ...individualCats.map(c => c.id),
+    ...fitnessCats.map(c => c.id)
+  ].filter(Boolean)
+
+  // Group everything else into "More"
+  const moreCats = categories.filter(c => !excludedIds.includes(c.id))
 
   const topClass = isScrolled ? 'top-[60px]' : 'top-[110px]'
 
-  return (
-    <div className="relative" onMouseLeave={handleMouseLeave}>
-      <button
-        className="flex items-center gap-2 text-[15px] font-bold text-gray-800 hover:text-red-600 transition-colors py-2 uppercase tracking-tight"
-        onMouseEnter={handleMouseEnter}
-      >
-        <span>Products</span>
-        <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
+  // --- RENDER HELPERS ---
 
-      {isOpen && (
-        <div
-          className={`fixed ${topClass} left-1/2 -translate-x-1/2 w-full max-w-[1400px] px-4 z-50 pointer-events-auto transition-[top] duration-300`}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-        >
-          <div className="bg-white rounded-[2rem] shadow-[0_40px_100px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden flex min-h-[500px]">
+  const MegaPanel = ({ children }) => (
+    <div
+      className={`fixed ${topClass} left-0 w-full bg-white/98 backdrop-blur-sm border-t border-gray-100 shadow-[0_8px_30px_rgba(0,0,0,0.08)] z-50 animate-in fade-in slide-in-from-top-1 duration-150`}
+      onMouseEnter={() => handleMouseEnter(openMenu)}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-30"></div>
+      <div className="container mx-auto py-8 px-6">
+        {children}
+      </div>
+    </div>
+  )
 
-            {/* COLUMN 1: COLLECTIONS */}
-            <div className="w-1/5 bg-gray-50 p-6 border-r border-gray-100 flex flex-col gap-2">
-              <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 pl-3">
-                Collections
+  // Render Logic for "Category -> SubCategory" style (Team/Individual)
+  const CategoryGrid = ({ cats }) => (
+    <MegaPanel>
+      <div className="grid grid-cols-5 gap-y-8 gap-x-6">
+        {cats.map(cat => (
+          <div key={cat.id} className="space-y-3">
+            <Link href={`/${cat.slug}`} className="group flex items-center gap-2" onClick={() => setOpenMenu(null)}>
+              <h3 className="font-bold text-gray-900 group-hover:text-red-600 transition-colors uppercase tracking-tight text-sm">
+                {cat.name === 'Team Sports' ? 'Ball Games' : cat.name}
+
               </h3>
-              {collections.map(col => (
-                <button
-                  key={col.id}
-                  className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center justify-between group ${activeCollectionId === col.id
-                    ? 'bg-red-600 text-white shadow-lg shadow-red-200'
-                    : 'hover:bg-white hover:text-red-600 text-gray-700'
-                    }`}
-                  onMouseEnter={() => setActiveCollectionId(col.id)}
-                >
-                  <span className="font-bold text-[14px]">{col.name}</span>
-                  <ChevronRight className={`w-4 h-4 transition-transform ${activeCollectionId === col.id ? 'translate-x-1' : 'opacity-0 group-hover:opacity-100'}`} />
-                </button>
+              <ChevronRight className="w-3 h-3 text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </Link>
+            <ul className="space-y-1.5">
+              {subCategories.filter(sc => sc.category_id === cat.id).map(sub => (
+                <li key={sub.id}>
+                  <Link
+                    href={`/${cat.slug}/${sub.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+                    className="text-[13px] text-gray-500 hover:text-red-600 hover:font-medium transition-colors block"
+                    onClick={() => setOpenMenu(null)}
+                  >
+                    {sub.name}
+                  </Link>
+                </li>
               ))}
-            </div>
+            </ul>
+          </div>
+        ))}
+      </div>
+    </MegaPanel>
+  )
 
-            {/* COLUMN 2: CATEGORIES */}
-            <div className="w-[22%] p-6 border-r border-gray-100 flex flex-col gap-2">
-              <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 pl-3">
-                {activeCollection ? activeCollection.name : 'Categories'}
-              </h3>
-              {activeCollection && (
-                <>
-                  <Link
-                    href={`/collections/${activeCollection.slug}`}
-                    className="mb-4 text-xs font-bold text-red-600 hover:underline px-3"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Browse All &rarr;
-                  </Link>
+  return (
+    <div className="flex items-center gap-1 h-full" onMouseLeave={handleMouseLeave}>
 
-                  {currentCategories.length > 0 ? (
-                    currentCategories.map(cat => (
-                      <button
-                        key={cat.id}
-                        className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center justify-between group ${activeCategoryId === cat.id
-                          ? 'bg-gray-100 text-gray-900 font-bold'
-                          : 'hover:bg-gray-50 text-gray-600'
-                          }`}
-                        onMouseEnter={() => setActiveCategoryId(cat.id)}
-                      >
-                        <div className="flex items-center gap-3">
-                          {cat.image_url && (
-                            <Image
-                              src={cat.image_url}
-                              alt=""
-                              width={24}
-                              height={24}
-                              className="w-6 h-6 rounded-md object-cover"
-                            />
-                          )}
-                          <span className="text-[14px]">{cat.name}</span>
-                        </div>
-                        <ChevronRight className={`w-3 h-3 ${activeCategoryId === cat.id ? 'opacity-100' : 'opacity-0'}`} />
-                      </button>
-                    ))
-                  ) : (
-                    <div className="text-gray-400 text-sm italic px-3">No categories found.</div>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* COLUMN 3: SUB-CATEGORIES */}
-            <div className="w-[22%] p-6 border-r border-gray-100 flex flex-col gap-2">
-              <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 pl-3">
-                {activeCategory ? activeCategory.name : 'Sub-Categories'}
-              </h3>
-              {activeCategory && (
-                <>
-                  <Link
-                    href={`/category/${activeCategory.slug}`}
-                    className="mb-4 text-xs font-bold text-red-600 hover:underline px-3"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Shop All &rarr;
-                  </Link>
-
-                  <div className="flex flex-col gap-1">
-                    {currentSubCategories.length > 0 ? (
-                      currentSubCategories.map(sub => (
-                        <Link
-                          key={sub.id}
-                          href={`/category/${activeCategory.slug}?sub=${sub.id}`}
-                          className={`flex items-center gap-3 p-2 rounded-lg transition-all group ${activeSubCategoryId === sub.id ? 'bg-gray-100' : 'hover:bg-gray-50'
-                            }`}
-                          onMouseEnter={() => setActiveSubCategoryId(sub.id)}
-                          onClick={() => setIsOpen(false)}
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-gray-200 shrink-0 overflow-hidden">
-                            {sub.image_url ? (
-                              <Image
-                                src={sub.image_url}
-                                alt=""
-                                width={32}
-                                height={32}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">IMG</div>
-                            )}
-                          </div>
-                          <span className="text-[13px] font-medium text-gray-700 group-hover:text-red-600 transition-colors">
-                            {sub.name}
-                          </span>
-                          {activeSubCategoryId === sub.id && <ChevronRight className="w-3 h-3 ml-auto text-gray-400" />}
-                        </Link>
-                      ))
+      {/* 1. CRICKET */}
+      <div className="relative h-full flex items-center">
+        <Link
+          href={cricketCat ? `/${cricketCat.slug}` : '/'}
+          className={`px-3 py-2 text-[14px] font-bold uppercase tracking-tight hover:text-red-600 transition-colors flex items-center gap-1 ${openMenu === 'Cricket' ? 'text-red-600' : 'text-gray-800'}`}
+          onMouseEnter={() => handleMouseEnter('Cricket')}
+        >
+          Cricket <ChevronDown className={`w-3 h-3 transition-transform ${openMenu === 'Cricket' ? 'rotate-180' : ''}`} />
+        </Link>
+        {openMenu === 'Cricket' && (
+          <MegaPanel>
+            {/* Cricket uses SubCategory -> Tags structure */}
+            <div className="grid grid-cols-5 gap-8">
+              {cricketSubCats.map(sub => {
+                const subTags = tags.filter(t => t.sub_category_id === sub.id)
+                return (
+                  <div key={sub.id} className="space-y-3">
+                    <Link
+                      href={`/${cricketCat.slug}/${sub.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+                      className="font-bold text-gray-900 hover:text-red-600 transition-colors uppercase text-sm block border-b border-gray-100 pb-2"
+                      onClick={() => setOpenMenu(null)}
+                    >
+                      {sub.name}
+                    </Link>
+                    {subTags.length > 0 ? (
+                      <ul className="space-y-1.5">
+                        {subTags.map(tag => (
+                          <li key={tag.id}>
+                            <Link
+                              href={`/${cricketCat.slug}/${tag.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+                              className="text-[13px] text-gray-500 hover:text-red-600 transition-colors block"
+                              onClick={() => setOpenMenu(null)}
+                            >
+                              {tag.name}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
                     ) : (
-                      <div className="text-gray-400 text-sm italic px-3">No items found.</div>
+                      <p className="text-xs text-gray-300 italic">No specific types</p>
                     )}
                   </div>
-                </>
-              )}
+                )
+              })}
             </div>
+          </MegaPanel>
+        )}
+      </div>
 
-            {/* COLUMN 4: BRANDS */}
-            <div className="flex-1 p-8 bg-white flex flex-col gap-6">
-              {activeSubCategoryId ? (
-                <div className="animate-in fade-in slide-in-from-left-4 duration-300">
-                  <h3 className="text-[11px] font-black text-red-600 uppercase tracking-[0.2em] mb-6">
-                    Available Brands
-                  </h3>
-                  <div className="grid grid-cols-3 gap-4">
-                    {brands
-                      .filter(b => {
-                        const sub = subCategories.find(s => s.id === activeSubCategoryId);
-                        return sub?.brand_ids?.includes(b.id);
-                      })
-                      .map(brand => (
-                        <Link
-                          key={brand.id}
-                          href={`/brands/${brand.id}`} // Or slug
-                          className="flex flex-col items-center justify-center p-3 rounded-xl border border-gray-100 hover:border-red-200 hover:shadow-lg transition-all group bg-white gap-2"
-                          onClick={() => setIsOpen(false)}
-                        >
-                          {brand.logo_url ? (
-                            // "Image make size little bit and show with color"
-                            <div className="h-12 w-full flex items-center justify-center relative">
-                              <Image
-                                src={brand.logo_url}
-                                alt={brand.name}
-                                fill
-                                className="object-contain"
-                                sizes="(max-width: 768px) 33vw, 20vw"
-                              />
-                            </div>
-                          ) : (
-                            <span className="text-[11px] font-bold text-gray-600 group-hover:text-red-600">{brand.name}</span>
-                          )}
-                          <span className="text-[10px] font-medium text-gray-400 group-hover:text-red-600 transition-colors">{brand.name}</span>
-                        </Link>
-                      ))}
-                  </div>
-                  {/* Fallback if no brands found for this sub-category */}
-                  {brands.filter(b => subCategories.find(s => s.id === activeSubCategoryId)?.brand_ids?.includes(b.id)).length === 0 && (
-                    <div className="text-gray-400 text-sm italic">No brands specific to this category found.</div>
-                  )}
+      {/* 2. TEAM SPORTS */}
+      <div className="relative h-full flex items-center">
+        <button
+          className={`px-3 py-2 text-[14px] font-bold uppercase tracking-tight hover:text-red-600 transition-colors flex items-center gap-1 ${openMenu === 'TeamSports' ? 'text-red-600' : 'text-gray-800'}`}
+          onMouseEnter={() => handleMouseEnter('TeamSports')}
+        >
+          Ball Games <ChevronDown className={`w-3 h-3 transition-transform ${openMenu === 'TeamSports' ? 'rotate-180' : ''}`} />
+
+        </button>
+        {openMenu === 'TeamSports' && <CategoryGrid cats={teamSportCats} />}
+      </div>
+
+      {/* 3. INDIVIDUAL GAMES */}
+      <div className="relative h-full flex items-center">
+        <button
+          className={`px-3 py-2 text-[14px] font-bold uppercase tracking-tight hover:text-red-600 transition-colors flex items-center gap-1 ${openMenu === 'Individual' ? 'text-red-600' : 'text-gray-800'}`}
+          onMouseEnter={() => handleMouseEnter('Individual')}
+        >
+          Individual Games <ChevronDown className={`w-3 h-3 transition-transform ${openMenu === 'Individual' ? 'rotate-180' : ''}`} />
+        </button>
+        {openMenu === 'Individual' && <CategoryGrid cats={individualCats} />}
+      </div>
+
+      {/* 4. FITNESS & TRAINING */}
+      <div className="relative h-full flex items-center">
+        <button
+          className={`px-3 py-2 text-[14px] font-bold uppercase tracking-tight hover:text-red-600 transition-colors flex items-center gap-1 ${openMenu === 'Fitness' ? 'text-red-600' : 'text-gray-800'}`}
+          onMouseEnter={() => handleMouseEnter('Fitness')}
+        >
+          Fitness & Training <ChevronDown className={`w-3 h-3 transition-transform ${openMenu === 'Fitness' ? 'rotate-180' : ''}`} />
+        </button>
+        {openMenu === 'Fitness' && <CategoryGrid cats={fitnessCats} />}
+      </div>
+
+      {/* 5. MORE (Includes Categories + Corporate Links) */}
+      <div className="relative h-full flex items-center">
+        <button
+          className={`px-3 py-2 text-[14px] font-bold uppercase tracking-tight hover:text-red-600 transition-colors flex items-center gap-1 ${openMenu === 'More' ? 'text-red-600' : 'text-gray-800'}`}
+          onMouseEnter={() => handleMouseEnter('More')}
+        >
+          More <ChevronDown className={`w-3 h-3 transition-transform ${openMenu === 'More' ? 'rotate-180' : ''}`} />
+        </button>
+        {openMenu === 'More' && (
+          <MegaPanel>
+            <div className="flex gap-12">
+              <div className="flex-1">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">More Categories</h3>
+                <div className="grid grid-cols-4 gap-y-8 gap-x-6">
+                  {moreCats.map(cat => (
+                    <div key={cat.id} className="space-y-3">
+                      <Link
+                        href={`/${cat.slug}`}
+                        className="group flex items-center gap-2"
+                        onClick={() => setOpenMenu(null)}
+                      >
+                        <h3 className="font-bold text-gray-900 group-hover:text-red-600 transition-colors uppercase tracking-tight text-sm">
+                          {cat.name === 'Team Sports' ? 'Ball Games' : cat.name}
+                        </h3>
+                        <ChevronRight className="w-3 h-3 text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </Link>
+                      <ul className="space-y-1.5">
+                        {subCategories.filter(sc => sc.category_id === cat.id).map(sub => (
+                          <li key={sub.id}>
+                            <Link
+                              href={`/${cat.slug}/${sub.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+                              className="text-[13px] text-gray-500 hover:text-red-600 hover:font-medium transition-colors block"
+                              onClick={() => setOpenMenu(null)}
+                            >
+                              {sub.name}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
                 </div>
-              ) : (
-                <div className="h-full flex items-center justify-center text-gray-300 text-sm font-medium tracking-wider uppercase">
-                  Select a sub-category to view brands
-                </div>
-              )}
+              </div>
+
+              {/* Right Side: Corporate / Quick Links */}
+              <div className="w-64 border-l border-gray-100 pl-12 bg-gray-50/50 -my-8 py-8">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">Explore Pavilion</h3>
+                <ul className="space-y-4">
+                  <li>
+                    <Link href="/brands" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                      Brands
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/gallery" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                      Know Your Sport
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/about" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                      About Us
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/careers" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                      Careers
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/contact" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                      Contact Us
+                    </Link>
+                  </li>
+                </ul>
+              </div>
             </div>
+          </MegaPanel>
+        )}
+      </div>
 
-          </div>
-        </div>
-      )}
     </div>
   )
 }
