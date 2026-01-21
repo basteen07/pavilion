@@ -155,7 +155,7 @@ export default function CustomerDetailPage({ params }) {
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Link href={`/admin/inventory/quotations/new?customer_id=${id}`}>
+                    <Link href={`/admin/quotations?new=true&customer_id=${id}`}>
                         <Button variant="outline">
                             <Plus className="w-4 h-4 mr-2" />
                             New Quotation
@@ -358,7 +358,7 @@ export default function CustomerDetailPage({ params }) {
                             <div className="text-center py-12 text-muted-foreground">
                                 <FileText className="w-12 h-12 mx-auto text-gray-200 mb-4" />
                                 <p className="text-sm">No quotations generated yet</p>
-                                <Link href={`/admin/inventory/quotations/new?customer_id=${id}`}>
+                                <Link href={`/admin/quotations?new=true&customer_id=${id}`}>
                                     <Button variant="outline" size="sm" className="mt-4">Create First Quote</Button>
                                 </Link>
                             </div>
@@ -377,7 +377,7 @@ export default function CustomerDetailPage({ params }) {
                                         </div>
                                         <div className="flex items-center justify-between mt-4">
                                             <p className="text-sm font-bold">₹{parseFloat(quote.total_amount).toLocaleString()}</p>
-                                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="flex gap-2 transition-opacity">
                                                 {quote.status === 'Draft' && (
                                                     <Button
                                                         size="sm"

@@ -128,7 +128,6 @@ export default function ProductDetailPage({ productSlug }) {
               <div className="mb-8">
                 <div className="flex items-center gap-4 mb-4">
                   <span className="px-3 py-1 rounded-full bg-red-50 text-red-600 text-[10px] font-black uppercase tracking-widest">{product.brand_name}</span>
-                  <span className="text-xs font-bold text-gray-400 tracking-tighter uppercase">SKU: {product.sku || 'PS-AUTO-2024'}</span>
                 </div>
                 <h1 className="text-4xl lg:text-6xl font-black text-gray-900 tracking-tighter leading-none mb-6">
                   {product.name}
@@ -225,39 +224,48 @@ export default function ProductDetailPage({ productSlug }) {
       {/* A+ Content Section */}
       <section className="py-24 bg-gray-50">
         <div className="container">
-          <div className="max-w-4xl mx-auto space-y-24">
-            {/* Description Tab Style */}
-            <div className="space-y-12">
-              <div className="text-center">
-                <h2 className="text-4xl lg:text-5xl font-black text-gray-900 tracking-tighter mb-6 uppercase">The Craftsmanship</h2>
-                <p className="text-xl text-gray-500 font-medium">{product.description || 'Our commitment to excellence ensures every piece of equipment meets the highest professional standards.'}</p>
-              </div>
+          <div className="max-w-4xl mx-auto">
+            {product.a_plus_content ? (
+              <div
+                className="prose prose-lg max-w-none prose-headings:font-black prose-headings:tracking-tighter prose-headings:uppercase prose-p:text-gray-600 prose-p:font-medium prose-p:leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: product.a_plus_content }}
+              />
+            ) : (
+              <div className="space-y-24">
+                {/* Description Tab Style */}
+                <div className="space-y-12">
+                  <div className="text-center">
+                    <h2 className="text-4xl lg:text-5xl font-black text-gray-900 tracking-tighter mb-6 uppercase">The Craftsmanship</h2>
+                    <p className="text-xl text-gray-500 font-medium">{product.description || 'Our commitment to excellence ensures every piece of equipment meets the highest professional standards.'}</p>
+                  </div>
 
-              {/* Graphic Features */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-                <div className="text-center space-y-4">
-                  <div className="w-16 h-16 rounded-full bg-red-600 text-white flex items-center justify-center mx-auto shadow-xl">
-                    <Zap className="w-8 h-8" />
+                  {/* Graphic Features */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                    <div className="text-center space-y-4">
+                      <div className="w-16 h-16 rounded-full bg-red-600 text-white flex items-center justify-center mx-auto shadow-xl">
+                        <Zap className="w-8 h-8" />
+                      </div>
+                      <h4 className="font-black uppercase tracking-widest text-sm">Ultra Performance</h4>
+                      <p className="text-sm text-gray-500 font-medium leading-relaxed">Engineered for explosive power and lightning response in competitive scenarios.</p>
+                    </div>
+                    <div className="text-center space-y-4">
+                      <div className="w-16 h-16 rounded-full bg-gray-900 text-white flex items-center justify-center mx-auto shadow-xl">
+                        <Shield className="w-8 h-8" />
+                      </div>
+                      <h4 className="font-black uppercase tracking-widest text-sm">Elite Durability</h4>
+                      <p className="text-sm text-gray-500 font-medium leading-relaxed">Tested against extreme impact to ensure longevity throughout multi-season professional use.</p>
+                    </div>
+                    <div className="text-center space-y-4">
+                      <div className="w-16 h-16 rounded-full bg-red-600 text-white flex items-center justify-center mx-auto shadow-xl">
+                        <Award className="w-8 h-8" />
+                      </div>
+                      <h4 className="font-black uppercase tracking-widest text-sm">Certified Grade</h4>
+                      <p className="text-sm text-gray-500 font-medium leading-relaxed">Conforms to international sporting regulations and professional match standards.</p>
+                    </div>
                   </div>
-                  <h4 className="font-black uppercase tracking-widest text-sm">Ultra Performance</h4>
-                  <p className="text-sm text-gray-500 font-medium leading-relaxed">Engineered for explosive power and lightning response in competitive scenarios.</p>
-                </div>
-                <div className="text-center space-y-4">
-                  <div className="w-16 h-16 rounded-full bg-gray-900 text-white flex items-center justify-center mx-auto shadow-xl">
-                    <Shield className="w-8 h-8" />
-                  </div>
-                  <h4 className="font-black uppercase tracking-widest text-sm">Elite Durability</h4>
-                  <p className="text-sm text-gray-500 font-medium leading-relaxed">Tested against extreme impact to ensure longevity throughout multi-season professional use.</p>
-                </div>
-                <div className="text-center space-y-4">
-                  <div className="w-16 h-16 rounded-full bg-red-600 text-white flex items-center justify-center mx-auto shadow-xl">
-                    <Award className="w-8 h-8" />
-                  </div>
-                  <h4 className="font-black uppercase tracking-widest text-sm">Certified Grade</h4>
-                  <p className="text-sm text-gray-500 font-medium leading-relaxed">Conforms to international sporting regulations and professional match standards.</p>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Technical Detail */}
             <div className="p-12 lg:p-20 rounded-[4rem] bg-white shadow-2xl">
@@ -270,7 +278,6 @@ export default function ProductDetailPage({ productSlug }) {
                   { label: 'Category', value: product.category_name },
                   { label: 'Material', value: 'Aerospace Grade Carbon / Willow' },
                   { label: 'Weight', value: 'Professional Standard' },
-                  { label: 'SKU', value: product.sku },
                   { label: 'Warranty', value: '12 Months Comprehensive' }
                 ].map((spec, i) => (
                   <div key={i} className="space-y-2">
@@ -311,7 +318,6 @@ export default function ProductDetailPage({ productSlug }) {
                     <div className="flex items-center gap-3">
                       <span className="text-[8px] font-black text-gray-400 uppercase tracking-tighter">MRP</span>
                       <span className="text-xl font-black text-gray-900 tracking-tighter leading-none">₹{p.mrp_price?.toLocaleString('en-IN')}</span>
-                      <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest ml-auto">SKU: {p.sku || 'N/A'}</span>
                     </div>
 
                   </div>

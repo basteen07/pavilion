@@ -1,6 +1,6 @@
 'use client'
 import Image from 'next/image';
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Search, ShoppingCart, User, Menu, Phone, Mail, Instagram, Facebook, Twitter, ChevronDown } from 'lucide-react'
@@ -21,21 +21,75 @@ import { useAuth } from '@/components/providers/AuthProvider'
 export function SiteHeader({ categories = [], brands = [], collections = [], subCategories = [], tags = [] }) {
     const router = useRouter()
     const { user, logout } = useAuth()
+    const [isVisible, setIsVisible] = useState(true)
     const [isScrolled, setIsScrolled] = useState(false)
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
+    // Using a ref for scroll tracking to avoid re-renders on every scroll
+    const lastScrollTop = useRef(0);
+
     useEffect(() => {
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > 20)
-        }
-        window.addEventListener('scroll', handleScroll)
-        return () => window.removeEventListener('scroll', handleScroll)
-    }, [])
+        const threshold = 10;
+        let ticking = false;
+
+        const updateHeader = () => {
+            const currentScrollY = window.scrollY;
+
+            // Check threshold
+            if (Math.abs(currentScrollY - lastScrollTop.current) < threshold) {
+                ticking = false;
+                return;
+            }
+
+            // Determine visibility
+            let nextVisible = true;
+            if (currentScrollY > 110) { // Increased from 100 for better margin
+                if (currentScrollY > lastScrollTop.current) {
+                    nextVisible = false; // Scrolling down
+                } else {
+                    nextVisible = true; // Scrolling up
+                }
+            } else {
+                nextVisible = true; // Always show at top
+            }
+
+            // Update states
+            setIsVisible(nextVisible);
+            setIsScrolled(currentScrollY > 20);
+
+            // Update CSS variables for other sticky elements
+            const hHeight = window.innerWidth < 1024 ? 64 : (currentScrollY > 20 ? 64 : 80);
+            const visibleHeight = nextVisible ? hHeight : 0;
+            document.documentElement.style.setProperty('--nav-visible-height', `${visibleHeight}px`);
+
+            lastScrollTop.current = currentScrollY;
+            ticking = false;
+        };
+
+        const onScroll = () => {
+            if (!ticking) {
+                window.requestAnimationFrame(updateHeader);
+                ticking = true;
+            }
+        };
+
+        // Initialize values
+        lastScrollTop.current = window.scrollY;
+        updateHeader();
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', updateHeader);
+
+        return () => {
+            window.removeEventListener('scroll', onScroll);
+            window.removeEventListener('resize', updateHeader);
+        };
+    }, []);
 
     return (
         <>
-            {/* Top Bar */}
-            <div className="bg-gray-900 text-white py-2.5 hidden md:block border-b border-gray-800/50">
+            {/* Top Bar - Normal flow, scrolls away */}
+            <div className={`bg-gray-900 text-white py-2.5 hidden md:block border-b border-gray-800/50 transition-opacity duration-300 ${isScrolled ? 'opacity-0 h-0 py-0 overflow-hidden' : 'opacity-100'}`}>
                 <div className="container flex justify-between items-center text-xs">
                     <div className="flex items-center gap-8">
                         <a href="tel:+911234567890" className="flex items-center gap-2 hover:text-red-400 transition-colors">
@@ -48,9 +102,9 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                     <div className="flex items-center gap-5">
                         <span className="text-gray-500 text-[10px] uppercase tracking-wider font-bold">Follow us</span>
                         <div className="flex items-center gap-4">
-                            <Instagram className="w-4 h-4 cursor-pointer hover:text-red-400 transition-colors" aria-label="Instagram" role="button" tabIndex={0} />
-                            <Facebook className="w-4 h-4 cursor-pointer hover:text-red-400 transition-colors" aria-label="Facebook" role="button" tabIndex={0} />
-                            <Twitter className="w-4 h-4 cursor-pointer hover:text-red-400 transition-colors" aria-label="Twitter" role="button" tabIndex={0} />
+                            <Instagram className="w-4 h-4 cursor-pointer hover:text-red-400 transition-colors" />
+                            <Facebook className="w-4 h-4 cursor-pointer hover:text-red-400 transition-colors" />
+                            <Twitter className="w-4 h-4 cursor-pointer hover:text-red-400 transition-colors" />
                         </div>
                     </div>
                 </div>
@@ -58,13 +112,14 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
 
             {/* Main Header */}
             <header
-                className={`sticky top-0 z-[100] transition-all duration-300 ${isScrolled
-                    ? 'bg-white/95 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.06)] py-2'
-                    : 'bg-white py-4 border-b border-gray-100'
+                className={`sticky top-0 z-[100] transition-all duration-300 transform ${isVisible ? 'translate-y-0' : '-translate-y-full'
+                    } ${isScrolled
+                        ? 'bg-white/95 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.06)] h-16'
+                        : 'bg-white h-20 border-b border-gray-100'
                     }`}
             >
-                <div className="container">
-                    <div className="flex items-center justify-between">
+                <div className="container h-full">
+                    <div className="flex items-center justify-between h-full">
                         {/* Logo */}
                         <Link href="/" className="flex items-center" aria-label="Pavilion Sports Home">
                             <Image
@@ -78,7 +133,7 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                         </Link>
 
                         {/* Desktop Navigation */}
-                        <nav className="hidden lg:flex items-center gap-8">
+                        <nav className="hidden lg:flex items-center gap-8 h-full">
                             <MegaMenu
                                 categories={categories}
                                 brands={brands}
@@ -92,10 +147,10 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                             </Link>
 
                             <DropdownMenu>
-                                <DropdownMenuTrigger className="text-[14px] font-bold uppercase tracking-tight text-gray-800 hover:text-red-600 transition-colors focus:outline-none flex items-center gap-1">
+                                <DropdownMenuTrigger className="text-[14px] font-bold uppercase tracking-tight text-gray-800 hover:text-red-600 transition-colors focus:outline-none flex items-center gap-1 h-full">
                                     Info <ChevronDown className="w-3 h-3" />
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-48 z-[200]">
+                                <DropdownMenuContent align="end" className="w-48 z-[200]" sideOffset={0}>
                                     <DropdownMenuItem asChild>
                                         <Link href="/about" className="cursor-pointer">About Us</Link>
                                     </DropdownMenuItem>
@@ -134,114 +189,85 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
 
                     </div>
                 </div>
-            </header>
+            </header >
             {/* Mobile Menu Overlay */}
-            {isMobileMenuOpen && (
-                <div className="fixed inset-0 z-[110] lg:hidden">
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} aria-hidden="true" />
-                    <div className="fixed inset-y-0 right-0 w-full max-w-xs bg-white shadow-2xl p-6 overflow-y-auto animate-in slide-in-from-right duration-300 flex flex-col">
-                        <div className="flex justify-between items-center mb-6">
-                            <span className="text-xl font-black text-gray-900 border-b-2 border-red-600 pb-1">MENU</span>
-                            <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 hover:text-red-600 transition-colors" aria-label="Close Menu">
-                                <Menu className="w-6 h-6" />
-                            </button>
-                        </div>
+            {
+                isMobileMenuOpen && (
+                    <div className="fixed inset-0 z-[110] lg:hidden">
+                        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} aria-hidden="true" />
+                        <div className="fixed inset-y-0 right-0 w-full max-w-xs bg-white shadow-2xl p-6 overflow-y-auto animate-in slide-in-from-right duration-300 flex flex-col">
+                            <div className="flex justify-between items-center mb-6">
+                                <span className="text-xl font-black text-gray-900 border-b-2 border-red-600 pb-1">MENU</span>
+                                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 hover:text-red-600 transition-colors" aria-label="Close Menu">
+                                    <Menu className="w-6 h-6" />
+                                </button>
+                            </div>
 
-                        <div className="flex-1 overflow-y-auto space-y-6 pr-2">
-                            {/* 1. CRICKET */}
-                            <MobileAccordion title="Cricket" isOpen={true}> {/* Default open */}
-                                {categories.find(c => c.name === 'Cricket') && subCategories
-                                    .filter(sc => sc.category_id === categories.find(c => c.name === 'Cricket').id)
-                                    .map(sub => (
-                                        <div key={sub.id} className="pl-4 border-l border-gray-100 ml-2">
-                                            <div className="font-bold text-sm text-gray-800 py-1">{sub.name}</div>
+                            <div className="flex-1 overflow-y-auto space-y-6 pr-2">
+                                {/* 1. CRICKET */}
+                                <MobileAccordion title="Cricket" isOpen={true}> {/* Default open */}
+                                    {categories.find(c => c.name === 'Cricket') && subCategories
+                                        .filter(sc => sc.category_id === categories.find(c => c.name === 'Cricket').id)
+                                        .map(sub => (
+                                            <div key={sub.id} className="pl-4 border-l border-gray-100 ml-2">
+                                                <div className="font-bold text-sm text-gray-800 py-1">{sub.name}</div>
+                                                <div className="flex flex-col gap-1 pl-2">
+                                                    {tags.filter(t => t.sub_category_id === sub.id).map(tag => (
+                                                        <Link
+                                                            key={tag.id}
+                                                            href={`/${categories.find(c => c.name === 'Cricket').slug}/${tag.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+                                                            className="text-xs text-gray-500 hover:text-red-600 py-1 block"
+                                                            onClick={() => setIsMobileMenuOpen(false)}
+                                                        >
+                                                            {tag.name}
+                                                        </Link>
+                                                    ))}
+                                                    {tags.filter(t => t.sub_category_id === sub.id).length === 0 && (
+                                                        <Link
+                                                            href={`/${categories.find(c => c.name === 'Cricket').slug}/${sub.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+                                                            className="text-xs text-gray-400 italic py-1 block"
+                                                            onClick={() => setIsMobileMenuOpen(false)}
+                                                        >
+                                                            View All
+                                                        </Link>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                </MobileAccordion>
+
+                                {/* 2. BALL GAMES (Collection: Team Sports) */}
+                                <MobileAccordion title="Ball Games">
+
+                                    {categories.filter(c => ['Football', 'Basketball', 'Volleyball', 'Handball', 'Throwball', 'Rugby', 'Kabaddi'].some(n => c.name.includes(n))).map(cat => (
+                                        <div key={cat.id} className="pl-4 border-l border-gray-100 ml-2 mb-3">
+                                            <Link
+                                                href={`/${cat.slug}`}
+                                                className="font-bold text-sm text-gray-800 py-1 block hover:text-red-600"
+                                                onClick={() => setIsMobileMenuOpen(false)}
+                                            >
+                                                {cat.name === 'Team Sports' ? 'Ball Games' : cat.name}
+
+                                            </Link>
                                             <div className="flex flex-col gap-1 pl-2">
-                                                {tags.filter(t => t.sub_category_id === sub.id).map(tag => (
+                                                {subCategories.filter(sc => sc.category_id === cat.id).map(sub => (
                                                     <Link
-                                                        key={tag.id}
-                                                        href={`/${categories.find(c => c.name === 'Cricket').slug}/${tag.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+                                                        key={sub.id}
+                                                        href={`/${cat.slug}/${sub.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
                                                         className="text-xs text-gray-500 hover:text-red-600 py-1 block"
                                                         onClick={() => setIsMobileMenuOpen(false)}
                                                     >
-                                                        {tag.name}
+                                                        {sub.name}
                                                     </Link>
                                                 ))}
-                                                {tags.filter(t => t.sub_category_id === sub.id).length === 0 && (
-                                                    <Link
-                                                        href={`/${categories.find(c => c.name === 'Cricket').slug}/${sub.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
-                                                        className="text-xs text-gray-400 italic py-1 block"
-                                                        onClick={() => setIsMobileMenuOpen(false)}
-                                                    >
-                                                        View All
-                                                    </Link>
-                                                )}
                                             </div>
                                         </div>
                                     ))}
-                            </MobileAccordion>
+                                </MobileAccordion>
 
-                            {/* 2. BALL GAMES (Collection: Team Sports) */}
-                            <MobileAccordion title="Ball Games">
-
-                                {categories.filter(c => ['Football', 'Basketball', 'Volleyball', 'Handball', 'Throwball', 'Rugby', 'Kabaddi'].some(n => c.name.includes(n))).map(cat => (
-                                    <div key={cat.id} className="pl-4 border-l border-gray-100 ml-2 mb-3">
-                                        <Link
-                                            href={`/${cat.slug}`}
-                                            className="font-bold text-sm text-gray-800 py-1 block hover:text-red-600"
-                                            onClick={() => setIsMobileMenuOpen(false)}
-                                        >
-                                            {cat.name === 'Team Sports' ? 'Ball Games' : cat.name}
-
-                                        </Link>
-                                        <div className="flex flex-col gap-1 pl-2">
-                                            {subCategories.filter(sc => sc.category_id === cat.id).map(sub => (
-                                                <Link
-                                                    key={sub.id}
-                                                    href={`/${cat.slug}/${sub.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
-                                                    className="text-xs text-gray-500 hover:text-red-600 py-1 block"
-                                                    onClick={() => setIsMobileMenuOpen(false)}
-                                                >
-                                                    {sub.name}
-                                                </Link>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                            </MobileAccordion>
-
-                            {/* 3. INDIVIDUAL GAMES */}
-                            <MobileAccordion title="Individual Games">
-                                {categories.filter(c => ['Tennis', 'Badminton', 'Table Tennis', 'Squash', 'Pickleball', 'Boxing', 'Swimming', 'Skating', 'Athletics', 'Racket Game'].some(n => c.name.includes(n))).map(cat => (
-                                    <div key={cat.id} className="pl-4 border-l border-gray-100 ml-2 mb-3">
-                                        <Link
-                                            href={`/${cat.slug}`}
-                                            className="font-bold text-sm text-gray-800 py-1 block hover:text-red-600"
-                                            onClick={() => setIsMobileMenuOpen(false)}
-                                        >
-                                            {cat.name}
-                                        </Link>
-                                        <div className="flex flex-col gap-1 pl-2">
-                                            {subCategories.filter(sc => sc.category_id === cat.id).map(sub => (
-                                                <Link
-                                                    key={sub.id}
-                                                    href={`/${cat.slug}/${sub.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
-                                                    className="text-xs text-gray-500 hover:text-red-600 py-1 block"
-                                                    onClick={() => setIsMobileMenuOpen(false)}
-                                                >
-                                                    {sub.name}
-                                                </Link>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                            </MobileAccordion>
-
-                            {/* 4. FITNESS */}
-                            <MobileAccordion title="Fitness & Training">
-                                {(() => {
-                                    const fitnessCats = categories.filter(c => ['Fitness', 'Training', 'Wellness'].some(n => c.name.toLowerCase().includes(n.toLowerCase())));
-                                    if (fitnessCats.length === 0) return <p className="text-xs text-gray-400 pl-4 py-2">No items found</p>;
-                                    return fitnessCats.map(cat => (
+                                {/* 3. INDIVIDUAL GAMES */}
+                                <MobileAccordion title="Individual Games">
+                                    {categories.filter(c => ['Tennis', 'Badminton', 'Table Tennis', 'Squash', 'Pickleball', 'Boxing', 'Swimming', 'Skating', 'Athletics', 'Racket Game'].some(n => c.name.includes(n))).map(cat => (
                                         <div key={cat.id} className="pl-4 border-l border-gray-100 ml-2 mb-3">
                                             <Link
                                                 href={`/${cat.slug}`}
@@ -263,61 +289,92 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                                                 ))}
                                             </div>
                                         </div>
-                                    ));
-                                })()}
-                            </MobileAccordion>
+                                    ))}
+                                </MobileAccordion>
 
-                            {/* 5. MORE */}
-                            <MobileAccordion title="More">
-                                <div className="space-y-4 pt-2">
-                                    {/* Remaining Categories */}
-                                    <div>
-                                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 pl-2">Categories</h4>
-                                        {categories.filter(c => !['Cricket'].includes(c.name) &&
-                                            !['Fitness', 'Training', 'Wellness'].some(n => c.name.toLowerCase().includes(n.toLowerCase())) &&
-                                            !['Football', 'Basketball', 'Volleyball', 'Handball', 'Throwball', 'Rugby', 'Kabaddi'].some(n => c.name.includes(n)) &&
-                                            !['Tennis', 'Badminton', 'Table Tennis', 'Squash', 'Pickleball', 'Boxing', 'Swimming', 'Skating', 'Athletics', 'Racket Game'].some(n => c.name.includes(n))
-                                        ).map(cat => (
-                                            <Link
-                                                key={cat.id}
-                                                href={`/${cat.slug}`}
-                                                className="block pl-4 py-1.5 text-sm text-gray-600 hover:text-red-600 border-l border-gray-100 ml-2"
-                                                onClick={() => setIsMobileMenuOpen(false)}
-                                            >
-                                                {cat.name === 'Team Sports' ? 'Ball Games' : cat.name}
+                                {/* 4. FITNESS */}
+                                <MobileAccordion title="Fitness & Training">
+                                    {(() => {
+                                        const fitnessCats = categories.filter(c => ['Fitness', 'Training', 'Wellness'].some(n => c.name.toLowerCase().includes(n.toLowerCase())));
+                                        if (fitnessCats.length === 0) return <p className="text-xs text-gray-400 pl-4 py-2">No items found</p>;
+                                        return fitnessCats.map(cat => (
+                                            <div key={cat.id} className="pl-4 border-l border-gray-100 ml-2 mb-3">
+                                                <Link
+                                                    href={`/${cat.slug}`}
+                                                    className="font-bold text-sm text-gray-800 py-1 block hover:text-red-600"
+                                                    onClick={() => setIsMobileMenuOpen(false)}
+                                                >
+                                                    {cat.name}
+                                                </Link>
+                                                <div className="flex flex-col gap-1 pl-2">
+                                                    {subCategories.filter(sc => sc.category_id === cat.id).map(sub => (
+                                                        <Link
+                                                            key={sub.id}
+                                                            href={`/${cat.slug}/${sub.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+                                                            className="text-xs text-gray-500 hover:text-red-600 py-1 block"
+                                                            onClick={() => setIsMobileMenuOpen(false)}
+                                                        >
+                                                            {sub.name}
+                                                        </Link>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ));
+                                    })()}
+                                </MobileAccordion>
 
-                                            </Link>
-                                        ))}
-                                    </div>
+                                {/* 5. MORE */}
+                                <MobileAccordion title="More">
+                                    <div className="space-y-4 pt-2">
+                                        {/* Remaining Categories */}
+                                        <div>
+                                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 pl-2">Categories</h4>
+                                            {categories.filter(c => !['Cricket'].includes(c.name) &&
+                                                !['Fitness', 'Training', 'Wellness'].some(n => c.name.toLowerCase().includes(n.toLowerCase())) &&
+                                                !['Football', 'Basketball', 'Volleyball', 'Handball', 'Throwball', 'Rugby', 'Kabaddi'].some(n => c.name.includes(n)) &&
+                                                !['Tennis', 'Badminton', 'Table Tennis', 'Squash', 'Pickleball', 'Boxing', 'Swimming', 'Skating', 'Athletics', 'Racket Game'].some(n => c.name.includes(n))
+                                            ).map(cat => (
+                                                <Link
+                                                    key={cat.id}
+                                                    href={`/${cat.slug}`}
+                                                    className="block pl-4 py-1.5 text-sm text-gray-600 hover:text-red-600 border-l border-gray-100 ml-2"
+                                                    onClick={() => setIsMobileMenuOpen(false)}
+                                                >
+                                                    {cat.name === 'Team Sports' ? 'Ball Games' : cat.name}
 
-                                    {/* Corporate Links */}
-                                    <div>
-                                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 pl-2">Explore Pavilion</h4>
-                                        <div className="flex flex-col gap-2 pl-4 border-l border-gray-100 ml-2">
-                                            <Link href="/brands" className="text-sm font-medium text-gray-700 hover:text-red-600" onClick={() => setIsMobileMenuOpen(false)}>Brands</Link>
-                                            <Link href="/gallery" className="text-sm font-medium text-gray-700 hover:text-red-600" onClick={() => setIsMobileMenuOpen(false)}>Know Your Sport</Link>
-                                            <Link href="/about" className="text-sm font-medium text-gray-700 hover:text-red-600" onClick={() => setIsMobileMenuOpen(false)}>About Us</Link>
-                                            <Link href="/careers" className="text-sm font-medium text-gray-700 hover:text-red-600" onClick={() => setIsMobileMenuOpen(false)}>Careers</Link>
-                                            <Link href="/contact" className="text-sm font-medium text-gray-700 hover:text-red-600" onClick={() => setIsMobileMenuOpen(false)}>Contact Us</Link>
+                                                </Link>
+                                            ))}
+                                        </div>
+
+                                        {/* Corporate Links */}
+                                        <div>
+                                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 pl-2">Explore Pavilion</h4>
+                                            <div className="flex flex-col gap-2 pl-4 border-l border-gray-100 ml-2">
+                                                <Link href="/brands" className="text-sm font-medium text-gray-700 hover:text-red-600" onClick={() => setIsMobileMenuOpen(false)}>Brands</Link>
+                                                <Link href="/gallery" className="text-sm font-medium text-gray-700 hover:text-red-600" onClick={() => setIsMobileMenuOpen(false)}>Know Your Sport</Link>
+                                                <Link href="/about" className="text-sm font-medium text-gray-700 hover:text-red-600" onClick={() => setIsMobileMenuOpen(false)}>About Us</Link>
+                                                <Link href="/careers" className="text-sm font-medium text-gray-700 hover:text-red-600" onClick={() => setIsMobileMenuOpen(false)}>Careers</Link>
+                                                <Link href="/contact" className="text-sm font-medium text-gray-700 hover:text-red-600" onClick={() => setIsMobileMenuOpen(false)}>Contact Us</Link>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </MobileAccordion>
+                                </MobileAccordion>
+
+                            </div>
+
+                            <div className="border-t pt-6 space-y-3 mt-4">
+                                <Button className="w-full bg-red-600 hover:bg-red-700 text-white font-bold" onClick={() => { router.push('/gallery'); setIsMobileMenuOpen(false); }}>
+                                    View Gallery
+                                </Button>
+                                <Button variant="outline" className="w-full" onClick={() => { router.push('/about'); setIsMobileMenuOpen(false); }}>
+                                    About Us
+                                </Button>
+                            </div>
 
                         </div>
-
-                        <div className="border-t pt-6 space-y-3 mt-4">
-                            <Button className="w-full bg-red-600 hover:bg-red-700 text-white font-bold" onClick={() => { router.push('/gallery'); setIsMobileMenuOpen(false); }}>
-                                View Gallery
-                            </Button>
-                            <Button variant="outline" className="w-full" onClick={() => { router.push('/about'); setIsMobileMenuOpen(false); }}>
-                                About Us
-                            </Button>
-                        </div>
-
                     </div>
-                </div>
-            )}
+                )
+            }
         </>)
 }
 

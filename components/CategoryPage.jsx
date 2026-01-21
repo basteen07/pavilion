@@ -345,25 +345,28 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
         </div>
       </section>
 
-      {/* Category Quick Access Chips */}
-      <section className="py-6 bg-white border-b">
+      {/* Category Quick Access Chips - Sticky with Header Offset */}
+      <div
+        className="bg-white/95 backdrop-blur-sm border-b sticky lg:static z-40 lg:z-auto shadow-sm transition-all duration-300 py-3"
+        style={{ top: 'var(--nav-visible-height, 72px)' }}
+      >
         <div className="w-full px-4 lg:px-6">
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide lg:flex-wrap lg:overflow-visible">
+          <div className="flex gap-3 overflow-x-auto pb-1.5 scrollbar-hide lg:flex-wrap lg:overflow-visible touch-pan-x snap-x">
             {allCategories.map((cat) => (
               <Link
                 key={cat.id}
                 href={`/${cat.slug}`}
-                className={`group flex items-center gap-2 pl-1 pr-4 py-1 rounded-full border 
-                  ${cat.slug === categorySlug ? 'border-red-600 bg-red-50' : 'border-gray-200 bg-white hover:border-red-600 hover:bg-red-50/50'}
-                  transition-all duration-200 shrink-0 shadow-sm`}
+                className={`group flex items-center gap-2 pl-1.5 pr-4 py-1.5 rounded-full border shrink-0 snap-start
+                  ${cat.slug === categorySlug ? 'border-red-600 bg-red-50 ring-1 ring-red-600/20' : 'border-gray-200 bg-white hover:border-red-600 hover:bg-red-50/50'}
+                  transition-all duration-200 shadow-sm`}
               >
-                <div className="w-8 h-8 rounded-full bg-gray-100 overflow-hidden border border-gray-100 group-hover:border-red-200 transition-colors">
+                <div className="w-7 h-7 rounded-full bg-gray-100 overflow-hidden border border-gray-100 group-hover:border-red-200 transition-colors">
                   {cat.image_url ? (
                     <Image
                       src={cat.image_url}
                       alt={cat.name}
-                      width={32}
-                      height={32}
+                      width={28}
+                      height={28}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -372,14 +375,14 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
                     </div>
                   )}
                 </div>
-                <span className={`text-xs font-bold whitespace-nowrap ${cat.slug === categorySlug ? 'text-red-700' : 'text-gray-700 group-hover:text-red-700'} transition-colors`}>
+                <span className={`text-[11px] font-bold whitespace-nowrap ${cat.slug === categorySlug ? 'text-red-700' : 'text-gray-700 group-hover:text-red-700'} transition-colors uppercase tracking-tight`}>
                   {cat.name}
                 </span>
               </Link>
             ))}
           </div>
         </div>
-      </section>
+      </div>
 
       {/* Refine Search Chips (only show if on main category page) */}
       {!subcategorySlug && subCategories.length > 0 && (
@@ -432,7 +435,10 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
       {/* Products Section */}
       <section className="bg-gray-50 min-h-screen">
         {/* Unified Full-Width Filter Bar - Desktop */}
-        <div className="hidden lg:block sticky top-20 z-30 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm transition-all duration-300">
+        <div
+          className="hidden lg:block sticky z-30 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm transition-all duration-300"
+          style={{ top: 'var(--nav-visible-height, 80px)' }}
+        >
           <div className="w-full px-4 lg:px-6 py-3">
             <div className="flex flex-wrap items-center gap-3">
               {/* Left Side: Category & Sub-Category */}
@@ -579,7 +585,10 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
         <div className="container py-12">
 
           {/* Mobile Filter Bar (Sticky) */}
-          <div className="lg:hidden sticky top-16 z-30 mb-4 px-4">
+          <div
+            className="lg:hidden sticky z-30 mb-4 px-4 transition-all duration-300"
+            style={{ top: 'calc(var(--nav-visible-height, 64px) + 54px)' }}
+          >
             <div className="flex items-center justify-between p-3 bg-white/95 backdrop-blur-md rounded-xl shadow-lg border border-gray-100">
               <div className="text-xs font-bold text-gray-900">
                 {products.length} Products

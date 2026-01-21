@@ -53,13 +53,13 @@ export default function MegaMenu({ categories = [], subCategories = [], tags = [
   // Group everything else into "More"
   const moreCats = categories.filter(c => !excludedIds.includes(c.id))
 
-  const topClass = isScrolled ? 'top-[60px]' : 'top-[110px]'
+
 
   // --- RENDER HELPERS ---
 
   const MegaPanel = ({ children }) => (
     <div
-      className={`fixed ${topClass} left-0 w-full bg-white border-t border-gray-100 shadow-lg z-50 animate-in fade-in slide-in-from-top-1 duration-150`}
+      className={`absolute top-full left-0 w-full bg-white border-t border-gray-100 shadow-lg z-50 animate-in fade-in slide-in-from-top-1 duration-150`}
       onMouseEnter={() => handleMouseEnter(openMenu)}
       onMouseLeave={handleMouseLeave}
     >
@@ -105,7 +105,7 @@ export default function MegaMenu({ categories = [], subCategories = [], tags = [
     <div className="flex items-center gap-1 h-full" onMouseLeave={handleMouseLeave}>
 
       {/* 1. CRICKET */}
-      <div className="relative h-full flex items-center">
+      <div className="h-full flex items-center">
         <Link
           href={cricketCat ? `/${cricketCat.slug}` : '/'}
           className={`px-3 py-2 text-[14px] font-bold uppercase tracking-tight hover:text-red-600 transition-colors flex items-center gap-1 ${openMenu === 'Cricket' ? 'text-red-600' : 'text-gray-800'}`}
@@ -154,7 +154,7 @@ export default function MegaMenu({ categories = [], subCategories = [], tags = [
       </div>
 
       {/* 2. TEAM SPORTS */}
-      <div className="relative h-full flex items-center">
+      <div className="h-full flex items-center">
         <button
           className={`px-3 py-2 text-[14px] font-bold uppercase tracking-tight hover:text-red-600 transition-colors flex items-center gap-1 ${openMenu === 'TeamSports' ? 'text-red-600' : 'text-gray-800'}`}
           onMouseEnter={() => handleMouseEnter('TeamSports')}
@@ -166,7 +166,7 @@ export default function MegaMenu({ categories = [], subCategories = [], tags = [
       </div>
 
       {/* 3. INDIVIDUAL GAMES */}
-      <div className="relative h-full flex items-center">
+      <div className="h-full flex items-center">
         <button
           className={`px-3 py-2 text-[14px] font-bold uppercase tracking-tight hover:text-red-600 transition-colors flex items-center gap-1 ${openMenu === 'Individual' ? 'text-red-600' : 'text-gray-800'}`}
           onMouseEnter={() => handleMouseEnter('Individual')}
@@ -177,7 +177,7 @@ export default function MegaMenu({ categories = [], subCategories = [], tags = [
       </div>
 
       {/* 4. FITNESS & TRAINING */}
-      <div className="relative h-full flex items-center">
+      <div className="h-full flex items-center">
         <button
           className={`px-3 py-2 text-[14px] font-bold uppercase tracking-tight hover:text-red-600 transition-colors flex items-center gap-1 ${openMenu === 'Fitness' ? 'text-red-600' : 'text-gray-800'}`}
           onMouseEnter={() => handleMouseEnter('Fitness')}
@@ -188,7 +188,7 @@ export default function MegaMenu({ categories = [], subCategories = [], tags = [
       </div>
 
       {/* 5. MORE (Includes Categories + Corporate Links) */}
-      <div className="relative h-full flex items-center">
+      <div className="h-full flex items-center">
         <button
           className={`px-3 py-2 text-[14px] font-bold uppercase tracking-tight hover:text-red-600 transition-colors flex items-center gap-1 ${openMenu === 'More' ? 'text-red-600' : 'text-gray-800'}`}
           onMouseEnter={() => handleMouseEnter('More')}

@@ -35,12 +35,12 @@ export function EnquiryModal({ open, onOpenChange, product }) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-3xl p-0 overflow-hidden rounded-2xl border-none">
-                <div className="grid grid-cols-1 md:grid-cols-2">
+            <DialogContent className="w-[92vw] sm:max-w-[440px] md:max-w-3xl p-0 overflow-hidden rounded-2xl border-none max-h-[92vh] overflow-y-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 h-full">
                     {/* Left Column: Form */}
-                    <div className="p-6 lg:p-8 bg-white">
-                        <DialogHeader className="mb-6">
-                            <DialogTitle className="text-2xl font-bold text-gray-900">
+                    <div className="p-4 md:p-8 bg-white">
+                        <DialogHeader className="mb-4 md:mb-6">
+                            <DialogTitle className="text-lg md:text-2xl font-bold text-gray-900">
                                 Enquire Now
                             </DialogTitle>
                             <p className="text-sm text-gray-500 mt-1">Fill the form below and we'll get back to you shortly.</p>
@@ -73,7 +73,7 @@ export function EnquiryModal({ open, onOpenChange, product }) {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div className="space-y-1.5">
                                     <Label htmlFor="phone" className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Phone</Label>
                                     <div className="relative">
@@ -130,25 +130,27 @@ export function EnquiryModal({ open, onOpenChange, product }) {
                         {/* Logo - Blended with background */}
                         <div className="relative z-10">
                             <div className="w-32 h-12 relative">
-                                <Image
+                               <center> <Image
                                     src="/sk-logo.png"
                                     alt="Logo"
                                     fill
                                     className="object-contain"
-                                />
-                            </div>
+                                /></center>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                <br/>
+                             <center> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<h3 className="text-white text-base md:text-lg font-bold relative">Sportskhel</h3></center> 
+                            </div> 
                         </div>
 
                         {/* Center Content */}
-                        <div className="relative z-10 text-center py-8">
-                            <h3 className="text-white text-lg font-bold mb-2">Prefer to Shop Online?</h3>
-                            <p className="text-gray-400 text-sm mb-6">Buy this product directly from our trusted partner store.</p>
+                        <div className="relative z-10text-center py-6 md:py-8">
+                            <h3 className="text-white text-base md:text-lg font-bold mb-2">Prefer to Shop Online?</h3>
+                            <p className="text-gray-400 text-xs md:text-sm mb-6">Buy this product directly from our trusted partner store.</p>
 
                             {product.buy_url ? (
                                 <Button
                                     asChild
                                     size="lg"
-                                    className="h-14 px-8 rounded-xl bg-white text-gray-900 hover:bg-red-600 hover:text-white font-bold text-sm gap-3 shadow-xl transition-all"
+                                    className="h-12 md:h-14 px-6 md:px-8 rounded-xl bg-white text-gray-900 hover:bg-red-600 hover:text-white font-bold text-xs md:text-sm gap-3 shadow-xl transition-all w-full md:w-auto"
                                 >
                                     <Link href={product.buy_url} target="_blank">
                                         <ShoppingCart className="w-5 h-5" />
@@ -170,7 +172,7 @@ export function EnquiryModal({ open, onOpenChange, product }) {
                             </p>
                         </div>
                     </div>
-                </div>
+                </div> 
             </DialogContent>
         </Dialog>
     )
