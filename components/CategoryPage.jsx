@@ -5,18 +5,20 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 
-import { ChevronRight, Filter, Grid, List, TableProperties, Star, Heart, ShoppingCart, MessageCircle, ExternalLink, QrCode, PhoneForwarded } from 'lucide-react'
+import { ChevronRight, Filter, Grid, List, TableProperties, Star, Heart, ShoppingCart, MessageCircle, ExternalLink, QrCode, PhoneForwarded, X } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
 import { Card } from '@/components/ui/card'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { SiteLayout } from '@/components/layout/SiteLayout'
 import { toast } from 'sonner'
 import { useQuery } from '@tanstack/react-query'
 import { apiCall } from '@/lib/api-client'
 import { EnquiryModal } from '@/components/product/EnquiryModal'
+
 
 
 export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy = [] }) {
@@ -29,6 +31,7 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
   const [priceRange, setPriceRange] = useState([0, 200000])
   const [enquiryOpen, setEnquiryOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState(null)
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false)
 
   const handleEnquire = (product) => {
     setSelectedProduct(product)
@@ -95,6 +98,30 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
     },
     enabled: !!currentSubCategory?.id
   })
+
+  // URL Hash Updates for Navigation Context
+  useEffect(() => {
+    const hash = []
+    // Only include filters that are NOT part of the URL path structure
+    if (selectedTag && selectedTag !== 'all') {
+      const tagName = tags.find(t => t.id === selectedTag)?.name
+      if (tagName) hash.push(tagName.toLowerCase().replace(/[^a-z0-9]+/g, '-'))
+    }
+
+    if (typeof window !== 'undefined') {
+      const newHash = hash.length > 0 ? `#${hash.join('/')}` : ''
+      // Only update if it changed to avoid loops
+      if (window.location.hash !== newHash) {
+        if (newHash) {
+          window.history.replaceState(null, '', newHash)
+        } else {
+          // Remove hash entirely if empty
+          // replaceState with just pathname + search keeps the URL clean
+          window.history.replaceState(null, '', window.location.pathname + window.location.search)
+        }
+      }
+    }
+  }, [selectedTag, tags])
 
   // Sync from URL Search Params & Hierarchy
   useEffect(() => {
@@ -247,6 +274,42 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
         </div>
       </section>
 
+      {/* Category Quick Access Chips */}
+      <section className="py-6 bg-white border-b">
+        <div className="container">
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide lg:flex-wrap lg:overflow-visible">
+            {allCategories.map((cat) => (
+              <Link
+                key={cat.id}
+                href={`/${cat.slug}`}
+                className={`group flex items-center gap-2 pl-1 pr-4 py-1 rounded-full border 
+                  ${cat.slug === categorySlug ? 'border-red-600 bg-red-50' : 'border-gray-200 bg-white hover:border-red-600 hover:bg-red-50/50'}
+                  transition-all duration-200 shrink-0 shadow-sm`}
+              >
+                <div className="w-8 h-8 rounded-full bg-gray-100 overflow-hidden border border-gray-100 group-hover:border-red-200 transition-colors">
+                  {cat.image_url ? (
+                    <Image
+                      src={cat.image_url}
+                      alt={cat.name}
+                      width={32}
+                      height={32}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-gray-400">
+                      {cat.name[0]}
+                    </div>
+                  )}
+                </div>
+                <span className={`text-xs font-bold whitespace-nowrap ${cat.slug === categorySlug ? 'text-red-700' : 'text-gray-700 group-hover:text-red-700'} transition-colors`}>
+                  {cat.name}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Refine Search Chips (only show if on main category page) */}
       {!subcategorySlug && subCategories.length > 0 && (
         <section className="py-12 bg-white border-b">
@@ -298,8 +361,8 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
       {/* Products Section */}
       <section className="py-20 bg-gray-50">
         <div className="container">
-          {/* Unified Compact Filter Bar */}
-          <div className="sticky top-20 z-30 mb-6 p-2 rounded-2xl bg-white/95 backdrop-blur-md shadow-lg border border-gray-100">
+          {/* Unified Compact Filter Bar - Desktop */}
+          <div className="hidden lg:block sticky top-20 z-30 mb-6 p-2 rounded-2xl bg-white/95 backdrop-blur-md shadow-lg border border-gray-100">
             <div className="flex flex-wrap items-center gap-3">
               {/* Left Side: Category & Sub-Category */}
               <div className="flex items-center gap-2 p-1 bg-gray-50/50 rounded-lg border border-gray-100">
@@ -437,6 +500,152 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
                     <TableProperties className="w-3.5 h-3.5" />
                   </Button>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Filter Bar (Sticky) */}
+          <div className="lg:hidden sticky top-16 z-30 mb-4 px-4">
+            <div className="flex items-center justify-between p-3 bg-white/95 backdrop-blur-md rounded-xl shadow-lg border border-gray-100">
+              <div className="text-xs font-bold text-gray-900">
+                {products.length} Products
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex bg-gray-100 p-0.5 rounded-lg border border-gray-200">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setViewMode('grid')}
+                    className={`w-7 h-7 rounded-md ${viewMode === 'grid' ? 'bg-white shadow-sm text-red-600' : 'text-gray-400 hover:text-gray-900'}`}
+                  >
+                    <Grid className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setViewMode('list')}
+                    className={`w-7 h-7 rounded-md ${viewMode === 'list' ? 'bg-white shadow-sm text-red-600' : 'text-gray-400 hover:text-gray-900'}`}
+                  >
+                    <List className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+
+                <Sheet open={mobileFilterOpen} onOpenChange={setMobileFilterOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 gap-2 text-xs font-bold uppercase tracking-wider border-gray-200">
+                      <Filter className="w-3.5 h-3.5" /> Filters
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl px-0">
+                    <SheetHeader className="px-6 mb-6">
+                      <SheetTitle className="text-left font-black uppercase tracking-tight">Filter Products</SheetTitle>
+                    </SheetHeader>
+                    <div className="px-6 overflow-y-auto h-full pb-20 space-y-6">
+
+                      <div className="space-y-3">
+                        <label className="text-xs font-bold text-gray-500 uppercase">Category</label>
+                        <Select value={categorySlug} onValueChange={(val) => router.push(val === 'all' ? '/products' : `/${val}`)}>
+                          <SelectTrigger className="w-full h-11 rounded-xl bg-gray-50 border-gray-200 font-bold">
+                            <SelectValue placeholder="Category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Categories</SelectItem>
+                            {allCategories.map(c => (
+                              <SelectItem key={c.id} value={c.slug}>{c.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-3">
+                        <label className="text-xs font-bold text-gray-500 uppercase">Sub-Category</label>
+                        <Select
+                          value={subcategorySlug || "all"}
+                          onValueChange={(val) => {
+                            if (val === 'all') {
+                              router.push(`/${categorySlug}`)
+                            } else {
+                              router.push(`/${categorySlug}/${val}`)
+                            }
+                          }}
+                          disabled={!subCategories.length}
+                        >
+                          <SelectTrigger className="w-full h-11 rounded-xl bg-gray-50 border-gray-200 font-bold disabled:opacity-50">
+                            <SelectValue placeholder="Sub-Category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Sub-Categories</SelectItem>
+                            {subCategories.map(sc => {
+                              const slug = sc.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+                              return (
+                                <SelectItem key={sc.id} value={slug}>{sc.name}</SelectItem>
+                              )
+                            })}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-3">
+                        <label className="text-xs font-bold text-gray-500 uppercase">Brand</label>
+                        <Select value={selectedBrand} onValueChange={setSelectedBrand}>
+                          <SelectTrigger className="w-full h-11 rounded-xl bg-gray-50 border-gray-200 font-bold">
+                            <SelectValue placeholder="Brand" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Brands</SelectItem>
+                            {brands.map(b => (
+                              <SelectItem key={b.id} value={b.slug || b.id.toString()}>{b.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {tags.length > 0 && (
+                        <div className="space-y-3">
+                          <label className="text-xs font-bold text-gray-500 uppercase">Tags</label>
+                          <Select value={selectedTag} onValueChange={setSelectedTag}>
+                            <SelectTrigger className="w-full h-11 rounded-xl bg-gray-50 border-gray-200 font-bold">
+                              <SelectValue placeholder="Tag" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Tags</SelectItem>
+                              {tags.map(t => (
+                                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
+                      <div className="space-y-3">
+                        <label className="text-xs font-bold text-gray-500 uppercase">Price Range</label>
+                        <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                          <div className="flex justify-between mb-4 text-sm font-bold">
+                            <span>₹0</span>
+                            <span>₹2,00,000</span>
+                          </div>
+                          <Slider
+                            defaultValue={[0, 200000]}
+                            max={200000}
+                            step={1000}
+                            value={priceRange}
+                            onValueChange={setPriceRange}
+                            className="w-full"
+                          />
+                          <div className="mt-4 text-center font-black text-lg text-gray-900">
+                            ₹{priceRange[0].toLocaleString('en-IN')} - ₹{priceRange[1].toLocaleString('en-IN')}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-white">
+                      <Button className="w-full h-12 bg-red-600 text-white font-bold rounded-xl" onClick={() => setMobileFilterOpen(false)}>
+                        Show {products.length} Products
+                      </Button>
+                    </div>
+                  </SheetContent>
+                </Sheet>
               </div>
             </div>
           </div>
