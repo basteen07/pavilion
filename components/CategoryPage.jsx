@@ -28,6 +28,7 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
   const [sortBy, setSortBy] = useState('featured')
   const [selectedBrand, setSelectedBrand] = useState('all')
   const [selectedTag, setSelectedTag] = useState('all')
+  const [resolvedTag, setResolvedTag] = useState(null)
   const [priceRange, setPriceRange] = useState([0, 200000])
   const [enquiryOpen, setEnquiryOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState(null)
@@ -88,65 +89,129 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
     return null
   }, [subcategorySlug, subCategories, searchParams])
 
-  // Fetch tags for current sub-category
-  const { data: tags = [] } = useQuery({
-    queryKey: ['tags', currentSubCategory?.id],
+  // Resolve Tag from URL Slug if Sub-Category is not found
+  const { data: tagFromSlug } = useQuery({
+    queryKey: ['tag-by-slug', subcategorySlug],
     queryFn: async () => {
-      if (!currentSubCategory?.id) return []
-      const result = await apiCall(`/tags?subCategoryId=${currentSubCategory.id}`)
+      if (!subcategorySlug || currentSubCategory) return null;
+      // Fetch all tags for this category to find a match
+      // Note: Ideally API should support /tags?slug=xyz, but filtering client side for now if needed or relying on finding it in a broad search if efficient.
+      // Trying to find strict match:
+      const allTagsRes = await apiCall('/tags');
+      const found = allTagsRes.find(t => t.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === subcategorySlug);
+      return found || null;
+    },
+    enabled: !!subcategorySlug && !currentSubCategory && !categoriesLoading
+  });
+
+  // Effect: When we find a tag from the slug (and no sub-category matched),
+  // we need to set the Tag Filter AND the Sub-Category context.
+  useEffect(() => {
+    if (tagFromSlug) {
+      setSelectedTag(tagFromSlug.id);
+
+      // If the tag has a sub_category_id, ensure we select that sub-category too so the context is correct
+      // This is crucial for "Corporate Grade" structure - we are "in" that sub-category, filtered by this tag.
+      if (tagFromSlug.sub_category_id) {
+        // We can't easily "set" currentSubCategory directly as it's a memo, 
+        // but we can ensure the UI knows we are technically in a sub-category context if we wanted to enforce it.
+        // However, the prop `subcategorySlug` is driving `currentSubCategory`. 
+        // If `currentSubCategory` is null, the UI thinks we are at Root Category.
+        // WE MUST MATCH the sub-category from the ID to make the UI consistent.
+      }
+    }
+  }, [tagFromSlug]);
+
+  // Derived state for the "Real" active sub-category
+  // If the hook found a sub-category directly, use it.
+  // If not, but we found a tag that BELONGS to a sub-category, find that sub-category from the list (if we have it).
+
+  // We need to fetch ALL sub-categories for this main category to be able to look up the parent of the tag.
+  // The existing `subCategories` query uses `currentCategory?.id`.
+
+  const activeSubCategory = useMemo(() => {
+    if (currentSubCategory) return currentSubCategory;
+    if (tagFromSlug && subCategories.length > 0) {
+      return subCategories.find(s => s.id === tagFromSlug.sub_category_id) || null;
+    }
+    return null;
+  }, [currentSubCategory, tagFromSlug, subCategories]);
+
+
+  // Fetch tags for CURRENT ACTIVE sub-category
+  const { data: tags = [] } = useQuery({
+    queryKey: ['tags', activeSubCategory?.id],
+    queryFn: async () => {
+      if (!activeSubCategory?.id) return []
+      const result = await apiCall(`/tags?subCategoryId=${activeSubCategory.id}`)
       return result || []
     },
-    enabled: !!currentSubCategory?.id
+    enabled: !!activeSubCategory?.id
   })
 
   // URL Hash Updates for Navigation Context
   useEffect(() => {
     const hash = []
-    // Only include filters that are NOT part of the URL path structure
+
+    // Logic: If we are on a "Tag Page" (slug is tag), we don't need hash for that tag.
+    // If we are on "SubCat Page" and select a tag, we DO need hash.
+
+    // If we resolved a tag from slug, `subcategorySlug` matches `tagFromSlug`.
+
     if (selectedTag && selectedTag !== 'all') {
-      const tagName = tags.find(t => t.id === selectedTag)?.name
-      if (tagName) hash.push(tagName.toLowerCase().replace(/[^a-z0-9]+/g, '-'))
+      const tagObj = tags.find(t => t.id === selectedTag);
+      // If the selected tag is NOT the one in the URL, add to hash
+      if (tagObj) {
+        const tagSlug = tagObj.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        if (tagSlug !== subcategorySlug) {
+          hash.push(tagSlug)
+        }
+      }
     }
 
     if (typeof window !== 'undefined') {
       const newHash = hash.length > 0 ? `#${hash.join('/')}` : ''
-      // Only update if it changed to avoid loops
       if (window.location.hash !== newHash) {
+        // Debounce or check? React strict mode might trigger double.
+        // Only replace if meaningful.
         if (newHash) {
           window.history.replaceState(null, '', newHash)
-        } else {
-          // Remove hash entirely if empty
-          // replaceState with just pathname + search keeps the URL clean
+        } else if (window.location.hash) {
+          // Only clear if we HAD a hash
           window.history.replaceState(null, '', window.location.pathname + window.location.search)
         }
       }
     }
-  }, [selectedTag, tags])
+  }, [selectedTag, tags, subcategorySlug])
 
   // Sync from URL Search Params & Hierarchy
   useEffect(() => {
     const brandParam = searchParams.get('brand')
     const tagParam = searchParams.get('tag')
 
-    if (brandParam) setSelectedBrand(brandParam)
-
-    // If we have a second slug in hierarchy, check if it's a tag
-    const potentialTagSlug = hierarchy[1]
-    if (potentialTagSlug && tags.length > 0) {
-      const foundTag = tags.find(t => t.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === potentialTagSlug)
-      if (foundTag) setSelectedTag(foundTag.id)
+    // Hash based restoration? 
+    // If user lands on #english-willow, we should select it.
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const hashTag = window.location.hash.replace('#', ''); // simplistic
+      if (hashTag && tags.length > 0) {
+        const found = tags.find(t => t.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === hashTag);
+        if (found) setSelectedTag(found.id);
+      }
     }
 
+    if (brandParam) setSelectedBrand(brandParam)
+    // Preference to URL Param > Hash > Default
     if (tagParam) setSelectedTag(tagParam)
-  }, [searchParams, hierarchy, tags])
+
+  }, [searchParams, tags])
 
   // Fetch contextual brands (only brands with products in selected category/subcategory)
   const { data: brands = [] } = useQuery({
-    queryKey: ['contextual-brands', currentCategory?.id, currentSubCategory?.id],
+    queryKey: ['contextual-brands', currentCategory?.id, activeSubCategory?.id],
     queryFn: async () => {
       const params = new URLSearchParams()
       if (currentCategory?.id) params.append('category_id', currentCategory.id)
-      if (currentSubCategory?.id) params.append('sub_category_id', currentSubCategory.id)
+      if (activeSubCategory?.id) params.append('sub_category_id', activeSubCategory.id)
       const result = await apiCall(`/brands?${params.toString()}`)
       return result || []
     },
@@ -156,7 +221,7 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
 
   // Fetch products with all filters applied
   const { data: productsData, isLoading: productsLoading } = useQuery({
-    queryKey: ['filtered-products', currentCategory?.id, currentSubCategory?.id, selectedBrand, selectedTag, priceRange, sortBy],
+    queryKey: ['filtered-products', currentCategory?.id, activeSubCategory?.id, selectedBrand, selectedTag, priceRange, sortBy],
     queryFn: async () => {
       const params = new URLSearchParams()
       params.append('limit', '500')
@@ -167,8 +232,8 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
       }
 
       // Sub-category filter (optional)
-      if (currentSubCategory?.id) {
-        params.append('sub_category', currentSubCategory.id)
+      if (activeSubCategory?.id) {
+        params.append('sub_category', activeSubCategory.id)
       }
 
       // Brand filter (optional)
@@ -258,15 +323,21 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
             <Link href="/" className="hover:text-white transition-colors">Home</Link>
             <ChevronRight className="w-4 h-4" />
             <span className="text-white/80">{currentCategory.name}</span>
-            {currentSubCategory && (
+            {activeSubCategory && (
               <>
                 <ChevronRight className="w-4 h-4" />
-                <span className="text-white">{currentSubCategory.name}</span>
+                <span className="text-white">{activeSubCategory.name}</span>
+              </>
+            )}
+            {tagFromSlug && (
+              <>
+                <ChevronRight className="w-4 h-4" />
+                <span className="text-white font-black">{tagFromSlug.name}</span>
               </>
             )}
           </div>
           <h1 className="text-4xl lg:text-6xl font-black tracking-tight mb-4 uppercase">
-            {currentSubCategory ? currentSubCategory.name : currentCategory.name}
+            {tagFromSlug ? tagFromSlug.name : (activeSubCategory ? activeSubCategory.name : currentCategory.name)}
           </h1>
           <p className="text-lg text-gray-400 max-w-2xl font-medium leading-relaxed">
             Explore our professional grade equipment used by elite athletes and institutions worldwide.
@@ -276,7 +347,7 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
 
       {/* Category Quick Access Chips */}
       <section className="py-6 bg-white border-b">
-        <div className="container">
+        <div className="w-full px-4 lg:px-6">
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide lg:flex-wrap lg:overflow-visible">
             {allCategories.map((cat) => (
               <Link
@@ -314,7 +385,7 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
       {!subcategorySlug && subCategories.length > 0 && (
         <section className="py-12 bg-white border-b">
           <div className="container">
-            <h2 className="text-[10px] font-black uppercase tracking-[0.25em] text-red-600 mb-6 flex items-center gap-2">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-red-600 mb-6 flex items-center gap-2">
               <span className="w-8 h-[2px] bg-red-600"></span>
               Refine Search
             </h2>
@@ -359,10 +430,10 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
 
 
       {/* Products Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="container">
-          {/* Unified Compact Filter Bar - Desktop */}
-          <div className="hidden lg:block sticky top-20 z-30 mb-6 p-2 rounded-2xl bg-white/95 backdrop-blur-md shadow-lg border border-gray-100">
+      <section className="bg-gray-50 min-h-screen">
+        {/* Unified Full-Width Filter Bar - Desktop */}
+        <div className="hidden lg:block sticky top-20 z-30 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm transition-all duration-300">
+          <div className="w-full px-4 lg:px-6 py-3">
             <div className="flex flex-wrap items-center gap-3">
               {/* Left Side: Category & Sub-Category */}
               <div className="flex items-center gap-2 p-1 bg-gray-50/50 rounded-lg border border-gray-100">
@@ -381,7 +452,7 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
                 <div className="h-4 w-px bg-gray-200"></div>
 
                 <Select
-                  value={subcategorySlug || "all"}
+                  value={activeSubCategory ? activeSubCategory.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : "all"}
                   onValueChange={(val) => {
                     if (val === 'all') {
                       router.push(`/${categorySlug}`)
@@ -503,6 +574,9 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="container py-12">
 
           {/* Mobile Filter Bar (Sticky) */}
           <div className="lg:hidden sticky top-16 z-30 mb-4 px-4">
@@ -561,7 +635,7 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
                       <div className="space-y-3">
                         <label className="text-xs font-bold text-gray-500 uppercase">Sub-Category</label>
                         <Select
-                          value={subcategorySlug || "all"}
+                          value={activeSubCategory ? activeSubCategory.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : "all"}
                           onValueChange={(val) => {
                             if (val === 'all') {
                               router.push(`/${categorySlug}`)

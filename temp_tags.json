@@ -1,0 +1,2161 @@
+﻿{
+    "value":  [
+                  {
+                      "id":  "fe6c823f-e763-4daa-a316-41149d1e41de",
+                      "name":  "Aerobic Stepper",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "sub_category_id":  136,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:42.277Z",
+                      "updated_at":  "2026-01-19T04:15:42.277Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "887ed44b-cab9-47e0-a95e-6023ef4f64b9",
+                      "name":  "Aero Howler",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  140,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:55.717Z",
+                      "updated_at":  "2026-01-19T04:15:55.717Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "1fc192c1-e8a1-4f0b-b789-caeb1c65deda",
+                      "name":  "Ankle Support",
+                      "category_id":  "3bf0b879-941b-4dd3-9309-1369a90c8b5f",
+                      "sub_category_id":  143,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:10.279Z",
+                      "updated_at":  "2026-01-19T04:16:10.279Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "5b5b3c58-67b5-42d1-a5d7-f87484133ee8",
+                      "name":  "Ankle Weight",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "sub_category_id":  136,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:42.703Z",
+                      "updated_at":  "2026-01-19T04:15:42.703Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "a7c481e1-371f-457f-b0f4-309bc58f9c37",
+                      "name":  "Arm Rings",
+                      "category_id":  "d4df70ea-bd6e-40c5-99b8-aa3b0b41fe09",
+                      "sub_category_id":  171,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:45.467Z",
+                      "updated_at":  "2026-01-19T04:49:45.467Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "71c169bb-bac7-4042-bf97-c81f66ba8abe",
+                      "name":  "Back Support",
+                      "category_id":  "3bf0b879-941b-4dd3-9309-1369a90c8b5f",
+                      "sub_category_id":  143,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:10.737Z",
+                      "updated_at":  "2026-01-19T04:16:10.737Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "c53ccd5b-f99e-466b-9529-d7ebf4e46d45",
+                      "name":  "Badminton Kitbag",
+                      "category_id":  "70416d08-b80b-40d0-98b0-0d3b0785f763",
+                      "sub_category_id":  131,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:36.500Z",
+                      "updated_at":  "2026-01-19T04:15:36.500Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "00af700b-1aa4-4bf9-bcd9-d83d78f90849",
+                      "name":  "Balance Board",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "sub_category_id":  136,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:43.161Z",
+                      "updated_at":  "2026-01-19T04:15:43.161Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "957b44b0-b200-4fa3-be61-3bc4acd9e316",
+                      "name":  "Ball Gauge",
+                      "category_id":  "dc6d5409-457f-49ba-bf03-5d23a2a0b9b1",
+                      "sub_category_id":  100,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:18.054Z",
+                      "updated_at":  "2026-01-19T04:15:18.054Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "0ee2ddb4-d391-4a57-8a10-b18f4d5f6965",
+                      "name":  "Ball Hammer",
+                      "category_id":  "dc6d5409-457f-49ba-bf03-5d23a2a0b9b1",
+                      "sub_category_id":  100,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:18.949Z",
+                      "updated_at":  "2026-01-19T04:15:18.949Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "70b353cd-3415-4322-8d73-5107cc9d143e",
+                      "name":  "Base Ball",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  142,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:04.104Z",
+                      "updated_at":  "2026-01-19T04:16:04.104Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "313fece9-86e3-4d98-9682-b262a71fb7e6",
+                      "name":  "Baseball Glove",
+                      "category_id":  "dc6d5409-457f-49ba-bf03-5d23a2a0b9b1",
+                      "sub_category_id":  100,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:18.493Z",
+                      "updated_at":  "2026-01-19T04:15:18.493Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "3e80bc03-fe74-46a1-956a-d42b7d672855",
+                      "name":  "Batting Glove",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  5,
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T15:59:02.181Z",
+                      "updated_at":  "2026-01-17T15:59:02.181Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "a8d304eb-2ddb-4da1-945a-5e7b87050582",
+                      "name":  "Batting Legguard",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  90,
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T16:01:12.665Z",
+                      "updated_at":  "2026-01-17T16:01:12.665Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "d4a5b704-457f-4dc3-97fd-9946c95efb80",
+                      "name":  "Batting Practice Bat",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  141,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:01.877Z",
+                      "updated_at":  "2026-01-19T04:16:01.877Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "03432dda-00d9-4d3f-a429-6005b4aa4fbb",
+                      "name":  "Bips",
+                      "category_id":  "2c9fc528-6632-4f88-986d-eba317d4a00a",
+                      "sub_category_id":  167,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:41.575Z",
+                      "updated_at":  "2026-01-19T04:49:41.575Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "94888318-1528-4275-bbd2-788d54ce1849",
+                      "name":  "Bowlers Wonder Ball",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  142,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:03.254Z",
+                      "updated_at":  "2026-01-19T04:16:03.254Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "1ab8c812-4157-4f61-9abf-28288b66a6a2",
+                      "name":  "Bowling Machine Ball",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  142,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:03.680Z",
+                      "updated_at":  "2026-01-19T04:16:03.680Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "d983f0da-dc43-47e7-baf2-a6f1e0a6bc3a",
+                      "name":  "Bowling Trainer",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  140,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:56.145Z",
+                      "updated_at":  "2026-01-19T04:15:56.145Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "21a6b019-b54c-4e26-ae11-f0cb4f9138e0",
+                      "name":  "Boxing Gloves",
+                      "category_id":  "b36dcffb-3407-440a-9a3e-6fb6f2f0ea01",
+                      "sub_category_id":  174,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:53.288Z",
+                      "updated_at":  "2026-01-19T04:49:53.288Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "1f6678f6-dd1e-49a0-ac44-a191272755d8",
+                      "name":  "Brief",
+                      "category_id":  "2c9fc528-6632-4f88-986d-eba317d4a00a",
+                      "sub_category_id":  167,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:41.999Z",
+                      "updated_at":  "2026-01-19T04:49:41.999Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "2082616b-9eb5-4610-9ba4-0dd6b5207f3d",
+                      "name":  "Carrom Board",
+                      "category_id":  "bc2b304a-b5bc-4f97-8c25-8e0d0d351671",
+                      "sub_category_id":  144,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:18.154Z",
+                      "updated_at":  "2026-01-19T04:49:18.154Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "3fe6ed59-5ce8-4463-b8de-01f8be3abe1a",
+                      "name":  "Carrom Coin",
+                      "category_id":  "bc2b304a-b5bc-4f97-8c25-8e0d0d351671",
+                      "sub_category_id":  144,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:18.652Z",
+                      "updated_at":  "2026-01-19T04:49:18.652Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "773d68ce-7d88-40cc-9f02-80fc219a8153",
+                      "name":  "Carrom Powder",
+                      "category_id":  "bc2b304a-b5bc-4f97-8c25-8e0d0d351671",
+                      "sub_category_id":  144,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:19.580Z",
+                      "updated_at":  "2026-01-19T04:49:19.580Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "071239b9-1633-43d3-9634-ab4c06926f54",
+                      "name":  "Carrom Stand",
+                      "category_id":  "bc2b304a-b5bc-4f97-8c25-8e0d0d351671",
+                      "sub_category_id":  144,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:20.018Z",
+                      "updated_at":  "2026-01-19T04:49:20.018Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "f79938f0-66d6-440e-b9d8-0a48d60a4302",
+                      "name":  "Carrom Striker",
+                      "category_id":  "bc2b304a-b5bc-4f97-8c25-8e0d0d351671",
+                      "sub_category_id":  144,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:19.119Z",
+                      "updated_at":  "2026-01-19T04:49:19.119Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "3342187b-6017-43c4-b8c2-e4f7908778aa",
+                      "name":  "Catch Practice Bat",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  141,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:02.306Z",
+                      "updated_at":  "2026-01-19T04:16:02.306Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "80bf6cd7-929d-4bda-b5e0-ddfdb9cd1b8d",
+                      "name":  "Chess Board",
+                      "category_id":  "bc2b304a-b5bc-4f97-8c25-8e0d0d351671",
+                      "sub_category_id":  145,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:20.887Z",
+                      "updated_at":  "2026-01-19T04:49:20.887Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "ef3eb29c-f9d6-4f36-8793-41b9381f4bb8",
+                      "name":  "Chess Clock",
+                      "category_id":  "bc2b304a-b5bc-4f97-8c25-8e0d0d351671",
+                      "sub_category_id":  145,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:21.784Z",
+                      "updated_at":  "2026-01-19T04:49:21.784Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "5bf3c4a4-58a4-4890-95fc-f1166094a452",
+                      "name":  "Chess Coin",
+                      "category_id":  "bc2b304a-b5bc-4f97-8c25-8e0d0d351671",
+                      "sub_category_id":  145,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:21.366Z",
+                      "updated_at":  "2026-01-19T04:49:21.366Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "9b06c9ee-1c67-440e-bdd8-8074bde75a11",
+                      "name":  "Chin Up Bar",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "sub_category_id":  136,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:43.589Z",
+                      "updated_at":  "2026-01-19T04:15:43.589Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "0e19c51b-1514-4e73-8da1-e1cb21b75813",
+                      "name":  "Cone",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  140,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:59.711Z",
+                      "updated_at":  "2026-01-19T04:15:59.711Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "f86dffab-f27f-4a47-bb33-d5325d75a453",
+                      "name":  "Dart Board",
+                      "category_id":  "bc2b304a-b5bc-4f97-8c25-8e0d0d351671",
+                      "sub_category_id":  146,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:22.612Z",
+                      "updated_at":  "2026-01-19T04:49:22.612Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "7ad02aa8-9fc9-4c80-bd01-d26ceb100116",
+                      "name":  "Dart Pins",
+                      "category_id":  "bc2b304a-b5bc-4f97-8c25-8e0d0d351671",
+                      "sub_category_id":  146,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:23.031Z",
+                      "updated_at":  "2026-01-19T04:49:23.031Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "93647c26-3d5b-45e8-bf24-97bc27a538f1",
+                      "name":  "Discuss",
+                      "category_id":  "173ed651-7bbc-4547-83a6-90e139a95b6f",
+                      "sub_category_id":  151,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:28.326Z",
+                      "updated_at":  "2026-01-19T04:49:28.326Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "62bbb8df-8d1c-4204-bf99-73954071bfc7",
+                      "name":  "Double Exercise Wheel",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "sub_category_id":  136,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:44.014Z",
+                      "updated_at":  "2026-01-19T04:15:44.014Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "0b6e9f0b-072c-4767-9a3e-64d4e90df511",
+                      "name":  "Dumbell Rod",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "sub_category_id":  136,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:44.476Z",
+                      "updated_at":  "2026-01-19T04:15:44.476Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "d3c76359-42a4-43fa-93ca-3b2fa3d9072a",
+                      "name":  "Ear Plug",
+                      "category_id":  "d4df70ea-bd6e-40c5-99b8-aa3b0b41fe09",
+                      "sub_category_id":  171,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:45.880Z",
+                      "updated_at":  "2026-01-19T04:49:45.880Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "396234b0-f219-4b95-b5e7-6d71849cc3fd",
+                      "name":  "Elbow Sleeves",
+                      "category_id":  "2c9fc528-6632-4f88-986d-eba317d4a00a",
+                      "sub_category_id":  167,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:42.448Z",
+                      "updated_at":  "2026-01-19T04:49:42.448Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "c77d27a5-696b-4877-a249-b5cb48beca6e",
+                      "name":  "Elbow Support",
+                      "category_id":  "3bf0b879-941b-4dd3-9309-1369a90c8b5f",
+                      "sub_category_id":  143,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:11.242Z",
+                      "updated_at":  "2026-01-19T04:16:11.242Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "83a98539-5337-41cd-bad3-ff3a0bbf029f",
+                      "name":  "English Willow Cricket Bats",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  4,
+                      "is_active":  true,
+                      "created_at":  "2026-01-14T00:39:02.510Z",
+                      "updated_at":  "2026-01-14T00:39:02.510Z",
+                      "brand_ids":  [
+                                        "7baa3bd3-7ff2-4dcc-96d9-1b4e3e1ff517",
+                                        "0b60d25c-3ffe-4bf6-b72d-323877093ba9",
+                                        "8e28254d-ca38-4c73-afa2-93eb3dcbcfa4",
+                                        "94d2c90e-0962-4bb1-bbed-b5cc95a06e7f",
+                                        "138fc576-3558-4644-939b-cd81619d3b3c",
+                                        "83a2bd95-f354-45b2-b679-27c1ec3f870e",
+                                        "e67f0c7f-8729-4c28-8859-266bb351dbfc"
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "70d329e8-0c52-40e6-8b33-1d86ee32f0b9",
+                      "name":  "Eyewear",
+                      "category_id":  "716d6d92-a299-4c1a-990e-23df701200fc",
+                      "sub_category_id":  125,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:30.579Z",
+                      "updated_at":  "2026-01-19T04:15:30.579Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "e2823dff-53e4-4162-89c7-383a4f93144e",
+                      "name":  "Fitness Kitbag",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "sub_category_id":  136,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:44.901Z",
+                      "updated_at":  "2026-01-19T04:15:44.901Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "bd7682ee-d3b4-4dbb-acc8-d7ec6bb8698d",
+                      "name":  "Flipper",
+                      "category_id":  "d4df70ea-bd6e-40c5-99b8-aa3b0b41fe09",
+                      "sub_category_id":  171,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:46.291Z",
+                      "updated_at":  "2026-01-19T04:49:46.291Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "4967f774-06cb-4bbf-9a5b-a900fefb2dc5",
+                      "name":  "Floating Fin",
+                      "category_id":  "d4df70ea-bd6e-40c5-99b8-aa3b0b41fe09",
+                      "sub_category_id":  171,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:46.704Z",
+                      "updated_at":  "2026-01-19T04:49:46.704Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "8c56c900-077e-4bbc-90b4-5ab8154096cf",
+                      "name":  "Foam Roller",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "sub_category_id":  136,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:45.369Z",
+                      "updated_at":  "2026-01-19T04:15:45.369Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "d2897b6b-aece-4034-8635-8b79ea067e87",
+                      "name":  "Focus Pad",
+                      "category_id":  "b36dcffb-3407-440a-9a3e-6fb6f2f0ea01",
+                      "sub_category_id":  174,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:53.707Z",
+                      "updated_at":  "2026-01-19T04:49:53.707Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "c5631408-b39c-4641-9ef9-c28154f74835",
+                      "name":  "Goal Keeper Glove",
+                      "category_id":  "8991c917-eec7-4f92-8b54-b7e8630a86ff",
+                      "sub_category_id":  98,
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T16:22:24.109Z",
+                      "updated_at":  "2026-01-17T16:22:24.109Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "7b563b4c-48c9-4ffb-952a-5946eca353d2",
+                      "name":  "Golf Ball",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  142,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:04.536Z",
+                      "updated_at":  "2026-01-19T04:16:04.536Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "69d7531f-d3bb-4e90-9e11-0ebc2a740570",
+                      "name":  "Gym Ball",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "sub_category_id":  137,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:52.504Z",
+                      "updated_at":  "2026-01-19T04:15:52.504Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "8f4eb30a-9495-4502-8b01-b99d3d9c0f72",
+                      "name":  "Gym Belt",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "sub_category_id":  136,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:45.855Z",
+                      "updated_at":  "2026-01-19T04:15:45.855Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "cfac0aaf-1d86-4e46-9d01-3d3ff55ce812",
+                      "name":  "Hammer Throw",
+                      "category_id":  "173ed651-7bbc-4547-83a6-90e139a95b6f",
+                      "sub_category_id":  151,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:28.740Z",
+                      "updated_at":  "2026-01-19T04:49:28.740Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "9c0e8c8e-5663-4628-8621-8de1a36b69fa",
+                      "name":  "Hand Grip",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "sub_category_id":  136,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:46.281Z",
+                      "updated_at":  "2026-01-19T04:15:46.281Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "f9c0ada3-c768-46df-b57f-384c00841d99",
+                      "name":  "Hand Paddle",
+                      "category_id":  "d4df70ea-bd6e-40c5-99b8-aa3b0b41fe09",
+                      "sub_category_id":  171,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:47.125Z",
+                      "updated_at":  "2026-01-19T04:49:47.125Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "0d48fda8-d504-4693-a755-3b12fa1115f6",
+                      "name":  "Hand Wraps",
+                      "category_id":  "b36dcffb-3407-440a-9a3e-6fb6f2f0ea01",
+                      "sub_category_id":  174,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:54.120Z",
+                      "updated_at":  "2026-01-19T04:49:54.120Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "715da06a-d5ab-4c6d-be92-f522d96ef807",
+                      "name":  "Head Band",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "sub_category_id":  136,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:46.705Z",
+                      "updated_at":  "2026-01-19T04:15:46.705Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "1c6507a6-e3e7-4507-8f31-8689c85793d5",
+                      "name":  "Head Guard",
+                      "category_id":  "b36dcffb-3407-440a-9a3e-6fb6f2f0ea01",
+                      "sub_category_id":  174,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:54.540Z",
+                      "updated_at":  "2026-01-19T04:49:54.540Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "fbb91339-6a55-4635-9ce9-8db7449d5b92",
+                      "name":  "Height Measuring Stand",
+                      "category_id":  "173ed651-7bbc-4547-83a6-90e139a95b6f",
+                      "sub_category_id":  151,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:29.176Z",
+                      "updated_at":  "2026-01-19T04:49:29.176Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "f836d496-94b4-4fd5-b1a0-6686dc588aec",
+                      "name":  "Helmet",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  92,
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T16:03:37.937Z",
+                      "updated_at":  "2026-01-17T16:03:37.937Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "a643d5e6-d062-4c64-aa16-6418677a89cf",
+                      "name":  "Hop Ball",
+                      "category_id":  "173ed651-7bbc-4547-83a6-90e139a95b6f",
+                      "sub_category_id":  152,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:33.110Z",
+                      "updated_at":  "2026-01-19T04:49:33.110Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "233a9706-490f-41b8-9799-7fa9d2a8e6cc",
+                      "name":  "Hula Hoops",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "sub_category_id":  136,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:47.129Z",
+                      "updated_at":  "2026-01-19T04:15:47.129Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "3b8c357a-a7bc-4701-9041-ae6df4a3f6b0",
+                      "name":  "Hurdles",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  140,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:00.165Z",
+                      "updated_at":  "2026-01-19T04:16:00.165Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "371d990d-2fec-4112-86cd-93ef95d16307",
+                      "name":  "Hurdles",
+                      "category_id":  "173ed651-7bbc-4547-83a6-90e139a95b6f",
+                      "sub_category_id":  151,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:29.693Z",
+                      "updated_at":  "2026-01-19T04:49:29.693Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "7dcb2404-40e9-4a9f-ac47-1d52a2630d55",
+                      "name":  "Ice Bag",
+                      "category_id":  "3bf0b879-941b-4dd3-9309-1369a90c8b5f",
+                      "sub_category_id":  143,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:11.669Z",
+                      "updated_at":  "2026-01-19T04:16:11.669Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "833fd561-0cf5-4459-a2a3-0aa35aacc4fb",
+                      "name":  "Javelin",
+                      "category_id":  "173ed651-7bbc-4547-83a6-90e139a95b6f",
+                      "sub_category_id":  151,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:30.176Z",
+                      "updated_at":  "2026-01-19T04:49:30.176Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "fba13b09-ac60-4869-83df-7073dc27886e",
+                      "name":  "Katchet Board",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  140,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:56.577Z",
+                      "updated_at":  "2026-01-19T04:15:56.577Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "80ccf5e6-c05d-45e7-9389-956c58921d65",
+                      "name":  "KatchMax",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  140,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:57.111Z",
+                      "updated_at":  "2026-01-19T04:15:57.111Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "86d98de4-76ae-4bf6-81ea-74021b8e2017",
+                      "name":  "Kick Board",
+                      "category_id":  "d4df70ea-bd6e-40c5-99b8-aa3b0b41fe09",
+                      "sub_category_id":  171,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:47.537Z",
+                      "updated_at":  "2026-01-19T04:49:47.537Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "7bf33561-cdbd-4fe3-8524-e83f1dc4e6a1",
+                      "name":  "Kit",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  95,
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T16:13:04.131Z",
+                      "updated_at":  "2026-01-17T16:13:04.131Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "6ed4a58b-aa1a-4a87-9763-7a2f155b1c05",
+                      "name":  "Kit Bag",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  94,
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T16:10:02.379Z",
+                      "updated_at":  "2026-01-17T16:10:02.379Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "2ff4079f-1c54-46bf-9b4d-3e29b7d41aa7",
+                      "name":  "Knee Pad",
+                      "category_id":  "3bf0b879-941b-4dd3-9309-1369a90c8b5f",
+                      "sub_category_id":  143,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:12.117Z",
+                      "updated_at":  "2026-01-19T04:16:12.117Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "0c4ee65e-c84e-4f2f-bcb5-57ac43e719a0",
+                      "name":  "Knee Support",
+                      "category_id":  "3bf0b879-941b-4dd3-9309-1369a90c8b5f",
+                      "sub_category_id":  143,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:12.544Z",
+                      "updated_at":  "2026-01-19T04:16:12.544Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "bb0d8da0-8708-4df3-8e02-7045a9265825",
+                      "name":  "Leather Training Ball",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  142,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:04.961Z",
+                      "updated_at":  "2026-01-19T04:16:04.961Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "3565e550-ffe8-4e4e-8710-93b429d1b641",
+                      "name":  "Life Jacket",
+                      "category_id":  "d4df70ea-bd6e-40c5-99b8-aa3b0b41fe09",
+                      "sub_category_id":  171,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:50.459Z",
+                      "updated_at":  "2026-01-19T04:49:50.459Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "aa3ef580-1c13-42a8-a62f-26f598abde35",
+                      "name":  "Mask",
+                      "category_id":  "d4df70ea-bd6e-40c5-99b8-aa3b0b41fe09",
+                      "sub_category_id":  171,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:47.952Z",
+                      "updated_at":  "2026-01-19T04:49:47.952Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "e3d27113-41a1-4272-a7eb-e9ac29f2e043",
+                      "name":  "Massage Ball",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "sub_category_id":  136,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:47.552Z",
+                      "updated_at":  "2026-01-19T04:15:47.552Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "67f6a5ca-85b4-4fc5-8a2d-1b29874c2c15",
+                      "name":  "Massage Twister",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "sub_category_id":  136,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:47.976Z",
+                      "updated_at":  "2026-01-19T04:15:47.976Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "e3a17e0a-4811-4568-9605-e4b8792431a8",
+                      "name":  "Mat",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  93,
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T16:08:37.106Z",
+                      "updated_at":  "2026-01-17T16:08:37.106Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "2bee7568-4c7c-4dc4-9dab-76d522391207",
+                      "name":  "Measuring Tape",
+                      "category_id":  "173ed651-7bbc-4547-83a6-90e139a95b6f",
+                      "sub_category_id":  151,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:30.613Z",
+                      "updated_at":  "2026-01-19T04:49:30.613Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "4c2e1f03-f9c1-489b-9713-eda4cabd2097",
+                      "name":  "Medicine Ball",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "sub_category_id":  137,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:53.013Z",
+                      "updated_at":  "2026-01-19T04:15:53.013Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "dffff060-8b34-46fd-84b7-779ea0bde5c5",
+                      "name":  "Metal Spikes",
+                      "category_id":  "c5f032d2-47f0-4092-9508-9302807849fd",
+                      "sub_category_id":  160,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:37.340Z",
+                      "updated_at":  "2026-01-19T04:49:37.340Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "a602a263-6beb-4303-ae3a-36ad2456767c",
+                      "name":  "Mouth Guard",
+                      "category_id":  "b36dcffb-3407-440a-9a3e-6fb6f2f0ea01",
+                      "sub_category_id":  174,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:55.069Z",
+                      "updated_at":  "2026-01-19T04:49:55.069Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "43b2cb5c-cc24-4df6-a101-e72a939714dd",
+                      "name":  "Net Wire",
+                      "category_id":  "70416d08-b80b-40d0-98b0-0d3b0785f763",
+                      "sub_category_id":  135,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:40.569Z",
+                      "updated_at":  "2026-01-19T04:15:40.569Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "ebe0a641-e3d6-4add-bdf7-a9bcbccecef6",
+                      "name":  "Noodles",
+                      "category_id":  "d4df70ea-bd6e-40c5-99b8-aa3b0b41fe09",
+                      "sub_category_id":  171,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:48.371Z",
+                      "updated_at":  "2026-01-19T04:49:48.371Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "985e7461-4b7e-4379-8567-2f57ad817a54",
+                      "name":  "Others",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  94,
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T16:12:27.746Z",
+                      "updated_at":  "2026-01-17T16:12:27.746Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "1ac079ba-92a7-43d8-b117-ac1fed701836",
+                      "name":  "Paddle",
+                      "category_id":  "d4df70ea-bd6e-40c5-99b8-aa3b0b41fe09",
+                      "sub_category_id":  171,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:48.801Z",
+                      "updated_at":  "2026-01-19T04:49:48.801Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "af9e8012-aa8f-4da3-bb37-3b13ae1801c1",
+                      "name":  "Parachute",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  140,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:57.543Z",
+                      "updated_at":  "2026-01-19T04:15:57.543Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "fe241070-ac73-407f-9a99-3ca1ec7e9b59",
+                      "name":  "Plastic Ball",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  142,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:05.477Z",
+                      "updated_at":  "2026-01-19T04:16:05.477Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "00d77d3c-0f86-4b3e-9fe3-03903e384f21",
+                      "name":  "Poly Coated Ball",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  142,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:05.941Z",
+                      "updated_at":  "2026-01-19T04:16:05.941Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "66f3c390-98e6-46fb-a9cb-198d037adc41",
+                      "name":  "Post - Basketball, Football, Throwball, Volleyball,Kho Kho",
+                      "category_id":  "173ed651-7bbc-4547-83a6-90e139a95b6f",
+                      "sub_category_id":  151,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:27.914Z",
+                      "updated_at":  "2026-01-19T04:49:27.914Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "2edbe46e-d4f3-4cca-9f77-4ea02b4ad488",
+                      "name":  "Post Fixed",
+                      "category_id":  "70416d08-b80b-40d0-98b0-0d3b0785f763",
+                      "sub_category_id":  135,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:40.994Z",
+                      "updated_at":  "2026-01-19T04:15:40.994Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "3c16e60a-23ca-4504-b0ca-1fca01b03033",
+                      "name":  "Prosoft Ball",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  142,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:06.369Z",
+                      "updated_at":  "2026-01-19T04:16:06.369Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "14d2e1e3-4706-4788-abed-3cfce0afea14",
+                      "name":  "Protective Kit",
+                      "category_id":  "173ed651-7bbc-4547-83a6-90e139a95b6f",
+                      "sub_category_id":  148,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:26.160Z",
+                      "updated_at":  "2026-01-19T04:49:26.160Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "f7fcabaa-a7c4-4512-b406-675628191d96",
+                      "name":  "Pugg Goal",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  140,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:57.969Z",
+                      "updated_at":  "2026-01-19T04:15:57.969Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "fa6eb384-281e-455e-8a6f-c787a95e077d",
+                      "name":  "Pullbuoy",
+                      "category_id":  "d4df70ea-bd6e-40c5-99b8-aa3b0b41fe09",
+                      "sub_category_id":  171,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:49.216Z",
+                      "updated_at":  "2026-01-19T04:49:49.216Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "ccc8f629-e0e5-4ce0-b34b-49420392c26e",
+                      "name":  "Pull up Bar",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "sub_category_id":  136,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:48.478Z",
+                      "updated_at":  "2026-01-19T04:15:48.478Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "370f5cb5-b76b-4cc8-abb5-78dac015928b",
+                      "name":  "Punching Bag",
+                      "category_id":  "b36dcffb-3407-440a-9a3e-6fb6f2f0ea01",
+                      "sub_category_id":  174,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:55.483Z",
+                      "updated_at":  "2026-01-19T04:49:55.483Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "f14d9e8f-70b7-4205-9956-d8482a3d2d62",
+                      "name":  "Push-up Bar",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "sub_category_id":  136,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:48.927Z",
+                      "updated_at":  "2026-01-19T04:15:48.927Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "e90f1454-d398-497a-ba9c-0713354f03f8",
+                      "name":  "Reaction Ball",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  142,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:06.799Z",
+                      "updated_at":  "2026-01-19T04:16:06.799Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "fb632ba8-f04e-48b5-a84b-71392404a35a",
+                      "name":  "Relay Baton",
+                      "category_id":  "173ed651-7bbc-4547-83a6-90e139a95b6f",
+                      "sub_category_id":  151,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:31.039Z",
+                      "updated_at":  "2026-01-19T04:49:31.039Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "1b0c9312-a641-4daa-962f-b9f83a22b465",
+                      "name":  "Resistance Band",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "sub_category_id":  136,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:49.354Z",
+                      "updated_at":  "2026-01-19T04:15:49.354Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "594c4158-14e1-4cc2-9c68-5b136ecc9877",
+                      "name":  "Resistance Tube",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "sub_category_id":  136,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:49.806Z",
+                      "updated_at":  "2026-01-19T04:15:49.806Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "484ed43f-81ae-435d-978f-08c1b6c70c13",
+                      "name":  "Rings",
+                      "category_id":  "d4df70ea-bd6e-40c5-99b8-aa3b0b41fe09",
+                      "sub_category_id":  171,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:49.627Z",
+                      "updated_at":  "2026-01-19T04:49:49.627Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "2b464db9-2b7c-4ddb-be33-18affa5579a3",
+                      "name":  "Scooter",
+                      "category_id":  "173ed651-7bbc-4547-83a6-90e139a95b6f",
+                      "sub_category_id":  148,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:25.329Z",
+                      "updated_at":  "2026-01-19T04:49:25.329Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "befe3bb2-659e-43e2-931e-aaac4e55851a",
+                      "name":  "Seam Ball",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  142,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:07.225Z",
+                      "updated_at":  "2026-01-19T04:16:07.225Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "cb563f38-6ce9-4814-9429-35289345b274",
+                      "name":  "Shin Guard",
+                      "category_id":  "8991c917-eec7-4f92-8b54-b7e8630a86ff",
+                      "sub_category_id":  98,
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T16:22:59.408Z",
+                      "updated_at":  "2026-01-17T16:22:59.408Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "0e09dbc1-3fe4-4bb9-9f3d-f60cfea3c936",
+                      "name":  "Shotput",
+                      "category_id":  "173ed651-7bbc-4547-83a6-90e139a95b6f",
+                      "sub_category_id":  151,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:31.452Z",
+                      "updated_at":  "2026-01-19T04:49:31.452Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "02186796-c13d-4dd2-a4c0-16897917675c",
+                      "name":  "Shoulder Support",
+                      "category_id":  "3bf0b879-941b-4dd3-9309-1369a90c8b5f",
+                      "sub_category_id":  143,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:13.054Z",
+                      "updated_at":  "2026-01-19T04:16:13.054Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "abf5d7aa-7cea-44e1-b923-5237d9dbf06a",
+                      "name":  "Skate Board",
+                      "category_id":  "173ed651-7bbc-4547-83a6-90e139a95b6f",
+                      "sub_category_id":  148,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:24.883Z",
+                      "updated_at":  "2026-01-19T04:49:24.883Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "ecaa20ad-d9a9-4d34-8e3e-17a64980ad13",
+                      "name":  "Skipping Rope",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "sub_category_id":  136,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:50.231Z",
+                      "updated_at":  "2026-01-19T04:15:50.231Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "89bb544c-25a7-4fd3-9818-ea053a593c0c",
+                      "name":  "Slam Ball",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "sub_category_id":  137,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:53.443Z",
+                      "updated_at":  "2026-01-19T04:15:53.443Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "9a9af699-f0b8-4eca-a027-5bc73f55ce7a",
+                      "name":  "Snorkel",
+                      "category_id":  "d4df70ea-bd6e-40c5-99b8-aa3b0b41fe09",
+                      "sub_category_id":  171,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:50.043Z",
+                      "updated_at":  "2026-01-19T04:49:50.043Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "a1b5c062-c90b-4056-ae56-b3d4b679f5b9",
+                      "name":  "Socks",
+                      "category_id":  "2c9fc528-6632-4f88-986d-eba317d4a00a",
+                      "sub_category_id":  167,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:42.860Z",
+                      "updated_at":  "2026-01-19T04:49:42.860Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "382ef0ac-9ba7-43cc-90f7-ccf967178716",
+                      "name":  "Soft Ball",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  142,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:07.669Z",
+                      "updated_at":  "2026-01-19T04:16:07.669Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "a3b7b57d-5f3a-49b0-b36c-30e2df1c2e6c",
+                      "name":  "Soft Spikes",
+                      "category_id":  "c5f032d2-47f0-4092-9508-9302807849fd",
+                      "sub_category_id":  160,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:37.752Z",
+                      "updated_at":  "2026-01-19T04:49:37.752Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "fbac6cba-14e8-4bc0-bc7d-880a8d945d2a",
+                      "name":  "Sports Gloves",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "sub_category_id":  136,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:50.661Z",
+                      "updated_at":  "2026-01-19T04:15:50.661Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "496d867d-467a-45e5-99f0-37fc40859b21",
+                      "name":  "Sports Helmet",
+                      "category_id":  "173ed651-7bbc-4547-83a6-90e139a95b6f",
+                      "sub_category_id":  148,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:25.741Z",
+                      "updated_at":  "2026-01-19T04:49:25.741Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "57627858-277b-4f21-bca1-f1e1c4f83cb8",
+                      "name":  "Sports Tape",
+                      "category_id":  "3bf0b879-941b-4dd3-9309-1369a90c8b5f",
+                      "sub_category_id":  143,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:13.501Z",
+                      "updated_at":  "2026-01-19T04:16:13.501Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "fa4bb6bf-15b2-488e-b677-3ed315f25b38",
+                      "name":  "Squash Kitbag",
+                      "category_id":  "70416d08-b80b-40d0-98b0-0d3b0785f763",
+                      "sub_category_id":  131,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:37.039Z",
+                      "updated_at":  "2026-01-19T04:15:37.039Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "b68e761b-f656-4888-8d67-9df74e364132",
+                      "name":  "Stop Watch",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  140,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:58.392Z",
+                      "updated_at":  "2026-01-19T04:15:58.392Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "4c36053d-069d-44a5-8665-99358f9d4756",
+                      "name":  "String",
+                      "category_id":  "70416d08-b80b-40d0-98b0-0d3b0785f763",
+                      "sub_category_id":  135,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:40.142Z",
+                      "updated_at":  "2026-01-19T04:15:40.142Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "6a9ac8df-e5f4-4803-989e-f92853e550c8",
+                      "name":  "Sun Screen",
+                      "category_id":  "3bf0b879-941b-4dd3-9309-1369a90c8b5f",
+                      "sub_category_id":  143,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:13.934Z",
+                      "updated_at":  "2026-01-19T04:16:13.934Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "501a157f-da04-4380-a64b-98ad2b5b32c4",
+                      "name":  "Swing Ball",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  142,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:08.101Z",
+                      "updated_at":  "2026-01-19T04:16:08.101Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "d155b7af-d371-49bb-87fd-1c6ca73e7a8a",
+                      "name":  "Synthetic",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  142,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:08.529Z",
+                      "updated_at":  "2026-01-19T04:16:08.529Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "8ea1d80a-5392-4857-9bb9-2bee1b1a08a1",
+                      "name":  "Take Off Board",
+                      "category_id":  "173ed651-7bbc-4547-83a6-90e139a95b6f",
+                      "sub_category_id":  151,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:31.868Z",
+                      "updated_at":  "2026-01-19T04:49:31.868Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "423d5dbb-92e0-4776-b8cc-764d70897e03",
+                      "name":  "Tennikoit Ring",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  140,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:01.019Z",
+                      "updated_at":  "2026-01-19T04:16:01.019Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "8067a411-a6fb-4729-ab62-4d11b4f681dc",
+                      "name":  "Tennis Kitbag",
+                      "category_id":  "70416d08-b80b-40d0-98b0-0d3b0785f763",
+                      "sub_category_id":  131,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:37.472Z",
+                      "updated_at":  "2026-01-19T04:15:37.472Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "452744cc-4731-4e83-be5a-a3d2165c6f46",
+                      "name":  "Tennis Net",
+                      "category_id":  "4804a83b-a890-443c-9de3-f3d8fd686b66",
+                      "sub_category_id":  130,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:34.244Z",
+                      "updated_at":  "2026-01-19T04:15:34.244Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "4fbee54e-9b7b-4836-a183-214457b2c495",
+                      "name":  "Tennis Net Tape",
+                      "category_id":  "4804a83b-a890-443c-9de3-f3d8fd686b66",
+                      "sub_category_id":  130,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:34.677Z",
+                      "updated_at":  "2026-01-19T04:15:34.677Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "3d0567c6-568a-4ca7-9872-3e716daae755",
+                      "name":  "Tennis Net Wire",
+                      "category_id":  "4804a83b-a890-443c-9de3-f3d8fd686b66",
+                      "sub_category_id":  130,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:35.136Z",
+                      "updated_at":  "2026-01-19T04:15:35.136Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "a1e2fa59-8ddc-45af-bbc2-426cf299a9b5",
+                      "name":  "Tennis Trainer",
+                      "category_id":  "4804a83b-a890-443c-9de3-f3d8fd686b66",
+                      "sub_category_id":  130,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:33.820Z",
+                      "updated_at":  "2026-01-19T04:15:33.820Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "4fd8ce01-d4a2-498f-9044-c76c9de6c585",
+                      "name":  "Thumb Support",
+                      "category_id":  "3bf0b879-941b-4dd3-9309-1369a90c8b5f",
+                      "sub_category_id":  143,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:14.359Z",
+                      "updated_at":  "2026-01-19T04:16:14.359Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "b7c47754-448b-44f8-abe0-6ad64aa3172a",
+                      "name":  "Training Ladder",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  140,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:58.818Z",
+                      "updated_at":  "2026-01-19T04:15:58.818Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "fc59636f-cee1-4a53-a6a5-54e8573a4e5e",
+                      "name":  "Trampoline",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "sub_category_id":  136,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:51.099Z",
+                      "updated_at":  "2026-01-19T04:15:51.099Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "ecf86124-f443-4e9c-88b0-e3e7f129fd19",
+                      "name":  "Tug of War",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  140,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:00.589Z",
+                      "updated_at":  "2026-01-19T04:16:00.589Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "fe309f09-8d8e-4af9-a3fd-df7af14de019",
+                      "name":  "Turf Ball",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  142,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:08.956Z",
+                      "updated_at":  "2026-01-19T04:16:08.956Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "d8c0c399-18b8-4fac-9356-6036fd15ccd1",
+                      "name":  "Waist Belt",
+                      "category_id":  "3bf0b879-941b-4dd3-9309-1369a90c8b5f",
+                      "sub_category_id":  143,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:14.784Z",
+                      "updated_at":  "2026-01-19T04:16:14.784Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "645d8930-f1f5-4587-b76c-c41e7f3aa62b",
+                      "name":  "Waist Trimmer Belt",
+                      "category_id":  "3bf0b879-941b-4dd3-9309-1369a90c8b5f",
+                      "sub_category_id":  143,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:15.217Z",
+                      "updated_at":  "2026-01-19T04:16:15.217Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "37b1c9de-f287-49e3-a6f6-f11bef9b0e17",
+                      "name":  "Water Balls",
+                      "category_id":  "d4df70ea-bd6e-40c5-99b8-aa3b0b41fe09",
+                      "sub_category_id":  171,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:50.870Z",
+                      "updated_at":  "2026-01-19T04:49:50.870Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "3718942a-d4ac-4084-8804-426a10f92ad1",
+                      "name":  "Weight Machine",
+                      "category_id":  "173ed651-7bbc-4547-83a6-90e139a95b6f",
+                      "sub_category_id":  151,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:49:32.281Z",
+                      "updated_at":  "2026-01-19T04:49:32.281Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "6497857d-8570-4350-89a2-7dd57c168818",
+                      "name":  "Whistle",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "sub_category_id":  140,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:59.244Z",
+                      "updated_at":  "2026-01-19T04:15:59.244Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "fbacb349-7f44-4cad-8dc6-3f12f7f2a804",
+                      "name":  "Wooden Case",
+                      "category_id":  "0d11b597-0290-4e21-b4a3-ac842d7e1698",
+                      "sub_category_id":  122,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:28.204Z",
+                      "updated_at":  "2026-01-19T04:15:28.204Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "64decb17-938a-4f3b-91b2-c7d1376aa80d",
+                      "name":  "Woolen Ball",
+                      "category_id":  "70416d08-b80b-40d0-98b0-0d3b0785f763",
+                      "sub_category_id":  135,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:39.718Z",
+                      "updated_at":  "2026-01-19T04:15:39.718Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "b6b88cbb-f045-4519-86be-a8bace64fea7",
+                      "name":  "Wrist Support",
+                      "category_id":  "3bf0b879-941b-4dd3-9309-1369a90c8b5f",
+                      "sub_category_id":  143,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:16:15.645Z",
+                      "updated_at":  "2026-01-19T04:16:15.645Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "517c25ef-b834-4afe-978a-7606bffd6fc7",
+                      "name":  "Yoga Brick",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "sub_category_id":  136,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T04:15:51.633Z",
+                      "updated_at":  "2026-01-19T04:15:51.633Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  0
+                  },
+                  {
+                      "id":  "af614dc4-f056-4b9e-af9c-1f0a3e3c83ef",
+                      "name":  "Grips",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  94,
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T16:10:31.743Z",
+                      "updated_at":  "2026-01-17T16:10:31.743Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  1
+                  },
+                  {
+                      "id":  "3e330762-e84d-4901-81fa-7fc693732f07",
+                      "name":  "Kashmir Willow Bats",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  4,
+                      "is_active":  true,
+                      "created_at":  "2026-01-14T01:36:56.483Z",
+                      "updated_at":  "2026-01-14T01:36:56.483Z",
+                      "brand_ids":  [
+                                        "e67f0c7f-8729-4c28-8859-266bb351dbfc",
+                                        "138fc576-3558-4644-939b-cd81619d3b3c",
+                                        "8e28254d-ca38-4c73-afa2-93eb3dcbcfa4",
+                                        "7baa3bd3-7ff2-4dcc-96d9-1b4e3e1ff517",
+                                        "0b60d25c-3ffe-4bf6-b72d-323877093ba9",
+                                        "94d2c90e-0962-4bb1-bbed-b5cc95a06e7f",
+                                        "83a2bd95-f354-45b2-b679-27c1ec3f870e"
+                                    ],
+                      "display_order":  1
+                  },
+                  {
+                      "id":  "012efc20-893f-4410-a551-ef0a518911d4",
+                      "name":  "Leather Balls",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  91,
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T16:02:40.428Z",
+                      "updated_at":  "2026-01-17T16:02:40.428Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  1
+                  },
+                  {
+                      "id":  "c97e0707-7fbb-4743-a9ff-cb686ec3438f",
+                      "name":  "Stumps",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  93,
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T16:09:04.239Z",
+                      "updated_at":  "2026-01-17T16:09:04.239Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  1
+                  },
+                  {
+                      "id":  "ff9e1916-2ab2-4129-84e2-d522b2a530a2",
+                      "name":  "Tennis Balls",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  91,
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T16:03:09.678Z",
+                      "updated_at":  "2026-01-17T16:03:09.678Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  1
+                  },
+                  {
+                      "id":  "ec6a1715-ba25-4c95-a0d2-702aa7b25cb9",
+                      "name":  "Thigh Pad",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  92,
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T16:04:03.466Z",
+                      "updated_at":  "2026-01-17T16:04:03.466Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  1
+                  },
+                  {
+                      "id":  "aa97fb5b-429f-428e-97e1-9ec12975fbb4",
+                      "name":  "Wicket Keeping Glove",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  5,
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T16:00:01.844Z",
+                      "updated_at":  "2026-01-17T16:00:01.844Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  1
+                  },
+                  {
+                      "id":  "ef154567-d0e3-4382-bda1-12de25f78789",
+                      "name":  "Abdomen Guard",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  92,
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T16:04:36.731Z",
+                      "updated_at":  "2026-01-17T16:04:36.731Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  2
+                  },
+                  {
+                      "id":  "fdf5bf83-6584-43be-9a81-654da53b53fe",
+                      "name":  "Bat Protection Tape",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  94,
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T16:11:02.589Z",
+                      "updated_at":  "2026-01-17T16:11:02.589Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  2
+                  },
+                  {
+                      "id":  "d893d8da-ab70-45cd-a84c-56c1992e6766",
+                      "name":  "Inner Gloves",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  5,
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T16:00:36.716Z",
+                      "updated_at":  "2026-01-17T16:00:36.716Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  2
+                  },
+                  {
+                      "id":  "5ce0585b-fc0b-41f5-a86b-5dbaec13b9a5",
+                      "name":  "Nets",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  93,
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T16:09:32.151Z",
+                      "updated_at":  "2026-01-17T16:09:32.151Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  2
+                  },
+                  {
+                      "id":  "6be506b1-46e8-449e-9dda-d62611f8673c",
+                      "name":  "Tennis Ball Bats",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  4,
+                      "is_active":  true,
+                      "created_at":  "2026-01-14T01:37:36.010Z",
+                      "updated_at":  "2026-01-14T01:37:36.010Z",
+                      "brand_ids":  [
+                                        "0b60d25c-3ffe-4bf6-b72d-323877093ba9",
+                                        "8e28254d-ca38-4c73-afa2-93eb3dcbcfa4",
+                                        "94d2c90e-0962-4bb1-bbed-b5cc95a06e7f",
+                                        "138fc576-3558-4644-939b-cd81619d3b3c",
+                                        "83a2bd95-f354-45b2-b679-27c1ec3f870e",
+                                        "e67f0c7f-8729-4c28-8859-266bb351dbfc",
+                                        "7baa3bd3-7ff2-4dcc-96d9-1b4e3e1ff517"
+                                    ],
+                      "display_order":  2
+                  },
+                  {
+                      "id":  "ccea2180-a235-4fcb-ab7b-f0af4ac333c7",
+                      "name":  "Wicket Keeping Legguard",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  90,
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T16:02:02.837Z",
+                      "updated_at":  "2026-01-17T16:02:02.837Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  2
+                  },
+                  {
+                      "id":  "80ab74ff-5e1e-49fd-ad29-936728edac31",
+                      "name":  "Cricket Kit",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  4,
+                      "is_active":  true,
+                      "created_at":  "2026-01-14T01:38:03.606Z",
+                      "updated_at":  "2026-01-14T01:38:03.606Z",
+                      "brand_ids":  [
+                                        "0b60d25c-3ffe-4bf6-b72d-323877093ba9",
+                                        "7baa3bd3-7ff2-4dcc-96d9-1b4e3e1ff517",
+                                        "8e28254d-ca38-4c73-afa2-93eb3dcbcfa4",
+                                        "94d2c90e-0962-4bb1-bbed-b5cc95a06e7f",
+                                        "138fc576-3558-4644-939b-cd81619d3b3c",
+                                        "e67f0c7f-8729-4c28-8859-266bb351dbfc",
+                                        "83a2bd95-f354-45b2-b679-27c1ec3f870e"
+                                    ],
+                      "display_order":  3
+                  },
+                  {
+                      "id":  "8efba640-8730-419a-b1f2-c80b3bc51c5e",
+                      "name":  "Elbow Guard",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  92,
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T16:05:22.248Z",
+                      "updated_at":  "2026-01-17T16:05:22.248Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  3
+                  },
+                  {
+                      "id":  "ed42530c-eca4-43cb-95ec-d1dabfb66a24",
+                      "name":  "Chest Guard",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  92,
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T16:05:58.165Z",
+                      "updated_at":  "2026-01-17T16:05:58.165Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  4
+                  },
+                  {
+                      "id":  "023db93d-9cb0-4bab-bb70-3bf51790a0d4",
+                      "name":  "Inner Thigh Pad",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  92,
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T16:06:23.568Z",
+                      "updated_at":  "2026-01-17T16:06:23.568Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  5
+                  },
+                  {
+                      "id":  "bad96dae-2be3-4182-bd8d-c02b235e94bc",
+                      "name":  "Shin Guard",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  92,
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T16:07:02.736Z",
+                      "updated_at":  "2026-01-17T16:07:02.736Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  6
+                  },
+                  {
+                      "id":  "0450b7a1-9255-49c0-9a47-b834dc9b152f",
+                      "name":  "Mask",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "sub_category_id":  92,
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T16:08:10.823Z",
+                      "updated_at":  "2026-01-17T16:08:10.823Z",
+                      "brand_ids":  [
+
+                                    ],
+                      "display_order":  7
+                  }
+              ],
+    "Count":  164
+}

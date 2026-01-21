@@ -129,12 +129,12 @@ export function EnquiryModal({ open, onOpenChange, product }) {
 
                         {/* Logo - Blended with background */}
                         <div className="relative z-10">
-                            <div className="w-32 h-12 relative opacity-40">
+                            <div className="w-32 h-12 relative">
                                 <Image
-                                    src="/pavilion-sports.png"
-                                    alt="Pavilion Sports"
+                                    src="/sk-logo.png"
+                                    alt="Logo"
                                     fill
-                                    className="object-contain brightness-0 invert"
+                                    className="object-contain"
                                 />
                             </div>
                         </div>

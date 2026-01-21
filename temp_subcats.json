@@ -1,0 +1,1483 @@
+﻿{
+    "value":  [
+                  {
+                      "id":  172,
+                      "name":  "Autograph Bats",
+                      "category_id":  "b36dcffb-3407-440a-9a3e-6fb6f2f0ea01",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:52.002Z",
+                      "updated_at":  "2026-01-19T10:19:52.002Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  180,
+                      "name":  "Badges \u0026 Pins",
+                      "category_id":  "6739f292-da02-47d7-88ad-244a758d0cc8",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:58.453Z",
+                      "updated_at":  "2026-01-19T10:19:58.453Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  116,
+                      "name":  "Badminton Accessories",
+                      "category_id":  "69f8f0c1-69ac-48e8-a504-406f840a6436",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:24.639Z",
+                      "updated_at":  "2026-01-19T09:45:24.639Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "130d0b32-11fb-47ff-ba3f-779bcabfa833",
+                                        "39b0bee3-484b-4ceb-a808-39445374276a",
+                                        "9abf98b1-7a29-4da0-bc1b-b3f6becd098f",
+                                        "aa38efb5-150f-4659-852f-a18d3487b04e"
+                                    ],
+                      "brand_count":  "4"
+                  },
+                  {
+                      "id":  105,
+                      "name":  "Ball",
+                      "category_id":  "6c4d60e5-3bfb-47d8-be0d-6af7e364a055",
+                      "image_url":  "/uploads/1768687463398-59464199-2.jpg",
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T22:04:25.226Z",
+                      "updated_at":  "2026-01-17T22:04:25.226Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  96,
+                      "name":  "Ball",
+                      "category_id":  "8991c917-eec7-4f92-8b54-b7e8630a86ff",
+                      "image_url":  "/uploads/1768686609606-522196526-PelotaGomaEspumaFulbito15CmSouvenirCumpleaosX1.jpg",
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T21:50:21.339Z",
+                      "updated_at":  "2026-01-17T21:50:21.339Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "138fc576-3558-4644-939b-cd81619d3b3c",
+                                        "7baa3bd3-7ff2-4dcc-96d9-1b4e3e1ff517",
+                                        "89f32d77-c9d5-41c0-879f-6c25a14ba20d",
+                                        "c5b94d2a-401a-4b80-a0a6-aab1ee317e61",
+                                        "c80f0d73-ab73-4b76-a67e-e55cb27da9d3",
+                                        "d8b4c901-10bb-4821-a059-8424620b5f75"
+                                    ],
+                      "brand_count":  "6"
+                  },
+                  {
+                      "id":  107,
+                      "name":  "Ball",
+                      "category_id":  "1023866a-befa-4040-ac6b-fcafb0c44230",
+                      "image_url":  "/uploads/1768687553890-370186670-WhatsAppImage2026-01-17at10.22.40PM.jpeg",
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T22:05:56.187Z",
+                      "updated_at":  "2026-01-17T22:05:56.187Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "3bbcf62e-7338-4916-9764-0c0c59fd63e7",
+                                        "6b4dc31a-0560-46c4-be0c-51caa9a91de0"
+                                    ],
+                      "brand_count":  "2"
+                  },
+                  {
+                      "id":  99,
+                      "name":  "Ball",
+                      "category_id":  "dc6d5409-457f-49ba-bf03-5d23a2a0b9b1",
+                      "image_url":  "/uploads/1768686928847-730203400-WhatsAppImage2026-01-17at10.14.32PM.jpeg",
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T21:55:32.101Z",
+                      "updated_at":  "2026-01-17T21:55:32.101Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "1d2fa650-063e-4d13-ae4d-d51fffc04675",
+                                        "393118ff-35f2-4200-bc7e-39c4478e1dcb",
+                                        "6b4dc31a-0560-46c4-be0c-51caa9a91de0",
+                                        "72ab601e-2b81-4027-a777-c9d6d58e6ff9",
+                                        "c5b94d2a-401a-4b80-a0a6-aab1ee317e61",
+                                        "d8b4c901-10bb-4821-a059-8424620b5f75",
+                                        "f60304e0-83fc-4f20-8e8c-cdb0ec6b8561"
+                                    ],
+                      "brand_count":  "7"
+                  },
+                  {
+                      "id":  101,
+                      "name":  "Ball",
+                      "category_id":  "2da6fc64-c750-4b49-b9e8-2786745d2ee3",
+                      "image_url":  "/uploads/1768687085184-204570065-WhatsAppImage2026-01-17at10.16.56PM.jpeg",
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T21:58:08.474Z",
+                      "updated_at":  "2026-01-17T21:58:08.474Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "b02caab8-a568-4c0f-b9c9-ab029264159b",
+                                        "c5b94d2a-401a-4b80-a0a6-aab1ee317e61",
+                                        "d8b4c901-10bb-4821-a059-8424620b5f75"
+                                    ],
+                      "brand_count":  "3"
+                  },
+                  {
+                      "id":  124,
+                      "name":  "Ball",
+                      "category_id":  "716d6d92-a299-4c1a-990e-23df701200fc",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:29.587Z",
+                      "updated_at":  "2026-01-19T09:45:29.587Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "7e268ff5-1799-4fd2-b6aa-0c277bd43a7c",
+                                        "f1309120-0101-4743-ac52-91f2f5b60028",
+                                        "f60304e0-83fc-4f20-8e8c-cdb0ec6b8561"
+                                    ],
+                      "brand_count":  "3"
+                  },
+                  {
+                      "id":  135,
+                      "name":  "Ball Badminton Accessories",
+                      "category_id":  "70416d08-b80b-40d0-98b0-0d3b0785f763",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:39.276Z",
+                      "updated_at":  "2026-01-19T09:45:39.276Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  134,
+                      "name":  "Ball Badminton Racket",
+                      "category_id":  "70416d08-b80b-40d0-98b0-0d3b0785f763",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:38.751Z",
+                      "updated_at":  "2026-01-19T09:45:38.751Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  108,
+                      "name":  "Balls",
+                      "category_id":  "04f8fd30-9fba-4595-a8ec-2f0ee544fc7f",
+                      "image_url":  "/uploads/1768687610329-729548316-WhatsAppImage2026-01-17at10.23.14PM.jpeg",
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T22:06:52.832Z",
+                      "updated_at":  "2026-01-17T22:06:52.832Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  157,
+                      "name":  "Basketball Shoe",
+                      "category_id":  "c5f032d2-47f0-4092-9508-9302807849fd",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:35.681Z",
+                      "updated_at":  "2026-01-19T10:19:35.681Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "138fc576-3558-4644-939b-cd81619d3b3c",
+                                        "7baa3bd3-7ff2-4dcc-96d9-1b4e3e1ff517",
+                                        "89f32d77-c9d5-41c0-879f-6c25a14ba20d",
+                                        "d8b4c901-10bb-4821-a059-8424620b5f75"
+                                    ],
+                      "brand_count":  "4"
+                  },
+                  {
+                      "id":  4,
+                      "name":  "Bats",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "image_url":  "/uploads/1768684302822-851030813-WhatsAppImage2026-01-18at2.20.58AM.jpeg",
+                      "is_active":  true,
+                      "created_at":  "2025-12-21T13:58:16.305Z",
+                      "updated_at":  "2025-12-21T13:58:16.305Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "0b60d25c-3ffe-4bf6-b72d-323877093ba9",
+                                        "83a2bd95-f354-45b2-b679-27c1ec3f870e",
+                                        "89f32d77-c9d5-41c0-879f-6c25a14ba20d",
+                                        "8e28254d-ca38-4c73-afa2-93eb3dcbcfa4",
+                                        "94d2c90e-0962-4bb1-bbed-b5cc95a06e7f",
+                                        "e5b527b9-30ef-4c78-b9c6-c0f7c1f7f3d2",
+                                        "e67f0c7f-8729-4c28-8859-266bb351dbfc"
+                                    ],
+                      "brand_count":  "7"
+                  },
+                  {
+                      "id":  174,
+                      "name":  "Boxing",
+                      "category_id":  "b36dcffb-3407-440a-9a3e-6fb6f2f0ea01",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:52.862Z",
+                      "updated_at":  "2026-01-19T10:19:52.862Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  173,
+                      "name":  "Caps",
+                      "category_id":  "b36dcffb-3407-440a-9a3e-6fb6f2f0ea01",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:52.449Z",
+                      "updated_at":  "2026-01-19T10:19:52.449Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  144,
+                      "name":  "Carrom",
+                      "category_id":  "bc2b304a-b5bc-4f97-8c25-8e0d0d351671",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:17.740Z",
+                      "updated_at":  "2026-01-19T10:19:17.740Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  145,
+                      "name":  "Chess",
+                      "category_id":  "bc2b304a-b5bc-4f97-8c25-8e0d0d351671",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:20.455Z",
+                      "updated_at":  "2026-01-19T10:19:20.455Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  167,
+                      "name":  "Clothing Accessories",
+                      "category_id":  "2c9fc528-6632-4f88-986d-eba317d4a00a",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:41.163Z",
+                      "updated_at":  "2026-01-19T10:19:41.163Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  164,
+                      "name":  "Clothing T-shirt\u0026 Trousers set",
+                      "category_id":  "2c9fc528-6632-4f88-986d-eba317d4a00a",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:39.848Z",
+                      "updated_at":  "2026-01-19T10:19:39.848Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  153,
+                      "name":  "Cricket Shoes",
+                      "category_id":  "c5f032d2-47f0-4092-9508-9302807849fd",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:33.995Z",
+                      "updated_at":  "2026-01-19T10:19:33.995Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "138fc576-3558-4644-939b-cd81619d3b3c",
+                                        "7baa3bd3-7ff2-4dcc-96d9-1b4e3e1ff517"
+                                    ],
+                      "brand_count":  "2"
+                  },
+                  {
+                      "id":  146,
+                      "name":  "Dart",
+                      "category_id":  "bc2b304a-b5bc-4f97-8c25-8e0d0d351671",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:22.198Z",
+                      "updated_at":  "2026-01-19T10:19:22.198Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "669047c1-353b-4978-80d7-37f27abbfce4",
+                                        "cccd14ab-c14b-4892-9511-b0b89c0c57d4"
+                                    ],
+                      "brand_count":  "2"
+                  },
+                  {
+                      "id":  176,
+                      "name":  "Eyewear",
+                      "category_id":  "b36dcffb-3407-440a-9a3e-6fb6f2f0ea01",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:56.340Z",
+                      "updated_at":  "2026-01-19T10:19:56.340Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  136,
+                      "name":  "Fitness Accessories",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:41.850Z",
+                      "updated_at":  "2026-01-19T09:45:41.850Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  137,
+                      "name":  "Fitness Balls",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:52.075Z",
+                      "updated_at":  "2026-01-19T09:45:52.075Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  147,
+                      "name":  "Fooseball Table",
+                      "category_id":  "bc2b304a-b5bc-4f97-8c25-8e0d0d351671",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:23.449Z",
+                      "updated_at":  "2026-01-19T10:19:23.449Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  158,
+                      "name":  "Football Boot",
+                      "category_id":  "c5f032d2-47f0-4092-9508-9302807849fd",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:36.094Z",
+                      "updated_at":  "2026-01-19T10:19:36.094Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "89f32d77-c9d5-41c0-879f-6c25a14ba20d"
+                                    ],
+                      "brand_count":  "1"
+                  },
+                  {
+                      "id":  150,
+                      "name":  "Foot Pump",
+                      "category_id":  "173ed651-7bbc-4547-83a6-90e139a95b6f",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:27.093Z",
+                      "updated_at":  "2026-01-19T10:19:27.093Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  155,
+                      "name":  "Golf Shoes",
+                      "category_id":  "c5f032d2-47f0-4092-9508-9302807849fd",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:34.827Z",
+                      "updated_at":  "2026-01-19T10:19:34.827Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "138fc576-3558-4644-939b-cd81619d3b3c",
+                                        "89f32d77-c9d5-41c0-879f-6c25a14ba20d",
+                                        "b770aa8e-f94e-49ba-b36e-814d113b8a81"
+                                    ],
+                      "brand_count":  "3"
+                  },
+                  {
+                      "id":  129,
+                      "name":  "Grip",
+                      "category_id":  "4804a83b-a890-443c-9de3-f3d8fd686b66",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:32.944Z",
+                      "updated_at":  "2026-01-19T09:45:32.944Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "386ef577-ab21-49d7-aaf6-b5511a3da09b",
+                                        "aa38efb5-150f-4659-852f-a18d3487b04e",
+                                        "c5b94d2a-401a-4b80-a0a6-aab1ee317e61",
+                                        "f1309120-0101-4743-ac52-91f2f5b60028",
+                                        "f60304e0-83fc-4f20-8e8c-cdb0ec6b8561"
+                                    ],
+                      "brand_count":  "5"
+                  },
+                  {
+                      "id":  115,
+                      "name":  "Grip",
+                      "category_id":  "69f8f0c1-69ac-48e8-a504-406f840a6436",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:24.162Z",
+                      "updated_at":  "2026-01-19T09:45:24.162Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "130d0b32-11fb-47ff-ba3f-779bcabfa833",
+                                        "39b0bee3-484b-4ceb-a808-39445374276a",
+                                        "6b4dc31a-0560-46c4-be0c-51caa9a91de0",
+                                        "9abf98b1-7a29-4da0-bc1b-b3f6becd098f",
+                                        "aa38efb5-150f-4659-852f-a18d3487b04e"
+                                    ],
+                      "brand_count":  "5"
+                  },
+                  {
+                      "id":  156,
+                      "name":  "Jogging Shoe/Running Shoe",
+                      "category_id":  "c5f032d2-47f0-4092-9508-9302807849fd",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:35.243Z",
+                      "updated_at":  "2026-01-19T10:19:35.243Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "138fc576-3558-4644-939b-cd81619d3b3c",
+                                        "7baa3bd3-7ff2-4dcc-96d9-1b4e3e1ff517",
+                                        "89f32d77-c9d5-41c0-879f-6c25a14ba20d",
+                                        "d8b4c901-10bb-4821-a059-8424620b5f75"
+                                    ],
+                      "brand_count":  "4"
+                  },
+                  {
+                      "id":  131,
+                      "name":  "Kitbag",
+                      "category_id":  "70416d08-b80b-40d0-98b0-0d3b0785f763",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:36.024Z",
+                      "updated_at":  "2026-01-19T09:45:36.024Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  179,
+                      "name":  "Medals",
+                      "category_id":  "6739f292-da02-47d7-88ad-244a758d0cc8",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:58.038Z",
+                      "updated_at":  "2026-01-19T10:19:58.038Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  113,
+                      "name":  "Nets",
+                      "category_id":  "69f8f0c1-69ac-48e8-a504-406f840a6436",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:23.202Z",
+                      "updated_at":  "2026-01-19T09:45:23.202Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "130d0b32-11fb-47ff-ba3f-779bcabfa833",
+                                        "39b0bee3-484b-4ceb-a808-39445374276a",
+                                        "9abf98b1-7a29-4da0-bc1b-b3f6becd098f",
+                                        "aa38efb5-150f-4659-852f-a18d3487b04e"
+                                    ],
+                      "brand_count":  "4"
+                  },
+                  {
+                      "id":  154,
+                      "name":  "Non Marking Shoes",
+                      "category_id":  "c5f032d2-47f0-4092-9508-9302807849fd",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:34.413Z",
+                      "updated_at":  "2026-01-19T10:19:34.413Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "138fc576-3558-4644-939b-cd81619d3b3c",
+                                        "7baa3bd3-7ff2-4dcc-96d9-1b4e3e1ff517",
+                                        "89f32d77-c9d5-41c0-879f-6c25a14ba20d",
+                                        "d8b4c901-10bb-4821-a059-8424620b5f75"
+                                    ],
+                      "brand_count":  "4"
+                  },
+                  {
+                      "id":  133,
+                      "name":  "Pickleball Accessories",
+                      "category_id":  "70416d08-b80b-40d0-98b0-0d3b0785f763",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:38.325Z",
+                      "updated_at":  "2026-01-19T09:45:38.325Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  132,
+                      "name":  "Pickleball Paddle",
+                      "category_id":  "70416d08-b80b-40d0-98b0-0d3b0785f763",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:37.899Z",
+                      "updated_at":  "2026-01-19T09:45:37.899Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "b770aa8e-f94e-49ba-b36e-814d113b8a81"
+                                    ],
+                      "brand_count":  "1"
+                  },
+                  {
+                      "id":  119,
+                      "name":  "Ply",
+                      "category_id":  "0d11b597-0290-4e21-b4a3-ac842d7e1698",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:26.408Z",
+                      "updated_at":  "2026-01-19T09:45:26.408Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "52df9d01-990d-4a4a-b18a-9c84cbb3dd05",
+                                        "5c4d4d33-ac40-4943-83ca-971dc77010ea",
+                                        "84a3e897-0510-424f-8015-a157c2f8a115",
+                                        "a4eb12db-afad-4f0c-8117-55b7f195c1e1",
+                                        "b02caab8-a568-4c0f-b9c9-ab029264159b"
+                                    ],
+                      "brand_count":  "5"
+                  },
+                  {
+                      "id":  141,
+                      "name":  "Practice Bats",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:46:01.451Z",
+                      "updated_at":  "2026-01-19T09:46:01.451Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  117,
+                      "name":  "Racket",
+                      "category_id":  "0d11b597-0290-4e21-b4a3-ac842d7e1698",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:25.533Z",
+                      "updated_at":  "2026-01-19T09:45:25.533Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "52df9d01-990d-4a4a-b18a-9c84cbb3dd05",
+                                        "5c4d4d33-ac40-4943-83ca-971dc77010ea",
+                                        "84a3e897-0510-424f-8015-a157c2f8a115",
+                                        "a4eb12db-afad-4f0c-8117-55b7f195c1e1"
+                                    ],
+                      "brand_count":  "4"
+                  },
+                  {
+                      "id":  111,
+                      "name":  "Racket",
+                      "category_id":  "69f8f0c1-69ac-48e8-a504-406f840a6436",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:22.338Z",
+                      "updated_at":  "2026-01-19T09:45:22.338Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "130d0b32-11fb-47ff-ba3f-779bcabfa833",
+                                        "39b0bee3-484b-4ceb-a808-39445374276a",
+                                        "9abf98b1-7a29-4da0-bc1b-b3f6becd098f",
+                                        "aa38efb5-150f-4659-852f-a18d3487b04e"
+                                    ],
+                      "brand_count":  "4"
+                  },
+                  {
+                      "id":  152,
+                      "name":  "Recreational Games",
+                      "category_id":  "173ed651-7bbc-4547-83a6-90e139a95b6f",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:32.695Z",
+                      "updated_at":  "2026-01-19T10:19:32.695Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "f7fb915b-ba70-48cc-be9b-4111570ccc9d"
+                                    ],
+                      "brand_count":  "1"
+                  },
+                  {
+                      "id":  118,
+                      "name":  "Rubber",
+                      "category_id":  "0d11b597-0290-4e21-b4a3-ac842d7e1698",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:25.959Z",
+                      "updated_at":  "2026-01-19T09:45:25.959Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "52df9d01-990d-4a4a-b18a-9c84cbb3dd05",
+                                        "5c4d4d33-ac40-4943-83ca-971dc77010ea",
+                                        "84a3e897-0510-424f-8015-a157c2f8a115",
+                                        "a4eb12db-afad-4f0c-8117-55b7f195c1e1"
+                                    ],
+                      "brand_count":  "4"
+                  },
+                  {
+                      "id":  159,
+                      "name":  "Running Spikes",
+                      "category_id":  "c5f032d2-47f0-4092-9508-9302807849fd",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:36.505Z",
+                      "updated_at":  "2026-01-19T10:19:36.505Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "138fc576-3558-4644-939b-cd81619d3b3c",
+                                        "7baa3bd3-7ff2-4dcc-96d9-1b4e3e1ff517",
+                                        "89f32d77-c9d5-41c0-879f-6c25a14ba20d",
+                                        "d8b4c901-10bb-4821-a059-8424620b5f75"
+                                    ],
+                      "brand_count":  "4"
+                  },
+                  {
+                      "id":  175,
+                      "name":  "Scoreboard",
+                      "category_id":  "b36dcffb-3407-440a-9a3e-6fb6f2f0ea01",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:55.900Z",
+                      "updated_at":  "2026-01-19T10:19:55.900Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  177,
+                      "name":  "Services",
+                      "category_id":  "b36dcffb-3407-440a-9a3e-6fb6f2f0ea01",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:56.756Z",
+                      "updated_at":  "2026-01-19T10:19:56.756Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  181,
+                      "name":  "Shield",
+                      "category_id":  "6739f292-da02-47d7-88ad-244a758d0cc8",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:59.002Z",
+                      "updated_at":  "2026-01-19T10:19:59.002Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "f7fb915b-ba70-48cc-be9b-4111570ccc9d"
+                                    ],
+                      "brand_count":  "1"
+                  },
+                  {
+                      "id":  160,
+                      "name":  "Shoe Accessories",
+                      "category_id":  "c5f032d2-47f0-4092-9508-9302807849fd",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:36.921Z",
+                      "updated_at":  "2026-01-19T10:19:36.921Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "138fc576-3558-4644-939b-cd81619d3b3c",
+                                        "d8b4c901-10bb-4821-a059-8424620b5f75"
+                                    ],
+                      "brand_count":  "2"
+                  },
+                  {
+                      "id":  165,
+                      "name":  "Shorts",
+                      "category_id":  "2c9fc528-6632-4f88-986d-eba317d4a00a",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:40.278Z",
+                      "updated_at":  "2026-01-19T10:19:40.278Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  112,
+                      "name":  "Shuttlecock",
+                      "category_id":  "69f8f0c1-69ac-48e8-a504-406f840a6436",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:22.772Z",
+                      "updated_at":  "2026-01-19T09:45:22.772Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "130d0b32-11fb-47ff-ba3f-779bcabfa833",
+                                        "39b0bee3-484b-4ceb-a808-39445374276a",
+                                        "9abf98b1-7a29-4da0-bc1b-b3f6becd098f",
+                                        "aa38efb5-150f-4659-852f-a18d3487b04e"
+                                    ],
+                      "brand_count":  "4"
+                  },
+                  {
+                      "id":  148,
+                      "name":  "Skates",
+                      "category_id":  "173ed651-7bbc-4547-83a6-90e139a95b6f",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:24.445Z",
+                      "updated_at":  "2026-01-19T10:19:24.445Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "7e268ff5-1799-4fd2-b6aa-0c277bd43a7c"
+                                    ],
+                      "brand_count":  "1"
+                  },
+                  {
+                      "id":  166,
+                      "name":  "Skin Fit",
+                      "category_id":  "2c9fc528-6632-4f88-986d-eba317d4a00a",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:40.690Z",
+                      "updated_at":  "2026-01-19T10:19:40.690Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  125,
+                      "name":  "Squash Accessories",
+                      "category_id":  "716d6d92-a299-4c1a-990e-23df701200fc",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:30.081Z",
+                      "updated_at":  "2026-01-19T09:45:30.081Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "b770aa8e-f94e-49ba-b36e-814d113b8a81",
+                                        "f1309120-0101-4743-ac52-91f2f5b60028",
+                                        "f60304e0-83fc-4f20-8e8c-cdb0ec6b8561",
+                                        "f7fb915b-ba70-48cc-be9b-4111570ccc9d"
+                                    ],
+                      "brand_count":  "4"
+                  },
+                  {
+                      "id":  123,
+                      "name":  "Squash Racket",
+                      "category_id":  "716d6d92-a299-4c1a-990e-23df701200fc",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:29.105Z",
+                      "updated_at":  "2026-01-19T09:45:29.105Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "f1309120-0101-4743-ac52-91f2f5b60028",
+                                        "f60304e0-83fc-4f20-8e8c-cdb0ec6b8561"
+                                    ],
+                      "brand_count":  "2"
+                  },
+                  {
+                      "id":  128,
+                      "name":  "Strings",
+                      "category_id":  "4804a83b-a890-443c-9de3-f3d8fd686b66",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:32.384Z",
+                      "updated_at":  "2026-01-19T09:45:32.384Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "1d2fa650-063e-4d13-ae4d-d51fffc04675",
+                                        "386ef577-ab21-49d7-aaf6-b5511a3da09b",
+                                        "aa38efb5-150f-4659-852f-a18d3487b04e",
+                                        "c5b94d2a-401a-4b80-a0a6-aab1ee317e61",
+                                        "f1309120-0101-4743-ac52-91f2f5b60028",
+                                        "f60304e0-83fc-4f20-8e8c-cdb0ec6b8561"
+                                    ],
+                      "brand_count":  "6"
+                  },
+                  {
+                      "id":  114,
+                      "name":  "Strings",
+                      "category_id":  "69f8f0c1-69ac-48e8-a504-406f840a6436",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:23.729Z",
+                      "updated_at":  "2026-01-19T09:45:23.729Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "130d0b32-11fb-47ff-ba3f-779bcabfa833",
+                                        "39b0bee3-484b-4ceb-a808-39445374276a",
+                                        "9abf98b1-7a29-4da0-bc1b-b3f6becd098f",
+                                        "aa38efb5-150f-4659-852f-a18d3487b04e"
+                                    ],
+                      "brand_count":  "4"
+                  },
+                  {
+                      "id":  143,
+                      "name":  "Support \u0026 Splints",
+                      "category_id":  "3bf0b879-941b-4dd3-9309-1369a90c8b5f",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:46:09.822Z",
+                      "updated_at":  "2026-01-19T09:46:09.822Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "669047c1-353b-4978-80d7-37f27abbfce4"
+                                    ],
+                      "brand_count":  "1"
+                  },
+                  {
+                      "id":  163,
+                      "name":  "Sweater",
+                      "category_id":  "2c9fc528-6632-4f88-986d-eba317d4a00a",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:39.433Z",
+                      "updated_at":  "2026-01-19T10:19:39.433Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  171,
+                      "name":  "Swimming Accessories",
+                      "category_id":  "d4df70ea-bd6e-40c5-99b8-aa3b0b41fe09",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:44.935Z",
+                      "updated_at":  "2026-01-19T10:19:44.935Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  169,
+                      "name":  "Swimming Caps",
+                      "category_id":  "d4df70ea-bd6e-40c5-99b8-aa3b0b41fe09",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:44.111Z",
+                      "updated_at":  "2026-01-19T10:19:44.111Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  168,
+                      "name":  "Swimming Goggles",
+                      "category_id":  "d4df70ea-bd6e-40c5-99b8-aa3b0b41fe09",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:43.688Z",
+                      "updated_at":  "2026-01-19T10:19:43.688Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "d594f309-4ce3-4dd8-a1ff-d04cb1b96f4c"
+                                    ],
+                      "brand_count":  "1"
+                  },
+                  {
+                      "id":  170,
+                      "name":  "Swimming Wear",
+                      "category_id":  "d4df70ea-bd6e-40c5-99b8-aa3b0b41fe09",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:44.523Z",
+                      "updated_at":  "2026-01-19T10:19:44.523Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "1e92bd97-c0e1-40e0-a2fb-cc3377ee39da"
+                                    ],
+                      "brand_count":  "1"
+                  },
+                  {
+                      "id":  122,
+                      "name":  "Table Tennis Accessories",
+                      "category_id":  "0d11b597-0290-4e21-b4a3-ac842d7e1698",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:27.757Z",
+                      "updated_at":  "2026-01-19T09:45:27.757Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "52df9d01-990d-4a4a-b18a-9c84cbb3dd05",
+                                        "5c4d4d33-ac40-4943-83ca-971dc77010ea",
+                                        "84a3e897-0510-424f-8015-a157c2f8a115",
+                                        "a4eb12db-afad-4f0c-8117-55b7f195c1e1"
+                                    ],
+                      "brand_count":  "4"
+                  },
+                  {
+                      "id":  130,
+                      "name":  "Tennis Accessories",
+                      "category_id":  "4804a83b-a890-443c-9de3-f3d8fd686b66",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:33.386Z",
+                      "updated_at":  "2026-01-19T09:45:33.386Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "386ef577-ab21-49d7-aaf6-b5511a3da09b",
+                                        "aa38efb5-150f-4659-852f-a18d3487b04e",
+                                        "f1309120-0101-4743-ac52-91f2f5b60028",
+                                        "f60304e0-83fc-4f20-8e8c-cdb0ec6b8561"
+                                    ],
+                      "brand_count":  "4"
+                  },
+                  {
+                      "id":  127,
+                      "name":  "Tennis Ball",
+                      "category_id":  "4804a83b-a890-443c-9de3-f3d8fd686b66",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:31.948Z",
+                      "updated_at":  "2026-01-19T09:45:31.948Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "386ef577-ab21-49d7-aaf6-b5511a3da09b",
+                                        "aa38efb5-150f-4659-852f-a18d3487b04e",
+                                        "c5b94d2a-401a-4b80-a0a6-aab1ee317e61",
+                                        "f1309120-0101-4743-ac52-91f2f5b60028",
+                                        "f60304e0-83fc-4f20-8e8c-cdb0ec6b8561"
+                                    ],
+                      "brand_count":  "5"
+                  },
+                  {
+                      "id":  126,
+                      "name":  "Tennis Racket",
+                      "category_id":  "4804a83b-a890-443c-9de3-f3d8fd686b66",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:31.519Z",
+                      "updated_at":  "2026-01-19T09:45:31.519Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "386ef577-ab21-49d7-aaf6-b5511a3da09b",
+                                        "aa38efb5-150f-4659-852f-a18d3487b04e",
+                                        "f1309120-0101-4743-ac52-91f2f5b60028",
+                                        "f60304e0-83fc-4f20-8e8c-cdb0ec6b8561"
+                                    ],
+                      "brand_count":  "4"
+                  },
+                  {
+                      "id":  151,
+                      "name":  "Track \u0026 Field Equipment",
+                      "category_id":  "173ed651-7bbc-4547-83a6-90e139a95b6f",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:27.504Z",
+                      "updated_at":  "2026-01-19T10:19:27.504Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  140,
+                      "name":  "Training Accessories",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:55.292Z",
+                      "updated_at":  "2026-01-19T09:45:55.292Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "1e92bd97-c0e1-40e0-a2fb-cc3377ee39da",
+                                        "b02caab8-a568-4c0f-b9c9-ab029264159b",
+                                        "d8b4c901-10bb-4821-a059-8424620b5f75"
+                                    ],
+                      "brand_count":  "3"
+                  },
+                  {
+                      "id":  142,
+                      "name":  "Training Balls",
+                      "category_id":  "ecd0cc47-334c-421b-be16-c8ef925fd325",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:46:02.731Z",
+                      "updated_at":  "2026-01-19T09:46:02.731Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "3bbcf62e-7338-4916-9764-0c0c59fd63e7",
+                                        "669047c1-353b-4978-80d7-37f27abbfce4",
+                                        "d8b4c901-10bb-4821-a059-8424620b5f75"
+                                    ],
+                      "brand_count":  "3"
+                  },
+                  {
+                      "id":  178,
+                      "name":  "Trophies",
+                      "category_id":  "6739f292-da02-47d7-88ad-244a758d0cc8",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:57.625Z",
+                      "updated_at":  "2026-01-19T10:19:57.625Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  162,
+                      "name":  "Trousers",
+                      "category_id":  "2c9fc528-6632-4f88-986d-eba317d4a00a",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:38.998Z",
+                      "updated_at":  "2026-01-19T10:19:38.998Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  161,
+                      "name":  "T-Shirts",
+                      "category_id":  "2c9fc528-6632-4f88-986d-eba317d4a00a",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:38.583Z",
+                      "updated_at":  "2026-01-19T10:19:38.583Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  120,
+                      "name":  "TT Ball",
+                      "category_id":  "0d11b597-0290-4e21-b4a3-ac842d7e1698",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:26.857Z",
+                      "updated_at":  "2026-01-19T09:45:26.857Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "52df9d01-990d-4a4a-b18a-9c84cbb3dd05",
+                                        "5c4d4d33-ac40-4943-83ca-971dc77010ea",
+                                        "84a3e897-0510-424f-8015-a157c2f8a115",
+                                        "a4eb12db-afad-4f0c-8117-55b7f195c1e1",
+                                        "b770aa8e-f94e-49ba-b36e-814d113b8a81"
+                                    ],
+                      "brand_count":  "5"
+                  },
+                  {
+                      "id":  121,
+                      "name":  "TT Table",
+                      "category_id":  "0d11b597-0290-4e21-b4a3-ac842d7e1698",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:27.287Z",
+                      "updated_at":  "2026-01-19T09:45:27.287Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "52df9d01-990d-4a4a-b18a-9c84cbb3dd05",
+                                        "5c4d4d33-ac40-4943-83ca-971dc77010ea",
+                                        "84a3e897-0510-424f-8015-a157c2f8a115",
+                                        "a4eb12db-afad-4f0c-8117-55b7f195c1e1"
+                                    ],
+                      "brand_count":  "4"
+                  },
+                  {
+                      "id":  149,
+                      "name":  "Wave Board",
+                      "category_id":  "173ed651-7bbc-4547-83a6-90e139a95b6f",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T10:19:26.682Z",
+                      "updated_at":  "2026-01-19T10:19:26.682Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "b770aa8e-f94e-49ba-b36e-814d113b8a81"
+                                    ],
+                      "brand_count":  "1"
+                  },
+                  {
+                      "id":  138,
+                      "name":  "Weights - Dumbbells",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:53.870Z",
+                      "updated_at":  "2026-01-19T09:45:53.870Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+                                        "1e92bd97-c0e1-40e0-a2fb-cc3377ee39da"
+                                    ],
+                      "brand_count":  "1"
+                  },
+                  {
+                      "id":  139,
+                      "name":  "Yoga Mats",
+                      "category_id":  "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+                      "image_url":  null,
+                      "is_active":  true,
+                      "created_at":  "2026-01-19T09:45:54.295Z",
+                      "updated_at":  "2026-01-19T09:45:54.295Z",
+                      "display_order":  0,
+                      "brand_ids":  [
+
+                                    ],
+                      "brand_count":  "0"
+                  },
+                  {
+                      "id":  100,
+                      "name":  "Accessories",
+                      "category_id":  "dc6d5409-457f-49ba-bf03-5d23a2a0b9b1",
+                      "image_url":  "/uploads/1768686980061-607997833-WhatsAppImage2026-01-17at10.18.33PM.jpeg",
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T21:56:25.550Z",
+                      "updated_at":  "2026-01-17T21:56:25.550Z",
+                      "display_order":  1,
+                      "brand_ids":  [
+                                        "3bbcf62e-7338-4916-9764-0c0c59fd63e7",
+                                        "669047c1-353b-4978-80d7-37f27abbfce4",
+                                        "72ab601e-2b81-4027-a777-c9d6d58e6ff9",
+                                        "c5b94d2a-401a-4b80-a0a6-aab1ee317e61",
+                                        "d8b4c901-10bb-4821-a059-8424620b5f75",
+                                        "f60304e0-83fc-4f20-8e8c-cdb0ec6b8561"
+                                    ],
+                      "brand_count":  "6"
+                  },
+                  {
+                      "id":  5,
+                      "name":  "Gloves",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "image_url":  "/uploads/1768684356727-52307218-WhatsAppImage2026-01-18at2.20.59AM.jpeg",
+                      "is_active":  true,
+                      "created_at":  "2025-12-21T13:58:38.024Z",
+                      "updated_at":  "2025-12-21T13:58:38.024Z",
+                      "display_order":  1,
+                      "brand_ids":  [
+                                        "0b60d25c-3ffe-4bf6-b72d-323877093ba9",
+                                        "83a2bd95-f354-45b2-b679-27c1ec3f870e",
+                                        "89f32d77-c9d5-41c0-879f-6c25a14ba20d",
+                                        "8e28254d-ca38-4c73-afa2-93eb3dcbcfa4",
+                                        "94d2c90e-0962-4bb1-bbed-b5cc95a06e7f",
+                                        "e5b527b9-30ef-4c78-b9c6-c0f7c1f7f3d2",
+                                        "e67f0c7f-8729-4c28-8859-266bb351dbfc"
+                                    ],
+                      "brand_count":  "7"
+                  },
+                  {
+                      "id":  109,
+                      "name":  "Nets",
+                      "category_id":  "04f8fd30-9fba-4595-a8ec-2f0ee544fc7f",
+                      "image_url":  "/uploads/1768687633290-830186649-WhatsAppImage2026-01-17at10.24.58PM.jpeg",
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T22:07:28.557Z",
+                      "updated_at":  "2026-01-17T22:07:28.557Z",
+                      "display_order":  1,
+                      "brand_ids":  [
+                                        "6b4dc31a-0560-46c4-be0c-51caa9a91de0"
+                                    ],
+                      "brand_count":  "1"
+                  },
+                  {
+                      "id":  102,
+                      "name":  "Nets",
+                      "category_id":  "2da6fc64-c750-4b49-b9e8-2786745d2ee3",
+                      "image_url":  "/uploads/1768687111277-333937404-WhatsAppImage2026-01-17at10.27.22PM.jpeg",
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T21:58:38.499Z",
+                      "updated_at":  "2026-01-17T21:58:38.499Z",
+                      "display_order":  1,
+                      "brand_ids":  [
+                                        "c5b94d2a-401a-4b80-a0a6-aab1ee317e61",
+                                        "d8b4c901-10bb-4821-a059-8424620b5f75"
+                                    ],
+                      "brand_count":  "2"
+                  },
+                  {
+                      "id":  106,
+                      "name":  "Nets",
+                      "category_id":  "6c4d60e5-3bfb-47d8-be0d-6af7e364a055",
+                      "image_url":  "/uploads/1768687492410-331426662-WhatsAppImage2026-01-17at10.17.54PM.jpeg",
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T22:04:54.395Z",
+                      "updated_at":  "2026-01-17T22:04:54.395Z",
+                      "display_order":  1,
+                      "brand_ids":  [
+                                        "393118ff-35f2-4200-bc7e-39c4478e1dcb"
+                                    ],
+                      "brand_count":  "1"
+                  },
+                  {
+                      "id":  97,
+                      "name":  "Nets",
+                      "category_id":  "8991c917-eec7-4f92-8b54-b7e8630a86ff",
+                      "image_url":  "/uploads/1768686650566-956390329-WhatsAppImage2026-01-17at10.11.06PM.jpeg",
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T21:50:53.697Z",
+                      "updated_at":  "2026-01-17T21:50:53.697Z",
+                      "display_order":  1,
+                      "brand_ids":  [
+                                        "138fc576-3558-4644-939b-cd81619d3b3c",
+                                        "7baa3bd3-7ff2-4dcc-96d9-1b4e3e1ff517",
+                                        "89f32d77-c9d5-41c0-879f-6c25a14ba20d",
+                                        "c5b94d2a-401a-4b80-a0a6-aab1ee317e61",
+                                        "c80f0d73-ab73-4b76-a67e-e55cb27da9d3",
+                                        "d8b4c901-10bb-4821-a059-8424620b5f75"
+                                    ],
+                      "brand_count":  "6"
+                  },
+                  {
+                      "id":  98,
+                      "name":  "Accessories",
+                      "category_id":  "8991c917-eec7-4f92-8b54-b7e8630a86ff",
+                      "image_url":  "/uploads/1768686687864-354289989-WhatsAppImage2026-01-17at10.13.23PM.jpeg",
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T21:51:33.545Z",
+                      "updated_at":  "2026-01-17T21:51:33.545Z",
+                      "display_order":  2,
+                      "brand_ids":  [
+                                        "138fc576-3558-4644-939b-cd81619d3b3c",
+                                        "1e92bd97-c0e1-40e0-a2fb-cc3377ee39da",
+                                        "7baa3bd3-7ff2-4dcc-96d9-1b4e3e1ff517",
+                                        "89f32d77-c9d5-41c0-879f-6c25a14ba20d",
+                                        "b770aa8e-f94e-49ba-b36e-814d113b8a81",
+                                        "c5b94d2a-401a-4b80-a0a6-aab1ee317e61",
+                                        "c80f0d73-ab73-4b76-a67e-e55cb27da9d3",
+                                        "cccd14ab-c14b-4892-9511-b0b89c0c57d4",
+                                        "d8b4c901-10bb-4821-a059-8424620b5f75"
+                                    ],
+                      "brand_count":  "9"
+                  },
+                  {
+                      "id":  103,
+                      "name":  "Knee Pads",
+                      "category_id":  "2da6fc64-c750-4b49-b9e8-2786745d2ee3",
+                      "image_url":  "/uploads/1768687229300-303231498-WhatsAppImage2026-01-17at10.18.33PM.jpeg",
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T22:00:33.351Z",
+                      "updated_at":  "2026-01-17T22:00:33.351Z",
+                      "display_order":  2,
+                      "brand_ids":  [
+                                        "6b4dc31a-0560-46c4-be0c-51caa9a91de0",
+                                        "c5b94d2a-401a-4b80-a0a6-aab1ee317e61",
+                                        "d8b4c901-10bb-4821-a059-8424620b5f75"
+                                    ],
+                      "brand_count":  "3"
+                  },
+                  {
+                      "id":  90,
+                      "name":  "Pads",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "image_url":  "/uploads/1768684434622-683201042-WhatsAppImage2026-01-17at9.13.55PM.jpeg",
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T21:14:00.343Z",
+                      "updated_at":  "2026-01-17T21:14:00.343Z",
+                      "display_order":  2,
+                      "brand_ids":  [
+                                        "0b60d25c-3ffe-4bf6-b72d-323877093ba9",
+                                        "83a2bd95-f354-45b2-b679-27c1ec3f870e",
+                                        "89f32d77-c9d5-41c0-879f-6c25a14ba20d",
+                                        "8e28254d-ca38-4c73-afa2-93eb3dcbcfa4",
+                                        "94d2c90e-0962-4bb1-bbed-b5cc95a06e7f",
+                                        "e5b527b9-30ef-4c78-b9c6-c0f7c1f7f3d2",
+                                        "e67f0c7f-8729-4c28-8859-266bb351dbfc"
+                                    ],
+                      "brand_count":  "7"
+                  },
+                  {
+                      "id":  91,
+                      "name":  "Cricket Balls",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "image_url":  "/uploads/1768684519353-635553361-Ball.jpeg",
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T21:15:28.465Z",
+                      "updated_at":  "2026-01-17T21:15:28.465Z",
+                      "display_order":  3,
+                      "brand_ids":  [
+                                        "0b60d25c-3ffe-4bf6-b72d-323877093ba9",
+                                        "7baa3bd3-7ff2-4dcc-96d9-1b4e3e1ff517",
+                                        "83a2bd95-f354-45b2-b679-27c1ec3f870e",
+                                        "89f32d77-c9d5-41c0-879f-6c25a14ba20d",
+                                        "8e28254d-ca38-4c73-afa2-93eb3dcbcfa4",
+                                        "94d2c90e-0962-4bb1-bbed-b5cc95a06e7f",
+                                        "e5b527b9-30ef-4c78-b9c6-c0f7c1f7f3d2",
+                                        "e67f0c7f-8729-4c28-8859-266bb351dbfc"
+                                    ],
+                      "brand_count":  "8"
+                  },
+                  {
+                      "id":  104,
+                      "name":  "Volleyball Accessories",
+                      "category_id":  "2da6fc64-c750-4b49-b9e8-2786745d2ee3",
+                      "image_url":  "/uploads/1768687281459-451547196-WhatsAppImage2026-01-17at10.17.54PM.jpeg",
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T22:01:27.658Z",
+                      "updated_at":  "2026-01-17T22:01:27.658Z",
+                      "display_order":  3,
+                      "brand_ids":  [
+                                        "c5b94d2a-401a-4b80-a0a6-aab1ee317e61",
+                                        "d8b4c901-10bb-4821-a059-8424620b5f75"
+                                    ],
+                      "brand_count":  "2"
+                  },
+                  {
+                      "id":  92,
+                      "name":  "Protective Gears",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "image_url":  "/uploads/1768684961484-772802924-WhatsAppImage2026-01-17at9.28.49PM.jpeg",
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T21:22:51.208Z",
+                      "updated_at":  "2026-01-17T21:22:51.208Z",
+                      "display_order":  4,
+                      "brand_ids":  [
+                                        "0b60d25c-3ffe-4bf6-b72d-323877093ba9",
+                                        "7baa3bd3-7ff2-4dcc-96d9-1b4e3e1ff517",
+                                        "83a2bd95-f354-45b2-b679-27c1ec3f870e",
+                                        "89f32d77-c9d5-41c0-879f-6c25a14ba20d",
+                                        "8e28254d-ca38-4c73-afa2-93eb3dcbcfa4",
+                                        "94d2c90e-0962-4bb1-bbed-b5cc95a06e7f",
+                                        "e5b527b9-30ef-4c78-b9c6-c0f7c1f7f3d2",
+                                        "e67f0c7f-8729-4c28-8859-266bb351dbfc"
+                                    ],
+                      "brand_count":  "8"
+                  },
+                  {
+                      "id":  93,
+                      "name":  "Practice",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "image_url":  "/uploads/1768685019835-157978810-WhatsAppImage2026-01-17at9.37.53PM.jpeg",
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T21:23:44.225Z",
+                      "updated_at":  "2026-01-17T21:23:44.225Z",
+                      "display_order":  5,
+                      "brand_ids":  [
+                                        "0b60d25c-3ffe-4bf6-b72d-323877093ba9",
+                                        "6b4dc31a-0560-46c4-be0c-51caa9a91de0",
+                                        "7baa3bd3-7ff2-4dcc-96d9-1b4e3e1ff517",
+                                        "83a2bd95-f354-45b2-b679-27c1ec3f870e",
+                                        "89f32d77-c9d5-41c0-879f-6c25a14ba20d",
+                                        "8e28254d-ca38-4c73-afa2-93eb3dcbcfa4",
+                                        "94d2c90e-0962-4bb1-bbed-b5cc95a06e7f",
+                                        "e5b527b9-30ef-4c78-b9c6-c0f7c1f7f3d2",
+                                        "e67f0c7f-8729-4c28-8859-266bb351dbfc"
+                                    ],
+                      "brand_count":  "9"
+                  },
+                  {
+                      "id":  94,
+                      "name":  "Accessories",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "image_url":  "/uploads/1768685167186-316217551-WhatsAppImage2026-01-17at9.30.02PM.jpeg",
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T21:25:16.136Z",
+                      "updated_at":  "2026-01-17T21:25:16.136Z",
+                      "display_order":  6,
+                      "brand_ids":  [
+                                        "0b60d25c-3ffe-4bf6-b72d-323877093ba9",
+                                        "669047c1-353b-4978-80d7-37f27abbfce4",
+                                        "7baa3bd3-7ff2-4dcc-96d9-1b4e3e1ff517",
+                                        "83a2bd95-f354-45b2-b679-27c1ec3f870e",
+                                        "89f32d77-c9d5-41c0-879f-6c25a14ba20d",
+                                        "8e28254d-ca38-4c73-afa2-93eb3dcbcfa4",
+                                        "94d2c90e-0962-4bb1-bbed-b5cc95a06e7f",
+                                        "e5b527b9-30ef-4c78-b9c6-c0f7c1f7f3d2",
+                                        "e67f0c7f-8729-4c28-8859-266bb351dbfc"
+                                    ],
+                      "brand_count":  "9"
+                  },
+                  {
+                      "id":  95,
+                      "name":  "Cricket Kit",
+                      "category_id":  "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+                      "image_url":  "/uploads/1768685214710-733906925-WhatsAppImage2026-01-17at9.45.13PM.jpeg",
+                      "is_active":  true,
+                      "created_at":  "2026-01-17T21:27:02.662Z",
+                      "updated_at":  "2026-01-17T21:27:02.662Z",
+                      "display_order":  7,
+                      "brand_ids":  [
+                                        "0b60d25c-3ffe-4bf6-b72d-323877093ba9",
+                                        "7baa3bd3-7ff2-4dcc-96d9-1b4e3e1ff517",
+                                        "83a2bd95-f354-45b2-b679-27c1ec3f870e",
+                                        "89f32d77-c9d5-41c0-879f-6c25a14ba20d",
+                                        "8e28254d-ca38-4c73-afa2-93eb3dcbcfa4",
+                                        "94d2c90e-0962-4bb1-bbed-b5cc95a06e7f",
+                                        "e5b527b9-30ef-4c78-b9c6-c0f7c1f7f3d2",
+                                        "e67f0c7f-8729-4c28-8859-266bb351dbfc"
+                                    ],
+                      "brand_count":  "8"
+                  }
+              ],
+    "Count":  93
+}

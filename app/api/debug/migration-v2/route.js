@@ -6,15 +6,15 @@ export async function GET() {
         console.log('Starting migration for multiple brands...');
 
         // 1. Check if brand_ids exists, if not, create it
-        await query(`
-            DO $$ 
-            BEGIN 
-                -- Add brand_ids column if it doesn't exist
-                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='product_tags' AND column_name='brand_ids') THEN
-                    ALTER TABLE product_tags ADD COLUMN brand_ids JSONB DEFAULT '[]';
-                END IF;
-            END $$;
+        const checkColumn = await query(`
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name='product_tags' AND column_name='brand_ids'
         `);
+
+        if (checkColumn.rows.length === 0) {
+            console.log('Adding brand_ids column...');
+            await query(`ALTER TABLE product_tags ADD COLUMN brand_ids JSONB DEFAULT '[]'`);
+        }
 
         // 2. Migrate existing data (brand_id -> brand_ids)
         // Check if brand_id column exists

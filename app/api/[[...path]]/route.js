@@ -171,7 +171,8 @@ async function handleRoute(request, { params }) {
     if (route === '/tags') {
       const url = new URL(request.url);
       const subCategoryId = url.searchParams.get('subCategoryId');
-      if (method === 'GET') return import('@/lib/api/categories').then(m => m.getTags(subCategoryId));
+      const slug = url.searchParams.get('slug');
+      if (method === 'GET') return import('@/lib/api/categories').then(m => m.getTags({ subCategoryId, slug }));
       if (method === 'POST') return import('@/lib/api/categories').then(async m => m.createTag(await request.json()));
     }
 
