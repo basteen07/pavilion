@@ -115,26 +115,29 @@ export default function MegaMenu({ categories = [], subCategories = [], tags = [
         </Link>
         {openMenu === 'Cricket' && (
           <MegaPanel>
-            {/* Cricket uses SubCategory -> Tags structure */}
-            <div className="grid grid-cols-5 gap-8">
-              {cricketSubCats.map(sub => {
-                const subTags = tags.filter(t => t.sub_category_id === sub.id)
-                return (
-                  <div key={sub.id} className="space-y-3">
-                    <Link
-                      href={`/${cricketCat.slug}/${sub.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
-                      className="font-bold text-gray-900 hover:text-red-600 transition-colors uppercase text-sm block border-b border-gray-100 pb-2"
-                      onClick={() => setOpenMenu(null)}
-                    >
-                      {sub.name}
-                    </Link>
-                    {subTags.length > 0 ? (
+            <div className="flex gap-12">
+              {/* Left Side: Cricket Content */}
+              <div className="flex-1">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">Cricket</h3>
+                <div className="grid grid-cols-4 gap-y-8 gap-x-6">
+                  {cricketSubCats.map(sub => (
+                    <div key={sub.id} className="space-y-3">
+                      <Link
+                        href={`/${cricketCat.slug}/${sub.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+                        className="group flex items-center gap-2"
+                        onClick={() => setOpenMenu(null)}
+                      >
+                        <h3 className="font-bold text-gray-900 group-hover:text-red-600 transition-colors uppercase tracking-tight text-sm">
+                          {sub.name}
+                        </h3>
+                        <ChevronRight className="w-3 h-3 text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </Link>
                       <ul className="space-y-1.5">
-                        {subTags.map(tag => (
+                        {tags.filter(t => t.sub_category_id === sub.id).map(tag => (
                           <li key={tag.id}>
                             <Link
                               href={`/${cricketCat.slug}/${tag.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
-                              className="text-[13px] text-gray-500 hover:text-red-600 transition-colors block"
+                              className="text-[13px] text-gray-500 hover:text-red-600 hover:font-medium transition-colors block"
                               onClick={() => setOpenMenu(null)}
                             >
                               {tag.name}
@@ -142,12 +145,42 @@ export default function MegaMenu({ categories = [], subCategories = [], tags = [
                           </li>
                         ))}
                       </ul>
-                    ) : (
-                      <p className="text-xs text-gray-300 italic">No specific types</p>
-                    )}
-                  </div>
-                )
-              })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right Side: Explore Pavilion */}
+              <div className="w-64 border-l border-gray-100 pl-12 bg-gray-50/50 -my-8 py-8">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">Explore Pavilion</h3>
+                <ul className="space-y-4">
+                  <li>
+                    <Link href="/brands" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                      Brands
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/gallery" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                      Gallery
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/about" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                      About Us
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/careers" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                      Careers
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/contact" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                      Contact Us
+                    </Link>
+                  </li>
+                </ul>
+              </div>
             </div>
           </MegaPanel>
         )}
@@ -162,7 +195,77 @@ export default function MegaMenu({ categories = [], subCategories = [], tags = [
           Ball Games <ChevronDown className={`w-3 h-3 transition-transform ${openMenu === 'TeamSports' ? 'rotate-180' : ''}`} />
 
         </button>
-        {openMenu === 'TeamSports' && <CategoryGrid cats={teamSportCats} />}
+        {openMenu === 'TeamSports' && (
+          <MegaPanel>
+            <div className="flex gap-12">
+              {/* Left Side: Team Sports Content */}
+              <div className="flex-1">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">Ball Games</h3>
+                <div className="grid grid-cols-4 gap-y-8 gap-x-6">
+                  {teamSportCats.map(cat => (
+                    <div key={cat.id} className="space-y-3">
+                      <Link
+                        href={`/${cat.slug}`}
+                        className="group flex items-center gap-2"
+                        onClick={() => setOpenMenu(null)}
+                      >
+                        <h3 className="font-bold text-gray-900 group-hover:text-red-600 transition-colors uppercase tracking-tight text-sm">
+                          {cat.name}
+                        </h3>
+                        <ChevronRight className="w-3 h-3 text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </Link>
+                      <ul className="space-y-1.5">
+                        {subCategories.filter(sc => sc.category_id === cat.id).map(sub => (
+                          <li key={sub.id}>
+                            <Link
+                              href={`/${cat.slug}/${sub.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+                              className="text-[13px] text-gray-500 hover:text-red-600 hover:font-medium transition-colors block"
+                              onClick={() => setOpenMenu(null)}
+                            >
+                              {sub.name}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right Side: Explore Pavilion */}
+              <div className="w-64 border-l border-gray-100 pl-12 bg-gray-50/50 -my-8 py-8">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">Explore Pavilion</h3>
+                <ul className="space-y-4">
+                  <li>
+                    <Link href="/brands" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                      Brands
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/gallery" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                      Gallery
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/about" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                      About Us
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/careers" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                      Careers
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/contact" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                      Contact Us
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </MegaPanel>
+        )}
       </div>
 
       {/* 3. INDIVIDUAL GAMES */}
@@ -173,7 +276,77 @@ export default function MegaMenu({ categories = [], subCategories = [], tags = [
         >
           Individual Games <ChevronDown className={`w-3 h-3 transition-transform ${openMenu === 'Individual' ? 'rotate-180' : ''}`} />
         </button>
-        {openMenu === 'Individual' && <CategoryGrid cats={individualCats} />}
+        {openMenu === 'Individual' && (
+          <MegaPanel>
+            <div className="flex gap-12">
+              {/* Left Side: Individual Games Content */}
+              <div className="flex-1">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">Individual Games</h3>
+                <div className="grid grid-cols-4 gap-y-8 gap-x-6">
+                  {individualCats.map(cat => (
+                    <div key={cat.id} className="space-y-3">
+                      <Link
+                        href={`/${cat.slug}`}
+                        className="group flex items-center gap-2"
+                        onClick={() => setOpenMenu(null)}
+                      >
+                        <h3 className="font-bold text-gray-900 group-hover:text-red-600 transition-colors uppercase tracking-tight text-sm">
+                          {cat.name}
+                        </h3>
+                        <ChevronRight className="w-3 h-3 text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </Link>
+                      <ul className="space-y-1.5">
+                        {subCategories.filter(sc => sc.category_id === cat.id).map(sub => (
+                          <li key={sub.id}>
+                            <Link
+                              href={`/${cat.slug}/${sub.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+                              className="text-[13px] text-gray-500 hover:text-red-600 hover:font-medium transition-colors block"
+                              onClick={() => setOpenMenu(null)}
+                            >
+                              {sub.name}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right Side: Explore Pavilion */}
+              <div className="w-64 border-l border-gray-100 pl-12 bg-gray-50/50 -my-8 py-8">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">Explore Pavilion</h3>
+                <ul className="space-y-4">
+                  <li>
+                    <Link href="/brands" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                      Brands
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/gallery" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                      Gallery
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/about" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                      About Us
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/careers" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                      Careers
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/contact" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                      Contact Us
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </MegaPanel>
+        )}
       </div>
 
       {/* 4. FITNESS & TRAINING */}
@@ -184,7 +357,77 @@ export default function MegaMenu({ categories = [], subCategories = [], tags = [
         >
           Fitness & Training <ChevronDown className={`w-3 h-3 transition-transform ${openMenu === 'Fitness' ? 'rotate-180' : ''}`} />
         </button>
-        {openMenu === 'Fitness' && <CategoryGrid cats={fitnessCats} />}
+        {openMenu === 'Fitness' && (
+          <MegaPanel>
+            <div className="flex gap-12">
+              {/* Left Side: Fitness Content */}
+              <div className="flex-1">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">Fitness & Training</h3>
+                <div className="grid grid-cols-4 gap-y-8 gap-x-6">
+                  {fitnessCats.map(cat => (
+                    <div key={cat.id} className="space-y-3">
+                      <Link
+                        href={`/${cat.slug}`}
+                        className="group flex items-center gap-2"
+                        onClick={() => setOpenMenu(null)}
+                      >
+                        <h3 className="font-bold text-gray-900 group-hover:text-red-600 transition-colors uppercase tracking-tight text-sm">
+                          {cat.name}
+                        </h3>
+                        <ChevronRight className="w-3 h-3 text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </Link>
+                      <ul className="space-y-1.5">
+                        {subCategories.filter(sc => sc.category_id === cat.id).map(sub => (
+                          <li key={sub.id}>
+                            <Link
+                              href={`/${cat.slug}/${sub.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+                              className="text-[13px] text-gray-500 hover:text-red-600 hover:font-medium transition-colors block"
+                              onClick={() => setOpenMenu(null)}
+                            >
+                              {sub.name}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right Side: Explore Pavilion */}
+              <div className="w-64 border-l border-gray-100 pl-12 bg-gray-50/50 -my-8 py-8">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">Explore Pavilion</h3>
+                <ul className="space-y-4">
+                  <li>
+                    <Link href="/brands" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                      Brands
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/gallery" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                      Gallery
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/about" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                      About Us
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/careers" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                      Careers
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/contact" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                      Contact Us
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </MegaPanel>
+        )}
       </div>
 
       {/* 5. MORE (Includes Categories + Corporate Links) */}
@@ -198,8 +441,9 @@ export default function MegaMenu({ categories = [], subCategories = [], tags = [
         {openMenu === 'More' && (
           <MegaPanel>
             <div className="flex gap-12">
+              {/* Left Side: Categories */}
               <div className="flex-1">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">More Categories</h3>
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">Categories</h3>
                 <div className="grid grid-cols-4 gap-y-8 gap-x-6">
                   {moreCats.map(cat => (
                     <div key={cat.id} className="space-y-3">
@@ -231,7 +475,7 @@ export default function MegaMenu({ categories = [], subCategories = [], tags = [
                 </div>
               </div>
 
-              {/* Right Side: Corporate / Quick Links */}
+              {/* Right Side: Explore Pavilion */}
               <div className="w-64 border-l border-gray-100 pl-12 bg-gray-50/50 -my-8 py-8">
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">Explore Pavilion</h3>
                 <ul className="space-y-4">

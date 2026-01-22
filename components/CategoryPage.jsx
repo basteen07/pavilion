@@ -315,7 +315,7 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
   return (
     <>
       {/* Category Hero */}
-      <section className="bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 text-white py-16 lg:py-20 relative overflow-hidden">
+      <section className="bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 text-white py-8 relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1540747913346-19e3adca174f?w=1920')] bg-cover bg-center opacity-10"></div>
         <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-transparent"></div>
         <div className="container relative z-10">
@@ -336,10 +336,10 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
               </>
             )}
           </div>
-          <h1 className="text-4xl lg:text-6xl font-black tracking-tight mb-4 uppercase">
+          <h1 className="text-4xl lg:text-6xl font-black tracking-tight mb-4 uppercase text-white">
             {tagFromSlug ? tagFromSlug.name : (activeSubCategory ? activeSubCategory.name : currentCategory.name)}
           </h1>
-          <p className="text-lg text-gray-400 max-w-2xl font-medium leading-relaxed">
+          <p className="text-lg text-gray-300 max-w-2xl font-medium leading-relaxed">
             Explore our professional grade equipment used by elite athletes and institutions worldwide.
           </p>
         </div>
@@ -350,7 +350,7 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
         className="bg-white/95 backdrop-blur-sm border-b sticky lg:static z-40 lg:z-auto shadow-sm transition-all duration-300 py-3"
         style={{ top: 'var(--nav-visible-height, 72px)' }}
       >
-        <div className="w-full px-4 lg:px-6">
+        {/* <div className="w-full px-4 lg:px-6">
           <div className="flex gap-3 overflow-x-auto pb-1.5 scrollbar-hide lg:flex-wrap lg:overflow-visible touch-pan-x snap-x">
             {allCategories.map((cat) => (
               <Link
@@ -381,8 +381,68 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
               </Link>
             ))}
           </div>
-        </div>
+        </div> */}
       </div>
+
+      {/* Category-Specific Tags & Subcategories Chips */}
+      {(tags.length > 0 || subCategories.length > 0) && (
+        <section className="py-0 bg-white border-b lg:relative lg:top-0 lg:z-auto sticky top-20 z-30 w-full">
+          <div className="w-full px-4 lg:px-6 py-2">
+            <div className="flex gap-2 w-full overflow-x-auto pb-2 lg:pb-0 scrollbar-hide touch-pan-x snap-x lg:flex-wrap">
+              {/* Subcategories */}
+              {subCategories.map((subCat) => {
+                const subCatSlug = subCat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+                const hasImage = subCat.image_url && subCat.image_url !== ''
+                return (
+                  <Link
+                    key={subCat.id}
+                    href={`/${categorySlug}/${subCatSlug}`}
+                    className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 hover:border-blue-600 hover:bg-blue-100 transition-all duration-300 shadow-sm hover:shadow-md shrink-0 snap-start"
+                  >
+                    <div className="w-6 h-6 rounded-full bg-blue-100 overflow-hidden flex-shrink-0 border border-blue-300">
+                      {hasImage ? (
+                        <Image
+                          src={subCat.image_url}
+                          alt={subCat.name}
+                          width={24}
+                          height={24}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-blue-50 text-blue-600 text-[8px] font-bold">
+                          {subCat.name[0]}
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-[10px] font-bold text-blue-700 group-hover:text-blue-800 transition-colors uppercase tracking-tight">
+                      {subCat.name}
+                    </span>
+                  </Link>
+                )
+              })}
+              
+              {/* Tags */}
+              {tags.map((tag) => {
+                const tagSlug = tag.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+                return (
+                  <Link
+                    key={tag.id}
+                    href={`/${categorySlug}/${tagSlug}`}
+                    className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-50 border border-green-200 hover:border-green-600 hover:bg-green-100 transition-all duration-300 shadow-sm hover:shadow-md shrink-0 snap-start"
+                  >
+                    <div className="w-6 h-6 rounded-full bg-green-100 overflow-hidden flex-shrink-0 border border-green-300 flex items-center justify-center">
+                      <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                    </div>
+                    <span className="text-[10px] font-bold text-green-700 group-hover:text-green-800 transition-colors uppercase tracking-tight">
+                      {tag.name}
+                    </span>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Refine Search Chips (only show if on main category page) */}
       {!subcategorySlug && subCategories.length > 0 && (
@@ -533,6 +593,8 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
 
               {/* Right Side: Sort, Count, Switcher */}
               <div className="flex items-center gap-3 ml-auto xl:ml-0">
+
+                <div className="h-4 w-px bg-gray-200 mx-1"></div>
                 <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger className="w-[130px] h-9 bg-transparent border-none font-bold text-[10px] uppercase tracking-wide focus:ring-0">
                     <SelectValue placeholder="Sort By" />
@@ -744,29 +806,113 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
               <p className="text-gray-500 mb-8">Try adjusting your filters or check back later for new arrivals.</p>
               <Button className="bg-red-600 hover:bg-red-700" onClick={() => router.push('/')}>Browse All Products</Button>
             </div>
-          ) : viewMode === 'table' ? (
-            <ProductTableView products={products} onEnquire={handleEnquire} selectedTag={selectedTag} />
           ) : (
+            <div className="space-y-12">
+              {/* Table View - Integrated Grouping Logic */}
+              {viewMode === 'table' ? (
+                (() => {
+                  const isTagPage = selectedTag && selectedTag !== 'all'
+                  const primaryKey = isTagPage ? 'brand_name' : 'tag_name'
+                  const secondaryKey = isTagPage ? 'tag_name' : 'brand_name'
+                  const primaryFallback = isTagPage ? 'Other Brands' : 'General'
+                  const secondaryFallback = isTagPage ? 'General' : 'Other Brands'
 
-            <div className="space-y-20">
-              {sortedGroups.map(groupName => (
-                <div key={groupName} id={`group-${groupName.toLowerCase().replace(/\s+/g, '-')}`} className="space-y-8 scroll-mt-40">
-                  <div className="flex items-center gap-4">
-                    <h2 className="text-3xl font-black tracking-tight text-gray-900 uppercase">{groupName}</h2>
-                    <div className="h-px flex-grow bg-gray-200"></div>
-                    <Badge variant="outline" className="rounded-full px-4 py-1 font-bold text-gray-500">
-                      {groupedProducts[groupName].length} Items
-                    </Badge>
-                  </div>
+                  const grouped = {}
+                  products.forEach(p => {
+                    const pVal = p[primaryKey] || primaryFallback
+                    const sVal = p[secondaryKey] || secondaryFallback
 
-                  <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-6' : 'grid-cols-1'}`}>
-                    {groupedProducts[groupName].map(product => (
-                      <ProductCard key={product.id} product={product} viewMode={viewMode} onEnquire={handleEnquire} />
-                    ))}
+                    if (!grouped[pVal]) grouped[pVal] = {}
+                    if (!grouped[pVal][sVal]) grouped[pVal][sVal] = []
+                    grouped[pVal][sVal].push(p)
+                  })
 
-                  </div>
+                  const primaryGroups = Object.keys(grouped).sort((a, b) => {
+                    if (a === primaryFallback) return 1
+                    if (b === primaryFallback) return -1
+                    return a.localeCompare(b)
+                  })
+
+                  return (
+                    <div className="space-y-0">
+                      {primaryGroups.map(pName => (
+                        <div key={pName} className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+                          {/* Primary Header (e.g., Brand or Tag) */}
+                          <div className="bg-gray-900 py-2.5 px-6">
+                            <h3 className="text-white font-black uppercase tracking-widest text-base">
+                              {pName}
+                            </h3>
+                          </div>
+
+                          <div className="overflow-x-auto">
+                            {Object.keys(grouped[pName]).sort().map(sName => (
+                              <div key={sName} className="border-b last:border-b-0">
+                                <table className="w-full text-xs text-left">
+                                  <tbody className="divide-y divide-gray-200">
+                                    {grouped[pName][sName].map(product => (
+                                      <tr key={product.id} className="hover:bg-red-50/30 transition-colors group">
+                                        <td className="px-6 py-2 text-[12px] w-5/12">
+                                          <div className="font-bold text-gray-900">{product.name}</div>
+                                        </td>
+                                        <td className="px-6 py-2 text-[12px] text-gray-700 w-2/12">
+                                          {product.brand_name || '-'}
+                                        </td>
+                                        <td className="px-6 py-2 font-black text-gray-900 text-[12px] w-2/12">
+                                          ₹{product.mrp_price?.toLocaleString('en-IN') || '-'}
+                                        </td>
+                                        <td className="px-6 py-2 text-right w-3/12">
+                                          <div className="flex items-center justify-end gap-3">
+                                            <Link
+                                              href={`/product/${product.slug}`}
+                                              className="text-gray-400 hover:text-red-600 font-bold uppercase text-[10px] tracking-wide"
+                                            >
+                                              View
+                                            </Link>
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={() => handleEnquire(product)}
+                                              className="h-7 px-3 text-[10px] font-black uppercase tracking-wider border-gray-200 hover:border-red-600 hover:text-red-600"
+                                            >
+                                              Enquire
+                                            </Button>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })()
+              ) : (
+                /* Grid/List View - Existing Grouped Display */
+                <div className="space-y-20">
+                  {sortedGroups.map(groupName => (
+                    <div key={groupName} id={`group-${groupName.toLowerCase().replace(/\s+/g, '-')}`} className="space-y-8 scroll-mt-40">
+                      <div className="flex items-center gap-4">
+                        <h2 className="text-3xl font-black tracking-tight text-gray-900 uppercase">{groupName}</h2>
+                        <div className="h-px flex-grow bg-gray-200"></div>
+                        <Badge variant="outline" className="rounded-full px-4 py-1 font-bold text-gray-500">
+                          {groupedProducts[groupName].length} Items
+                        </Badge>
+                      </div>
+
+                      <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-6' : 'grid-cols-1'}`}>
+                        {groupedProducts[groupName].map(product => (
+                          <ProductCard key={product.id} product={product} viewMode={viewMode} onEnquire={handleEnquire} />
+                        ))}
+
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           )}
         </div>
@@ -781,109 +927,10 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
   )
 }
 
-function ProductTableView({ products, onEnquire, selectedTag }) {
-  const router = useRouter()
-  const isTagPage = selectedTag && selectedTag !== 'all'
-
-  // Dynamic Grouping Logic
-  const primaryKey = isTagPage ? 'brand_name' : 'tag_name'
-  const secondaryKey = isTagPage ? 'tag_name' : 'brand_name'
-  const primaryFallback = isTagPage ? 'Other Brands' : 'General'
-  const secondaryFallback = isTagPage ? 'General' : 'Other Brands'
-
-  const grouped = useMemo(() => {
-    const data = {}
-    products.forEach(p => {
-      const pVal = p[primaryKey] || primaryFallback
-      const sVal = p[secondaryKey] || secondaryFallback
-
-      if (!data[pVal]) data[pVal] = {}
-      if (!data[pVal][sVal]) data[pVal][sVal] = []
-      data[pVal][sVal].push(p)
-    })
-    return data
-  }, [products, primaryKey, secondaryKey])
-
-  const primaryGroups = Object.keys(grouped).sort((a, b) => {
-    if (a === primaryFallback) return 1
-    if (b === primaryFallback) return -1
-    return a.localeCompare(b)
-  })
-
-  return (
-    <div className="space-y-12">
-      {primaryGroups.map(pName => (
-        <div key={pName} className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-          {/* Primary Header (e.g., Brand or Tag) */}
-          <div className="bg-gray-900 py-2.5 px-6">
-            <h3 className="text-white font-black uppercase tracking-widest text-base">
-              {pName}
-            </h3>
-          </div>
-
-          <div className="overflow-x-auto">
-            {Object.keys(grouped[pName]).sort().map(sName => (
-              <div key={sName} className="border-b last:border-b-0">
-                {/* Secondary Header (e.g., Tag or Brand) */}
-                <div className="bg-gray-50/50 py-1.5 px-6 border-b border-gray-100 flex items-center justify-between">
-                  <span className="text-[10px] font-black text-red-600 uppercase tracking-wider">{sName}</span>
-                  <span className="text-[9px] font-bold text-gray-400 uppercase">{grouped[pName][sName].length} items</span>
-                </div>
-
-                <table className="w-full text-sm text-left">
-                  <thead className="text-[9px] text-gray-400 uppercase bg-white border-b sticky top-0">
-                    <tr>
-                      <th className="px-6 py-3 font-bold w-1/2">Product Name</th>
-                      <th className="px-6 py-3 font-bold font-black text-gray-900">MRP Price</th>
-                      <th className="px-6 py-3 font-bold text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50 text-xs">
-                    {grouped[pName][sName].map(product => (
-                      <tr key={product.id} className="hover:bg-red-50/30 transition-colors group">
-                        <td className="px-6 py-3">
-                          <div className="font-bold text-gray-900">{product.name}</div>
-                          {product.is_featured && <span className="text-[8px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-black uppercase ml-2">Popular</span>}
-                        </td>
-                        <td className="px-6 py-3 font-black text-gray-900">
-                          ₹{product.mrp_price?.toLocaleString('en-IN') || '-'}
-                        </td>
-                        <td className="px-6 py-3 text-right">
-                          <div className="flex items-center justify-end gap-3">
-                            <Link
-                              href={`/product/${product.slug}`}
-                              className="text-gray-400 hover:text-red-600 font-bold uppercase text-[9px] tracking-wide"
-                            >
-                              View
-                            </Link>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => onEnquire(product)}
-                              className="h-7 px-3 text-[9px] font-black uppercase tracking-wider border-gray-200 hover:border-red-600 hover:text-red-600"
-                            >
-                              Enquire
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
 
 
 function ProductCard({ product, viewMode, onEnquire }) {
-
   const router = useRouter()
-  const detailUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/product/${product.slug}`
 
   if (viewMode === 'list') {
     return (
