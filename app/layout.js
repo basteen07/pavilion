@@ -96,7 +96,6 @@ export default async function RootLayout({ children }) {
             </B2BCartProvider>
           </AuthProvider>
         </QueryProvider>
-        <Toaster />
 
         {/* Body Scripts */}
         {settings.body_scripts && (

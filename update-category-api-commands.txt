@@ -1,0 +1,84 @@
+# API Commands to Update Categories
+# Use these curl commands or the admin interface
+
+# Update Cricket
+curl -X PUT http://localhost:3000/api/collections/[ID] \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "image_desktop": "/uploads/1766324642324-295972127-Cricket.jpg",
+    "image_mobile": "/uploads/1766324642324-295972127-Cricket.jpg"
+  }'
+
+# Update Football
+curl -X PUT http://localhost:3000/api/collections/[ID] \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "image_desktop": "/uploads/1766325274874-449197930-buy-Football-online.jpeg",
+    "image_mobile": "/uploads/1766325274874-449197930-buy-Football-online.jpeg"
+  }'
+
+# Update Basketball
+curl -X PUT http://localhost:3000/api/collections/[ID] \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "image_desktop": "/uploads/1766325343693-856817141-Bascketball.jpeg",
+    "image_mobile": "/uploads/1766325343693-856817141-Bascketball.jpeg"
+  }'
+
+# Update Volleyball
+curl -X PUT http://localhost:3000/api/collections/[ID] \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "image_desktop": "/uploads/1766325379045-234688888-Volleyballl.jpeg",
+    "image_mobile": "/uploads/1766325379045-234688888-Volleyballl.jpeg"
+  }'
+
+# Update Team Sports
+curl -X PUT http://localhost:3000/api/collections/[ID] \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "image_desktop": "/uploads/1766323229008-576900632-TeamSport.jpg",
+    "image_mobile": "/uploads/1766323229008-576900632-TeamSport.jpg"
+  }'
+
+# Update Individual Games
+curl -X PUT http://localhost:3000/api/collections/[ID] \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "image_desktop": "/uploads/1766324180816-433552644-IndividualGames.jpg",
+    "image_mobile": "/uploads/1766324180816-433552644-IndividualGames.jpg"
+  }'
+
+# Update Fitness & Training
+curl -X PUT http://localhost:3000/api/collections/[ID] \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "image_desktop": "/uploads/1766324246576-975951444-FitnessTrainingEquipments.jpg",
+    "image_mobile": "/uploads/1766324246576-975951444-FitnessTrainingEquipments.jpg"
+  }'
+
+# Update Indoor Sports
+curl -X PUT http://localhost:3000/api/collections/[ID] \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "image_desktop": "/uploads/1766324291541-584693456-IndoorSportsGoods.jpg",
+    "image_mobile": "/uploads/1766324291541-584693456-IndoorSportsGoods.jpg"
+  }'
+
+# Update Shoes & Clothing
+curl -X PUT http://localhost:3000/api/collections/[ID] \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "image_desktop": "/uploads/1766316587194-345817537-ShoesClothing.jpg",
+    "image_mobile": "/uploads/1766316587194-345817537-ShoesClothing.jpg"
+  }'
+

@@ -59,11 +59,11 @@ export default function MegaMenu({ categories = [], subCategories = [], tags = [
 
   const MegaPanel = ({ children }) => (
     <div
-      className={`absolute top-full left-0 w-full bg-white border-t border-gray-100 shadow-lg z-50 animate-in fade-in slide-in-from-top-1 duration-150`}
+      className={`absolute top-full left-0 w-screen bg-white border-t border-gray-100 shadow-2xl z-50 animate-in fade-in slide-in-from-top-1 duration-150`}
       onMouseEnter={() => handleMouseEnter(openMenu)}
       onMouseLeave={handleMouseLeave}
     >
-      <div className="container mx-auto py-6 px-6">
+      <div className="w-full px-4 md:px-6 lg:px-8 xl:px-12 py-6">
         {children}
       </div>
     </div>
@@ -242,7 +242,7 @@ export default function MegaMenu({ categories = [], subCategories = [], tags = [
                   </li>
                   <li>
                     <Link href="/gallery" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
-                      Know Your Sport
+                      Gallery
                     </Link>
                   </li>
                   <li>

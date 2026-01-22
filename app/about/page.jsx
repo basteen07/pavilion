@@ -11,9 +11,6 @@ export default function AboutPage() {
       {/* Header */}
       <header className="border-b bg-white sticky top-0 z-50">
         <div className="container flex items-center justify-between h-16">
-          <Link href="/" className="text-2xl font-bold text-red-600">
-            PAVILION SPORTS
-          </Link>
           <Link href="/">
             <Button variant="ghost">
               <ArrowLeft className="w-4 h-4 mr-2" />

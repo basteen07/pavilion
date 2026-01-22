@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Search, ShoppingCart, User, Menu, Phone, Mail, Instagram, Facebook, Twitter, ChevronDown } from 'lucide-react'
+import { Search, ShoppingCart, User, Menu, Phone, Mail, Instagram, Facebook, Twitter, ChevronDown, MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import MegaMenu from '@/components/MegaMenu'
@@ -88,9 +88,9 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
 
     return (
         <>
-            {/* Top Bar - Normal flow, scrolls away */}
+            {/* Top Bar - Full Width */}
             <div className={`bg-gray-900 text-white py-2.5 hidden md:block border-b border-gray-800/50 transition-opacity duration-300 ${isScrolled ? 'opacity-0 h-0 py-0 overflow-hidden' : 'opacity-100'}`}>
-                <div className="container flex justify-between items-center text-xs">
+                <div className="w-full px-4 md:px-6 lg:px-8 xl:px-12 flex justify-between items-center text-xs">
                     <div className="flex items-center gap-8">
                         <a href="tel:+911234567890" className="flex items-center gap-2 hover:text-red-400 transition-colors">
                             <Phone className="w-3.5 h-3.5" /> +91 12345 67890
@@ -105,12 +105,13 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                             <Instagram className="w-4 h-4 cursor-pointer hover:text-red-400 transition-colors" />
                             <Facebook className="w-4 h-4 cursor-pointer hover:text-red-400 transition-colors" />
                             <Twitter className="w-4 h-4 cursor-pointer hover:text-red-400 transition-colors" />
+                            <MessageCircle className="w-4 h-4 cursor-pointer hover:text-green-400 transition-colors" />
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Main Header */}
+            {/* Main Header - Full Width */}
             <header
                 className={`sticky top-0 z-[100] transition-all duration-300 transform ${isVisible ? 'translate-y-0' : '-translate-y-full'
                     } ${isScrolled
@@ -118,7 +119,7 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                         : 'bg-white h-20 border-b border-gray-100'
                     }`}
             >
-                <div className="container h-full">
+                <div className="w-full px-4 md:px-6 lg:px-8 xl:px-12 h-full">
                     <div className="flex items-center justify-between h-full">
                         {/* Logo */}
                         <Link href="/" className="flex items-center" aria-label="Pavilion Sports Home">
@@ -351,7 +352,7 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                                             <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 pl-2">Explore Pavilion</h4>
                                             <div className="flex flex-col gap-2 pl-4 border-l border-gray-100 ml-2">
                                                 <Link href="/brands" className="text-sm font-medium text-gray-700 hover:text-red-600" onClick={() => setIsMobileMenuOpen(false)}>Brands</Link>
-                                                <Link href="/gallery" className="text-sm font-medium text-gray-700 hover:text-red-600" onClick={() => setIsMobileMenuOpen(false)}>Know Your Sport</Link>
+                                                <Link href="/gallery" className="text-sm font-medium text-gray-700 hover:text-red-600" onClick={() => setIsMobileMenuOpen(false)}>Gallery</Link>
                                                 <Link href="/about" className="text-sm font-medium text-gray-700 hover:text-red-600" onClick={() => setIsMobileMenuOpen(false)}>About Us</Link>
                                                 <Link href="/careers" className="text-sm font-medium text-gray-700 hover:text-red-600" onClick={() => setIsMobileMenuOpen(false)}>Careers</Link>
                                                 <Link href="/contact" className="text-sm font-medium text-gray-700 hover:text-red-600" onClick={() => setIsMobileMenuOpen(false)}>Contact Us</Link>
