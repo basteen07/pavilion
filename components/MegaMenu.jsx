@@ -155,16 +155,6 @@ export default function MegaMenu({ categories = [], subCategories = [], tags = [
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">Explore Pavilion</h3>
                 <ul className="space-y-4">
                   <li>
-                    <Link href="/brands" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
-                      Brands
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/gallery" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
-                      Gallery
-                    </Link>
-                  </li>
-                  <li>
                     <Link href="/about" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
                       About Us
                     </Link>
@@ -237,16 +227,6 @@ export default function MegaMenu({ categories = [], subCategories = [], tags = [
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">Explore Pavilion</h3>
                 <ul className="space-y-4">
                   <li>
-                    <Link href="/brands" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
-                      Brands
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/gallery" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
-                      Gallery
-                    </Link>
-                  </li>
-                  <li>
                     <Link href="/about" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
                       About Us
                     </Link>
@@ -317,16 +297,6 @@ export default function MegaMenu({ categories = [], subCategories = [], tags = [
               <div className="w-64 border-l border-gray-100 pl-12 bg-gray-50/50 -my-8 py-8">
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">Explore Pavilion</h3>
                 <ul className="space-y-4">
-                  <li>
-                    <Link href="/brands" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
-                      Brands
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/gallery" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
-                      Gallery
-                    </Link>
-                  </li>
                   <li>
                     <Link href="/about" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
                       About Us
@@ -399,16 +369,6 @@ export default function MegaMenu({ categories = [], subCategories = [], tags = [
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">Explore Pavilion</h3>
                 <ul className="space-y-4">
                   <li>
-                    <Link href="/brands" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
-                      Brands
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/gallery" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
-                      Gallery
-                    </Link>
-                  </li>
-                  <li>
                     <Link href="/about" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
                       About Us
                     </Link>
@@ -479,16 +439,6 @@ export default function MegaMenu({ categories = [], subCategories = [], tags = [
               <div className="w-64 border-l border-gray-100 pl-12 bg-gray-50/50 -my-8 py-8">
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">Explore Pavilion</h3>
                 <ul className="space-y-4">
-                  <li>
-                    <Link href="/brands" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
-                      Brands
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/gallery" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
-                      Gallery
-                    </Link>
-                  </li>
                   <li>
                     <Link href="/about" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors" onClick={() => setOpenMenu(null)}>
                       About Us

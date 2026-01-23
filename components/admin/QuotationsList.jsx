@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Card } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -24,6 +25,7 @@ export function QuotationsList({ onCreate, onEdit }) {
     const [statusFilter, setStatusFilter] = useState('all')
     const [dateFrom, setDateFrom] = useState('')
     const [dateTo, setDateTo] = useState('')
+    const [pageSize, setPageSize] = useState(10)
     const [selectedIds, setSelectedIds] = useState(new Set())
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
     const [deleteTarget, setDeleteTarget] = useState(null) // 'single' or 'bulk'
@@ -46,14 +48,14 @@ export function QuotationsList({ onCreate, onEdit }) {
     // Reset page when filters change
     useEffect(() => {
         setPage(1)
-    }, [statusFilter, dateFrom, dateTo])
+    }, [statusFilter, dateFrom, dateTo, pageSize])
 
     const { data, isLoading } = useQuery({
-        queryKey: ['quotations', page, debouncedSearch, statusFilter, dateFrom, dateTo],
+        queryKey: ['quotations', page, debouncedSearch, statusFilter, dateFrom, dateTo, pageSize],
         queryFn: () => {
             const params = new URLSearchParams({
                 page: page.toString(),
-                limit: '10',
+                limit: pageSize.toString(),
                 search: debouncedSearch
             })
             if (statusFilter !== 'all') params.append('status', statusFilter)
@@ -89,6 +91,28 @@ export function QuotationsList({ onCreate, onEdit }) {
     const allSelected = quotations.length > 0 && selectedIds.size === quotations.length
 
     // --- Actions ---
+
+    // Helper to get primary contact details
+    const getPrimaryContact = (quote) => {
+        const snapshot = quote.customer_snapshot || {};
+        const contacts = Array.isArray(snapshot.contacts) ? snapshot.contacts : [];
+
+        // 1. Try to find explicitly marked primary contact
+        let contact = contacts.find(c => c.is_primary);
+
+        // 2. Fallback to first contact if available
+        if (!contact && contacts.length > 0) {
+            contact = contacts[0];
+        }
+
+        // 3. Fallback to legacy flat fields or defaults
+        return {
+            name: contact?.name || snapshot.primary_contact || snapshot.contact_person || 'N/A',
+            designation: contact?.designation || '',
+            phone: contact?.phone || snapshot.phone || 'N/A',
+            email: contact?.email || snapshot.email || ''
+        };
+    };
 
     async function handleView(quoteId) {
         setActionLoading(quoteId)
@@ -169,15 +193,34 @@ export function QuotationsList({ onCreate, onEdit }) {
 
             // Customer Info
             const cust = quote.customer_snapshot || {};
+            const contact = getPrimaryContact(quote); // Use the helper
+
             doc.text(`To: ${cust.company_name || quote.customer_name || 'Customer'}`, 14, 40);
-            doc.text(cust.email || quote.customer_email || '', 14, 45);
+
+            // Enhanced Contact Details in PDF
+            let yPos = 45;
+            if (contact.name && contact.name !== 'N/A') {
+                const designationStr = contact.designation ? ` (${contact.designation})` : '';
+                doc.text(`Attn: ${contact.name}${designationStr}`, 14, yPos);
+                yPos += 5;
+            }
+
+            if (contact.email) {
+                doc.text(`Email: ${contact.email}`, 14, yPos);
+                yPos += 5;
+            }
+
+            if (contact.phone && contact.phone !== 'N/A') {
+                doc.text(`Phone: ${contact.phone}`, 14, yPos);
+                yPos += 5;
+            }
 
             // Meta
             doc.text(`Reference: ${quote.quotation_number}`, 150, 40);
             doc.text(`Date: ${new Date(quote.created_at).toLocaleDateString()}`, 150, 45);
 
-            // Table
-            let y = 60;
+            // Table needs to start lower if contact info is long
+            let y = Math.max(65, yPos + 10);
             doc.setDrawColor(220, 38, 38); // Brand Red for lines
             doc.line(14, y, 196, y);
             y += 10;
@@ -297,85 +340,78 @@ export function QuotationsList({ onCreate, onEdit }) {
             </div>
 
             {/* Filters & Search */}
-            <div className="flex flex-col sm:flex-row gap-4">
-                <div className="relative flex-1 max-w-sm">
-                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
-                    <Input
-                        placeholder="Search quotations..."
-                        className="pl-8 bg-white"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
-                </div>
+            <div className="flex flex-col gap-4 bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
+                    <div className="sm:col-span-4 relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+                        <Input
+                            placeholder="Search Quote # or Customer..."
+                            className="pl-9 bg-gray-50/50 border-gray-200"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                    </div>
 
-                <Popover open={filterOpen} onOpenChange={setFilterOpen}>
-                    <PopoverTrigger asChild>
-                        <Button variant="outline" className="gap-2">
-                            <Filter className="w-4 h-4" />
-                            Filters
-                            {activeFiltersCount > 0 && (
-                                <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
-                                    {activeFiltersCount}
-                                </Badge>
-                            )}
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80" align="end">
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center">
-                                <h4 className="font-semibold text-sm">Filters</h4>
-                                {activeFiltersCount > 0 && (
-                                    <Button variant="ghost" size="sm" onClick={clearFilters} className="h-auto p-0 text-xs">
-                                        Clear all
-                                    </Button>
-                                )}
-                            </div>
+                    <div className="sm:col-span-2">
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                            <SelectTrigger className="bg-gray-50/50 border-gray-200">
+                                <SelectValue placeholder="Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Status</SelectItem>
+                                <SelectItem value="Draft">Draft</SelectItem>
+                                <SelectItem value="Sent">Sent</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
 
-                            <div className="space-y-2">
-                                <Label className="text-xs">Status</Label>
-                                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All Status</SelectItem>
-                                        <SelectItem value="Draft">Draft</SelectItem>
-                                        <SelectItem value="Sent">Sent</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label className="text-xs">Date From</Label>
-                                <Input
-                                    type="date"
-                                    value={dateFrom}
-                                    onChange={(e) => setDateFrom(e.target.value)}
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label className="text-xs">Date To</Label>
-                                <Input
-                                    type="date"
-                                    value={dateTo}
-                                    onChange={(e) => setDateTo(e.target.value)}
-                                />
-                            </div>
+                    <div className="sm:col-span-2">
+                        <div className="relative">
+                            <Input
+                                type="date"
+                                className="bg-gray-50/50 border-gray-200 text-xs"
+                                value={dateFrom}
+                                onChange={(e) => setDateFrom(e.target.value)}
+                                placeholder="From"
+                            />
                         </div>
-                    </PopoverContent>
-                </Popover>
+                    </div>
 
-                {selectedIds.size > 0 && (
-                    <Button
-                        variant="destructive"
-                        onClick={() => openDeleteDialog('bulk')}
-                        className="gap-2"
-                    >
-                        <Trash2 className="w-4 h-4" />
-                        Delete ({selectedIds.size})
-                    </Button>
-                )}
+                    <div className="sm:col-span-2">
+                        <div className="relative">
+                            <Input
+                                type="date"
+                                className="bg-gray-50/50 border-gray-200 text-xs"
+                                value={dateTo}
+                                onChange={(e) => setDateTo(e.target.value)}
+                                placeholder="To"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="sm:col-span-2 flex justify-end gap-2">
+                        {selectedIds.size > 0 && (
+                            <Button
+                                variant="destructive"
+                                onClick={() => openDeleteDialog('bulk')}
+                                className="w-full"
+                            >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete ({selectedIds.size})
+                            </Button>
+                        )}
+                        {activeFiltersCount > 0 && selectedIds.size === 0 && (
+                            <Button
+                                variant="ghost"
+                                onClick={clearFilters}
+                                className="w-full text-gray-500 hover:text-gray-900"
+                            >
+                                <X className="w-4 h-4 mr-2" />
+                                Clear
+                            </Button>
+                        )}
+                    </div>
+                </div>
             </div>
 
             <Card className="border-none shadow-sm overflow-hidden">
@@ -390,8 +426,8 @@ export function QuotationsList({ onCreate, onEdit }) {
                             </TableHead>
                             <TableHead>Ref No.</TableHead>
                             <TableHead>Customer</TableHead>
+                            <TableHead>Primary Contact</TableHead>
                             <TableHead>Date</TableHead>
-                            <TableHead>Total Amount</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="text-right pr-6">Actions</TableHead>
                         </TableRow>
@@ -420,11 +456,27 @@ export function QuotationsList({ onCreate, onEdit }) {
                                     </TableCell>
                                     <TableCell className="font-medium">{quote.reference_number || quote.quotation_number}</TableCell>
                                     <TableCell>
-                                        <div className="font-medium text-gray-900">{quote.company_name || quote.customer_name || 'Walking Customer'}</div>
+                                        {quote.customer_id ? (
+                                            <Link href={`/admin/customers/${quote.customer_id}`} className="hover:underline group">
+                                                <div className="font-medium text-gray-900 group-hover:text-red-600 transition-colors">
+                                                    {quote.company_name || quote.customer_name || 'Walking Customer'}
+                                                </div>
+                                            </Link>
+                                        ) : (
+                                            <div className="font-medium text-gray-900">{quote.company_name || quote.customer_name || 'Walking Customer'}</div>
+                                        )}
                                         <div className="text-xs text-gray-500">{quote.customer_snapshot?.email || quote.customer_email}</div>
                                     </TableCell>
+                                    <TableCell className="max-w-[200px]">
+                                        <div className="truncate">
+                                            <div className="font-medium text-sm flex items-center gap-1">
+                                                {getPrimaryContact(quote).name}
+                                                {getPrimaryContact(quote).designation && <span className="text-xs text-gray-400">({getPrimaryContact(quote).designation})</span>}
+                                            </div>
+                                            <div className="text-xs text-gray-500">{getPrimaryContact(quote).phone}</div>
+                                        </div>
+                                    </TableCell>
                                     <TableCell className="text-gray-500">{format(new Date(quote.created_at), 'dd MMM yyyy')}</TableCell>
-                                    <TableCell className="font-semibold text-gray-900">₹{parseFloat(quote.total_amount).toLocaleString()}</TableCell>
                                     <TableCell>
                                         <Badge
                                             variant="outline"
@@ -452,27 +504,25 @@ export function QuotationsList({ onCreate, onEdit }) {
                                                     >
                                                         <Eye className="w-4 h-4" />
                                                     </Button>
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        className="h-8 w-8 text-amber-600 hover:bg-amber-50"
+                                                        onClick={() => onEdit(quote.id)}
+                                                        title="Edit Quotation"
+                                                    >
+                                                        <PenLine className="w-4 h-4" />
+                                                    </Button>
                                                     {quote.status === 'Draft' && (
-                                                        <>
-                                                            <Button
-                                                                size="icon"
-                                                                variant="ghost"
-                                                                className="h-8 w-8 text-blue-600 hover:bg-blue-50"
-                                                                onClick={() => handleSend(quote.id)}
-                                                                title="Mark as Sent"
-                                                            >
-                                                                <Send className="w-4 h-4" />
-                                                            </Button>
-                                                            <Button
-                                                                size="icon"
-                                                                variant="ghost"
-                                                                className="h-8 w-8 text-amber-600 hover:bg-amber-50"
-                                                                onClick={() => onEdit(quote.id)}
-                                                                title="Edit Draft"
-                                                            >
-                                                                <PenLine className="w-4 h-4" />
-                                                            </Button>
-                                                        </>
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="h-8 w-8 text-blue-600 hover:bg-blue-50"
+                                                            onClick={() => handleSend(quote.id)}
+                                                            title="Mark as Sent"
+                                                        >
+                                                            <Send className="w-4 h-4" />
+                                                        </Button>
                                                     )}
                                                     <Button
                                                         size="icon"
@@ -502,28 +552,70 @@ export function QuotationsList({ onCreate, onEdit }) {
                     </TableBody>
                 </Table>
 
-                {/* Pagination */}
+                {/* Enhanced Pagination */}
                 {totalPages > 1 && (
-                    <div className="p-4 flex justify-center gap-2 border-t bg-white">
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={page === 1}
-                            onClick={() => setPage(p => Math.max(1, p - 1))}
-                        >
-                            Previous
-                        </Button>
-                        <span className="flex items-center text-sm text-gray-600 px-2">
-                            Page {page} of {totalPages}
-                        </span>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={page === totalPages}
-                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                        >
-                            Next
-                        </Button>
+                    <div className="p-4 flex justify-between items-center border-t bg-white">
+                        <div className="flex items-center gap-4">
+                            <span className="text-sm text-gray-600">
+                                Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, data?.total || 0)} of {data?.total || 0} quotations
+                            </span>
+                            <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(parseInt(value))}>
+                                <SelectTrigger className="w-20 h-8">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="5">5</SelectItem>
+                                    <SelectItem value="10">10</SelectItem>
+                                    <SelectItem value="20">20</SelectItem>
+                                    <SelectItem value="50">50</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={page === 1}
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                            >
+                                Previous
+                            </Button>
+                            <div className="flex items-center gap-1">
+                                {/* Page numbers */}
+                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                    let pageNum;
+                                    if (totalPages <= 5) {
+                                        pageNum = i + 1;
+                                    } else if (page <= 3) {
+                                        pageNum = i + 1;
+                                    } else if (page >= totalPages - 2) {
+                                        pageNum = totalPages - 4 + i;
+                                    } else {
+                                        pageNum = page - 2 + i;
+                                    }
+
+                                    return (
+                                        <Button
+                                            key={pageNum}
+                                            size="sm"
+                                            variant={page === pageNum ? "default" : "outline"}
+                                            className="w-8 h-8 p-0"
+                                            onClick={() => setPage(pageNum)}
+                                        >
+                                            {pageNum}
+                                        </Button>
+                                    );
+                                })}
+                            </div>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={page === totalPages}
+                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                            >
+                                Next
+                            </Button>
+                        </div>
                     </div>
                 )}
             </Card>

@@ -16,6 +16,11 @@ import {
     Briefcase,
     FolderOpen,
     ShieldCheck,
+    ChevronDown,
+    Eye,
+    Grid3X3,
+    Tag,
+    Store,
 } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
@@ -29,9 +34,13 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    SidebarMenuSub,
+    SidebarMenuSubItem,
+    SidebarMenuSubButton,
     SidebarFooter,
     SidebarHeader,
     SidebarRail,
+    SidebarCollapsible,
 } from "@/components/ui/sidebar"
 import {
     DropdownMenu,
@@ -39,6 +48,11 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+    Collapsible,
+    CollapsibleTrigger,
+    CollapsibleContent,
+} from "@/components/ui/collapsible"
 
 // Menu items configuration
 const data = {
@@ -50,9 +64,41 @@ const data = {
             isActive: true,
         },
         {
-            title: "Products",
-            url: "/admin/products",
+            title: "Catalog",
+            url: "#",
             icon: Package,
+            items: [
+                {
+                    title: "Overview",
+                    url: "/admin/catalog",
+                    icon: Eye,
+                },
+                {
+                    title: "Products",
+                    url: "/admin/products",
+                    icon: Package,
+                },
+                {
+                    title: "Collections",
+                    url: "/admin/collections",
+                    icon: Grid3X3,
+                },
+                {
+                    title: "Categories",
+                    url: "/admin/categories",
+                    icon: LayoutList,
+                },
+                {
+                    title: "Brands",
+                    url: "/admin/brands",
+                    icon: Store,
+                },
+                {
+                    title: "Tags",
+                    url: "/admin/tags",
+                    icon: Tag,
+                },
+            ],
         },
         {
             title: "Quotations",
@@ -158,16 +204,49 @@ export function AdminSidebar({ ...props }) {
                         <SidebarMenu>
                             {data.navMain.map((item) => (
                                 <SidebarMenuItem key={item.title}>
-                                    <SidebarMenuButton
-                                        asChild
-                                        tooltip={item.title}
-                                        isActive={pathname === item.url || pathname.startsWith(item.url + '/')}
-                                    >
-                                        <Link href={item.url}>
-                                            <item.icon />
-                                            <span>{item.title}</span>
-                                        </Link>
-                                    </SidebarMenuButton>
+                                    {item.items ? (
+                                        // Expandable sub-menu
+                                        <Collapsible
+                                            defaultOpen={item.items.some(subItem => pathname === subItem.url || pathname.startsWith(subItem.url + '/'))}
+                                        >
+                                            <CollapsibleTrigger asChild>
+                                                <SidebarMenuButton tooltip={item.title}>
+                                                    <item.icon />
+                                                    <span>{item.title}</span>
+                                                    <ChevronDown className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
+                                                </SidebarMenuButton>
+                                            </CollapsibleTrigger>
+                                            <CollapsibleContent>
+                                                <SidebarMenuSub>
+                                                    {item.items.map((subItem) => (
+                                                        <SidebarMenuSubItem key={subItem.title}>
+                                                            <SidebarMenuSubButton
+                                                                asChild
+                                                                isActive={pathname === subItem.url || pathname.startsWith(subItem.url + '/')}
+                                                            >
+                                                                <Link href={subItem.url}>
+                                                                    <subItem.icon className="h-4 w-4" />
+                                                                    <span>{subItem.title}</span>
+                                                                </Link>
+                                                            </SidebarMenuSubButton>
+                                                        </SidebarMenuSubItem>
+                                                    ))}
+                                                </SidebarMenuSub>
+                                            </CollapsibleContent>
+                                        </Collapsible>
+                                    ) : (
+                                        // Regular menu item
+                                        <SidebarMenuButton
+                                            asChild
+                                            tooltip={item.title}
+                                            isActive={pathname === item.url || pathname.startsWith(item.url + '/')}
+                                        >
+                                            <Link href={item.url}>
+                                                <item.icon />
+                                                <span>{item.title}</span>
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    )}
                                 </SidebarMenuItem>
                             ))}
                             {isSuperadmin && data.superadminOnly.map((item) => (

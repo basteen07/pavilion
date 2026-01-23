@@ -146,23 +146,6 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                             <Link href="/gallery" className="text-[14px] font-bold uppercase tracking-tight text-gray-800 hover:text-red-600 transition-colors">
                                 Gallery
                             </Link>
-
-                            <DropdownMenu>
-                                <DropdownMenuTrigger className="text-[14px] font-bold uppercase tracking-tight text-gray-800 hover:text-red-600 transition-colors focus:outline-none flex items-center gap-1 h-full">
-                                    Info <ChevronDown className="w-3 h-3" />
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-48 z-[200]" sideOffset={0}>
-                                    <DropdownMenuItem asChild>
-                                        <Link href="/about" className="cursor-pointer">About Us</Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem asChild>
-                                        <Link href="/contact" className="cursor-pointer">Contact Us</Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem asChild>
-                                        <Link href="/careers" className="cursor-pointer">Careers</Link>
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
                         </nav>
 
 
@@ -180,11 +163,17 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="lg:hidden"
+                                className="lg:hidden w-10 h-10"
                                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                                 aria-label={isMobileMenuOpen ? "Close Menu" : "Open Menu"}
                             >
-                                <Menu className="w-6 h-6" />
+                                {isMobileMenuOpen ? (
+                                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M18 6L6 18M6 6l12 12" />
+                                    </svg>
+                                ) : (
+                                    <Menu className="w-5 h-5" />
+                                )}
                             </Button>
                         </div>
 
@@ -200,7 +189,9 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                             <div className="flex justify-between items-center mb-6">
                                 <span className="text-xl font-black text-gray-900 border-b-2 border-red-600 pb-1">MENU</span>
                                 <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 hover:text-red-600 transition-colors" aria-label="Close Menu">
-                                    <Menu className="w-6 h-6" />
+                                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M18 6L6 18M6 6l12 12" />
+                                    </svg>
                                 </button>
                             </div>
 
@@ -361,14 +352,22 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                                     </div>
                                 </MobileAccordion>
 
+                                {/* 6. INFO */}
+                                <MobileAccordion title="Info">
+                                    <div className="space-y-2 pt-2">
+                                        <div className="flex flex-col gap-2 pl-4 border-l border-gray-100 ml-2">
+                                            <Link href="/about" className="text-sm font-medium text-gray-700 hover:text-red-600" onClick={() => setIsMobileMenuOpen(false)}>About Us</Link>
+                                            <Link href="/careers" className="text-sm font-medium text-gray-700 hover:text-red-600" onClick={() => setIsMobileMenuOpen(false)}>Careers</Link>
+                                            <Link href="/contact" className="text-sm font-medium text-gray-700 hover:text-red-600" onClick={() => setIsMobileMenuOpen(false)}>Contact Us</Link>
+                                        </div>
+                                    </div>
+                                </MobileAccordion>
+
                             </div>
 
                             <div className="border-t pt-6 space-y-3 mt-4">
                                 <Button className="w-full bg-red-600 hover:bg-red-700 text-white font-bold" onClick={() => { router.push('/gallery'); setIsMobileMenuOpen(false); }}>
                                     View Gallery
-                                </Button>
-                                <Button variant="outline" className="w-full" onClick={() => { router.push('/about'); setIsMobileMenuOpen(false); }}>
-                                    About Us
                                 </Button>
                             </div>
 

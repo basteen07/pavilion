@@ -141,9 +141,11 @@ export default function ProductList({ products = [], loading = false }) {
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <span className="text-xs text-gray-400 line-through font-bold">
-                                                    ₹{Number(product.mrp_price).toLocaleString()}
-                                                </span>
+                                                {product.shop_price && Number(product.shop_price) > 0 && Number(product.shop_price) < Number(product.mrp_price) ? (
+                                                    <span className="text-xs text-gray-400 line-through font-bold">
+                                                        ₹{Number(product.mrp_price).toLocaleString()}
+                                                    </span>
+                                                ) : null}
                                             </TableCell>
                                             <TableCell className="text-right pr-8">
                                                 <div className="flex items-center justify-end gap-3">

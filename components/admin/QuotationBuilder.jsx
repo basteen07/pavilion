@@ -55,6 +55,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
     const [isSaving, setIsSaving] = useState(false)
     const [customerSearchOpen, setCustomerSearchOpen] = useState(false)
     const [discardDialogOpen, setDiscardDialogOpen] = useState(false)
+    const [clearCustomerDialogOpen, setClearCustomerDialogOpen] = useState(false)
 
     // --- Quotation Details ---
     const [quotationDetails, setQuotationDetails] = useState({
@@ -69,7 +70,8 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
         terms_and_conditions: '',
         show_total: true,
         tags: '',
-        payment_terms: 'Net 30 Days'
+        payment_terms: 'Net 30 Days',
+        comments: ''
     })
 
     // --- New Customer Form State ---
@@ -209,8 +211,10 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
 
         // Company Details
         doc.setFontSize(8)
-        doc.setTextColor(100)
-        doc.text('Pavilion Sports | 123 Street, City | sales@pavilionsports.com', 15, 28)
+        doc.setTextColor(80)
+        doc.setFont('helvetica', 'normal')
+        doc.text('Pavilion Sports | Corporate Office: 123 Street, City', 15, 28)
+        doc.text('Email: sales@pavilionsports.com | Web: www.pavilionsports.com', 15, 32)
 
         // Meta Info Row
         let currentY = 38
@@ -220,24 +224,51 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
         doc.text(`Valid Until: ${quotationDetails.valid_until}`, 70, currentY)
         doc.text(`Payment: ${quotationDetails.payment_terms || 'Net 30 Days'}`, 130, currentY)
 
-        // Customer Details - Compact
+        // Customer Details - Compact with Primary Contact
         currentY += 10
         doc.setFillColor(248, 248, 248)
-        doc.rect(15, currentY - 4, 180, 18, 'F')
+        doc.rect(15, currentY - 4, 180, 22, 'F')
         doc.setFontSize(8)
         doc.setTextColor(100)
         doc.text('BILL TO:', 20, currentY)
         doc.setFont('helvetica', 'bold')
         doc.setTextColor(40)
         doc.text(customer?.company_name || customer?.name || 'Walking Customer', 20, currentY + 5)
+
+        // Primary Contact
+        const primaryContact = customer?.contacts?.find(c => c.is_primary)
+        if (primaryContact?.name) {
+            doc.setFont('helvetica', 'normal')
+            doc.setFontSize(7)
+            doc.setTextColor(100)
+            doc.text(`Attn: ${primaryContact.name}`, 20, currentY + 10)
+
+            let contactDetails = [];
+            if (primaryContact.designation) contactDetails.push(primaryContact.designation);
+            if (primaryContact.phone) contactDetails.push(`Ph: ${primaryContact.phone}`);
+
+            if (contactDetails.length > 0) {
+                doc.text(contactDetails.join(' | '), 20, currentY + 14)
+            }
+        }
+
         doc.setFont('helvetica', 'normal')
         doc.setTextColor(100)
         const address = customer?.address ? doc.splitTextToSize(customer.address, 80)[0] : '';
-        doc.text(address, 20, currentY + 10)
-        doc.text(customer?.phone || '', 120, currentY + 5)
-        doc.text(customer?.email || '', 120, currentY + 10)
+        const addressYOffset = primaryContact?.name ? (primaryContact.designation || primaryContact.phone ? 18 : 14) : 10;
+        doc.text(address, 20, currentY + addressYOffset)
 
-        currentY += 22
+        doc.setFont('helvetica', 'bold')
+        doc.text('Phone:', 120, currentY + 5)
+        doc.setFont('helvetica', 'normal')
+        doc.text(customer?.phone || '-', 132, currentY + 5)
+
+        doc.setFont('helvetica', 'bold')
+        doc.text('Email:', 120, currentY + 10)
+        doc.setFont('helvetica', 'normal')
+        doc.text(customer?.email || '-', 132, currentY + 10)
+
+        currentY += (primaryContact?.name ? (primaryContact.designation || primaryContact.phone ? 32 : 26) : 22)
 
         // Group items by Category > Sub-Category > Brand
         const groups = quotationItems.reduce((acc, item) => {
@@ -250,17 +281,17 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             return acc;
         }, {});
 
-        // Table Header - Simplified columns
+        // Table Header - Reordered: Brand, Product, MRP, Your Price, GST
         doc.setFillColor(55, 65, 81)
         doc.rect(15, currentY, 180, 7, 'F')
         doc.setTextColor(255)
         doc.setFontSize(8)
         doc.setFont('helvetica', 'bold')
-        doc.text('Product', 20, currentY + 5)
-        doc.text('Qty', 120, currentY + 5)
-        doc.text('Price', 138, currentY + 5)
-        doc.text('GST', 160, currentY + 5)
-        doc.text('Total', 178, currentY + 5)
+        doc.text('Brand', 20, currentY + 5)
+        doc.text('Product', 50, currentY + 5)
+        doc.text('MRP', 115, currentY + 5)
+        doc.text('Your Price', 138, currentY + 5)
+        doc.text('GST', 168, currentY + 5)
         currentY += 10
 
         Object.entries(groups).forEach(([groupName, items]) => {
@@ -269,45 +300,51 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                 currentY = 20
             }
 
-            // Group Header - Compact
-            if (Object.keys(groups).length > 1) {
-                doc.setFillColor(243, 244, 246)
-                doc.rect(15, currentY, 180, 5, 'F')
-                doc.setFont('helvetica', 'bold')
-                doc.setTextColor(100)
-                doc.setFontSize(7)
-                doc.text(groupName.toUpperCase(), 20, currentY + 3.5)
-                currentY += 7
-            }
-
             items.forEach((item) => {
-                if (currentY > 265) {
+                if (currentY > 250) {
                     doc.addPage()
                     currentY = 20
                 }
 
+                const isDetailed = !!item.is_detailed;
+
+                // Detailed View: Show image if enabled for this product
+                if (isDetailed && item.image) {
+                    try {
+                        doc.addImage(item.image, 'JPEG', 20, currentY, 12, 12)
+                    } catch (e) {
+                        console.error('Image add error:', e)
+                    }
+                }
+
                 doc.setFont('helvetica', 'normal')
                 doc.setTextColor(40)
-                doc.setFontSize(9)
+                doc.setFontSize(7)
+
+                // Brand - Ensuring it displays
+                const brandDisplayText = item.brand_name || item.brand || '-';
+                doc.text(brandDisplayText, 20, currentY + 3)
 
                 // Product name (truncated if needed)
-                const productName = item.name.length > 45 ? item.name.substring(0, 42) + '...' : item.name;
-                doc.text(productName, 20, currentY)
-
-                // View product link
-                doc.setFontSize(7)
-                doc.setTextColor(59, 130, 246)
-                doc.textWithLink('View', 20, currentY + 4, { url: `${window.location.origin}/product/${item.slug}` })
-
-                doc.setTextColor(40)
                 doc.setFontSize(8)
-                doc.text(item.quantity.toString(), 122, currentY)
-                doc.text(`₹${parseFloat(item.custom_price).toLocaleString()}`, 135, currentY)
-                doc.text(`${item.gst_rate || '18'}%`, 162, currentY)
-                doc.setFont('helvetica', 'bold')
-                doc.text(`₹${(parseFloat(item.custom_price) * item.quantity).toLocaleString()}`, 175, currentY)
+                const productName = item.name.length > 35 ? item.name.substring(0, 32) + '...' : item.name;
+                doc.text(productName, 50, currentY + 3)
 
-                currentY += 10
+                // Detailed View: Show description if enabled for this product
+                if (isDetailed && item.short_description) {
+                    doc.setFontSize(6)
+                    doc.setTextColor(100)
+                    const desc = item.short_description.length > 50 ? item.short_description.substring(0, 47) + '...' : item.short_description
+                    doc.text(desc, 50, currentY + 7)
+                    doc.setTextColor(40)
+                }
+
+                doc.setFontSize(8)
+                doc.text(`₹${parseFloat(item.mrp).toLocaleString()}`, 115, currentY + 3)
+                doc.text(`₹${parseFloat(item.custom_price).toLocaleString()}`, 138, currentY + 3)
+                doc.text(`${item.gst_rate || '18'}%`, 170, currentY + 3)
+
+                currentY += isDetailed ? 15 : 8
             })
             currentY += 3
         })
@@ -324,31 +361,32 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             doc.line(120, currentY, 195, currentY)
             currentY += 8
 
+            // Total MRP (Reference)
+            const totalMRP = quotationItems.reduce((sum, item) => sum + (parseFloat(item.mrp || 0) * parseInt(item.quantity || 1)), 0)
             doc.setFont('helvetica', 'normal')
             doc.setTextColor(100)
+            doc.setFontSize(8)
+            doc.text('Total MRP (Reference):', 130, currentY)
+            doc.setTextColor(150)
+            doc.text(`₹${totalMRP.toLocaleString()}`, 175, currentY)
+
+            currentY += 6
             doc.setFontSize(9)
+            doc.setTextColor(100)
             doc.text('Subtotal:', 130, currentY)
             doc.setTextColor(40)
             doc.text(`₹${subtotal.toLocaleString()}`, 175, currentY)
 
-            if (discountAmount > 0) {
-                currentY += 6
-                doc.setTextColor(100)
-                doc.text('Discount:', 130, currentY)
-                doc.setTextColor(220, 38, 38)
-                doc.text(`-₹${discountAmount.toLocaleString()}`, 175, currentY)
-            }
-
             currentY += 6
             doc.setTextColor(100)
-            doc.text(`GST (${quotationDetails.tax_rate}%):`, 130, currentY)
+            doc.text('Total Taxes:', 130, currentY)
             doc.setTextColor(40)
             doc.text(`₹${tax.toLocaleString()}`, 175, currentY)
 
             currentY += 8
             doc.setFontSize(11)
             doc.setFont('helvetica', 'bold')
-            doc.text('Total:', 130, currentY)
+            doc.text('Grand Total:', 130, currentY)
             doc.setTextColor(220, 38, 38)
             doc.text(`₹${total.toLocaleString()}`, 175, currentY)
         }
@@ -370,6 +408,26 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
         doc.setTextColor(120)
         const splitTerms = doc.splitTextToSize(termsToShow, 180)
         doc.text(splitTerms, 15, currentY)
+        currentY += splitTerms.length * 3
+
+        // Comments - If present
+        if (quotationDetails.comments) {
+            currentY += 8
+            if (currentY > 260) {
+                doc.addPage()
+                currentY = 20
+            }
+            doc.setFontSize(8)
+            doc.setFont('helvetica', 'bold')
+            doc.setTextColor(100)
+            doc.text('COMMENTS / SPECIAL INSTRUCTIONS:', 15, currentY)
+            currentY += 5
+            doc.setFont('helvetica', 'normal')
+            doc.setFontSize(7)
+            doc.setTextColor(120)
+            const splitComments = doc.splitTextToSize(quotationDetails.comments, 180)
+            doc.text(splitComments, 15, currentY)
+        }
 
         // Footer
         doc.setFontSize(7)
@@ -512,10 +570,10 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             name: product.name,
             slug: product.slug,
             sku: product.sku,
-            brand: product.brand_name,
+            brand: product.brand_name || product.brand || '',
             category_name: product.category_name,
             sub_category_name: product.sub_category_name,
-            brand_name: product.brand_name,
+            brand_name: product.brand_name || product.brand || '',
             image: getFirstImage(product.images),
             mrp: parseFloat(product.mrp_price) || 0,
             dealer_price: parseFloat(product.dealer_price) || 0,
@@ -620,13 +678,8 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
     // --- Calculations ---
     const subtotal = quotationItems.reduce((sum, item) => sum + (parseFloat(item.custom_price || 0) * parseInt(item.quantity || 1)), 0)
 
-    // Apply Global discount
-    const discountAmount = quotationDetails.discount_type === 'percentage'
-        ? subtotal * (parseFloat(quotationDetails.discount_value || 0) / 100)
-        : parseFloat(quotationDetails.discount_value || 0);
-
-    const shipping = parseFloat(quotationDetails.shipping_cost || 0);
-    const taxableAmount = Math.max(0, subtotal - discountAmount + shipping);
+    // No shipping or global discount
+    const taxableAmount = subtotal;
     const taxRate = parseFloat(quotationDetails.tax_rate || 0);
     const tax = taxableAmount * (taxRate / 100);
     const total = taxableAmount + tax;
@@ -652,7 +705,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
         customer_snapshot: customers.find(c => c.id === selectedCustomer),
         items: quotationItems,
         subtotal,
-        discount_amount: discountAmount,
+        discount_amount: 0,
         gst: tax,
         total_amount: total
     }
@@ -724,7 +777,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                 <CardHeader className="bg-white border-b border-gray-100 py-3 px-4 flex flex-row items-center justify-between">
                     <CardTitle className="text-sm font-bold">Customer Details</CardTitle>
                     {selectedCustomer && (
-                        <Button variant="ghost" size="sm" onClick={() => { setSelectedCustomer(''); setQuotationDetails(prev => ({ ...prev, discount_value: 0 })) }} className="h-6 text-red-500 hover:text-red-700 hover:bg-red-50">
+                        <Button variant="ghost" size="sm" onClick={() => setClearCustomerDialogOpen(true)} className="h-6 text-red-500 hover:text-red-700 hover:bg-red-50">
                             Clear Selection
                         </Button>
                     )}
@@ -856,16 +909,18 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                 <div className="divide-y divide-gray-100">
                                     {quotationItems.map((item, idx) => (
                                         <div key={idx} className="flex items-center gap-4 p-4 hover:bg-gray-50 group border-b border-gray-100 last:border-0 relative">
-                                            {/* Row Checkbox & Delete Overlay */}
+                                            {/* Per-Product Detailed View Checkbox */}
                                             <div className="flex items-center gap-3">
-                                                <Checkbox className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600" />
+                                                <Checkbox
+                                                    checked={item.is_detailed}
+                                                    onCheckedChange={() => toggleItemDetail(idx)}
+                                                    className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                                                    title="Show detailed view for this product"
+                                                />
                                             </div>
 
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-start gap-3">
-                                                    <div onClick={() => toggleItemDetail(idx)} className="cursor-pointer">
-                                                        {item.is_detailed ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
-                                                    </div>
 
                                                     {item.is_detailed && (
                                                         <div className="w-16 h-16 rounded bg-gray-100 shrink-0 overflow-hidden border">
@@ -917,7 +972,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                                     <span className={`text-[10px] mr-2 font-bold uppercase ${item.customer_type_base === 'dealer' ? 'text-green-600' : 'text-gray-500'}`}>
                                                         {item.customer_type_base === 'dealer' ? 'Markup%' : 'Disc%'}
                                                     </span>
-                                                    <Input className="h-6 w-12 p-0 text-center text-xs bg-transparent border-none focus-visible:ring-0 font-bold" value={item.discount} onChange={(e) => updateItem(idx, 'discount', e.target.value)} />
+                                                    <Input className="h-6 w-12 p-0 text-center text-xs bg-white border border-gray-200 focus-visible:ring-1 font-bold rounded shadow-sm" value={item.discount} onChange={(e) => updateItem(idx, 'discount', e.target.value)} />
                                                 </div>
                                                 <div className="text-[10px] text-gray-400 mt-1 font-medium">GST: {item.gst_rate || '18%'}</div>
                                             </div>
@@ -938,21 +993,11 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                     <Card className="border-none shadow-sm rounded-xl">
                         <CardHeader className="bg-white border-b border-gray-100 pb-3"><CardTitle className="text-base font-bold">Payment</CardTitle></CardHeader>
                         <CardContent className="bg-white pt-4 space-y-3">
+                            <div className="flex justify-between text-sm"><span className="text-gray-400">Total MRP (Reference)</span><span className="font-medium text-gray-500">{quotationItems.reduce((sum, item) => sum + (parseFloat(item.mrp || 0) * parseInt(item.quantity || 1)), 0).toFixed(2)}</span></div>
                             <div className="flex justify-between text-sm"><span className="text-gray-600">Subtotal</span><span className="font-medium">{subtotal.toFixed(2)}</span></div>
-                            <div className="flex justify-between text-sm items-center"><span className="text-blue-600 cursor-pointer">Shipping</span><div className="flex items-center gap-2 w-32"><span className="text-gray-400 text-xs">+</span><Input className="h-7 text-right text-xs" placeholder="0" value={quotationDetails.shipping_cost} onChange={(e) => setQuotationDetails({ ...quotationDetails, shipping_cost: e.target.value })} /></div></div>
-
-                            {/* Customer Discount Display */}
-                            <div className="flex justify-between text-sm items-center group">
-                                <span className="text-blue-600 cursor-pointer">Global Discount ({quotationDetails.discount_type})</span>
-                                <div className="flex items-center gap-2 w-32">
-                                    <span className="text-gray-400 text-xs">-</span>
-                                    <Input className="h-7 text-right text-xs" placeholder="0" value={quotationDetails.discount_value} onChange={(e) => setQuotationDetails({ ...quotationDetails, discount_value: e.target.value })} />
-                                </div>
-                            </div>
-
-                            <div className="flex justify-between text-sm items-center"><div className="flex items-center gap-1 text-gray-600"><span>Tax Rate</span><div className="flex items-center bg-gray-100 rounded px-1"><Input className="h-5 w-8 p-0 text-center text-xs bg-transparent border-none focus-visible:ring-0" value={quotationDetails.tax_rate} onChange={(e) => setQuotationDetails({ ...quotationDetails, tax_rate: e.target.value })} /><span className="text-xs text-gray-500">%</span></div></div><span className="font-medium">{tax.toFixed(2)}</span></div>
+                            <div className="flex justify-between text-sm"><span className="text-gray-600">Total Taxes (GST {quotationDetails.tax_rate}%)</span><span className="font-medium">{tax.toFixed(2)}</span></div>
                             <Separator />
-                            <div className="flex justify-between text-base font-bold pt-2"><span>Total</span><span>{total.toFixed(2)}</span></div>
+                            <div className="flex justify-between text-base font-bold pt-2"><span>Grand Total</span><span>{total.toFixed(2)}</span></div>
 
                             <div className="pt-4 border-t mt-4 space-y-4">
                                 <div className="flex items-center justify-between">
@@ -960,6 +1005,15 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                     <Switch
                                         checked={quotationDetails.show_total}
                                         onCheckedChange={(val) => setQuotationDetails({ ...quotationDetails, show_total: val })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Comments / Special Instructions</Label>
+                                    <Textarea
+                                        placeholder="Add delivery instructions, special notes, etc."
+                                        className="text-xs min-h-[80px]"
+                                        value={quotationDetails.comments}
+                                        onChange={(e) => setQuotationDetails({ ...quotationDetails, comments: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -1177,7 +1231,14 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                                                                 <span className="text-[9px] font-normal text-blue-500">Based on Type</span>
                                                                             </div>
                                                                         </TableHead>
-                                                                        <TableHead className="bg-white text-right">Your Price</TableHead>
+                                                                        <TableHead className="bg-white text-right">
+                                                                            {(() => {
+                                                                                const customer = customers.find(c => c.id === selectedCustomer);
+                                                                                const custType = customerTypes.find(t => String(t.id) === String(customer?.customer_type_id));
+                                                                                const baseType = custType?.base_price_type || 'mrp';
+                                                                                return baseType === 'dealer' ? 'Proposed Price' : 'Your Price';
+                                                                            })()}
+                                                                        </TableHead>
                                                                         <TableHead className="bg-white w-[50px]"></TableHead>
                                                                     </TableRow>
                                                                 </TableHeader>
@@ -1248,7 +1309,36 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                                                                     </div>
                                                                                 </TableCell>
                                                                                 <TableCell className="text-right">
-                                                                                    <div className="font-bold text-gray-900">{parseFloat(product.shop_price || product.mrp_price).toLocaleString()}</div>
+                                                                                    <div className="font-bold text-gray-900">
+                                                                                        {(() => {
+                                                                                            const customer = customers.find(c => c.id === selectedCustomer);
+                                                                                            const custType = customerTypes.find(t => String(t.id) === String(customer?.customer_type_id));
+
+                                                                                            // Get base_price_type and percentage from customer or custType
+                                                                                            const customerTypeBase = customer?.base_price_type || custType?.base_price_type || 'mrp';
+                                                                                            const percentage = parseFloat(customer?.percentage || custType?.percentage || 0);
+
+                                                                                            let customPrice = parseFloat(product.shop_price || product.mrp_price);
+
+                                                                                            // Apply pricing logic based on customer type
+                                                                                            if (customerTypeBase === 'dealer') {
+                                                                                                // Dealer: base is dealer_price, ADD markup percentage
+                                                                                                const basePrice = parseFloat(product.dealer_price || product.shop_price || product.mrp_price);
+                                                                                                customPrice = basePrice * (1 + percentage / 100);
+                                                                                            } else {
+                                                                                                // MRP: base is MRP, SUBTRACT discount percentage
+                                                                                                const basePrice = parseFloat(product.mrp_price);
+                                                                                                customPrice = basePrice * (1 - percentage / 100);
+                                                                                            }
+
+                                                                                            // If no customer type, fallback to dealer price if available
+                                                                                            if (!customer?.base_price_type && !custType && product.dealer_price) {
+                                                                                                customPrice = parseFloat(product.dealer_price);
+                                                                                            }
+
+                                                                                            return customPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                                                                        })()}
+                                                                                    </div>
                                                                                 </TableCell>
                                                                                 <TableCell>
                                                                                     <Button
@@ -1405,6 +1495,35 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                         </AlertDialogFooter>
                                     </AlertDialogContent>
                                 </AlertDialog >
+
+                                {/* Customer Clear Warning Dialog */}
+                                <AlertDialog open={clearCustomerDialogOpen} onOpenChange={setClearCustomerDialogOpen}>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle className="flex items-center gap-2">
+                                                <AlertTriangle className="w-5 h-5 text-orange-500" />
+                                                Clear Customer Selection?
+                                            </AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                Clearing the customer will remove all products from this quotation. This action cannot be undone. Do you want to continue?
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction
+                                                onClick={() => {
+                                                    setSelectedCustomer('');
+                                                    setQuotationItems([]);
+                                                    setClearCustomerDialogOpen(false);
+                                                    toast.info('Customer and products cleared');
+                                                }}
+                                                className="bg-red-600 hover:bg-red-700"
+                                            >
+                                                Clear All
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
 
                                 {/* Preview Modal Integration */}
                                 <QuotationPreviewModal

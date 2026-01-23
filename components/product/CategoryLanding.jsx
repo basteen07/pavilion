@@ -32,7 +32,7 @@ export function CategoryLanding({ type, data }) {
     return (
         <div className="bg-white min-h-screen">
             {/* Immersive Hero Section */}
-            <section className="relative h-[60vh] min-h-[500px] w-full flex items-center overflow-hidden bg-gray-900">
+            <section className="relative h-[45vh] min-h-[380px] w-full flex items-center overflow-hidden bg-gray-900">
                 <div className="absolute inset-0 z-0">
                     <Image
                         src={heroImage}

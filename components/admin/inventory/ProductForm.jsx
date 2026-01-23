@@ -25,7 +25,7 @@ const productSchema = z.object({
     name: z.string().min(3, 'Name is required'),
     sku: z.string().min(2, 'SKU is required'),
     mrp_price: z.coerce.number().min(0.01, 'MRP is required'),
-    shop_price: z.coerce.number().min(0.01, 'Shop Price is required'),
+    shop_price: z.coerce.number().min(0).optional().default(0),
     dealer_price: z.coerce.number().min(0.01, 'Dealer Price is required'),
     counter_price: z.coerce.number().min(0).optional(),
     recommended_price: z.coerce.number().min(0).optional(),
@@ -70,7 +70,7 @@ export function ProductForm({ product, onCancel, onSuccess }) {
             name: product?.name || '',
             sku: product?.sku || '',
             mrp_price: product?.mrp_price || 0,
-            shop_price: product?.shop_price || product?.mrp_price || 0,
+            shop_price: product?.shop_price || 0,
             dealer_price: product?.dealer_price || 0,
             counter_price: product?.counter_price || 0,
             recommended_price: product?.recommended_price || 0,
@@ -541,9 +541,8 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                 </div>
                             </div>
                             <div className="mt-4 pt-4 border-t space-y-2">
-                                <Label className="text-gray-900 font-bold">Shop Price (Frontend Display Price) *</Label>
+                                <Label className="text-gray-900 font-bold">Shop Price </Label>
                                 <Input type="number" {...register('shop_price')} className="max-w-[200px] border-2 border-red-200" />
-                                <p className="text-[10px] text-gray-500">This is the price that customers will see on the website.</p>
                                 {errors.shop_price && <p className="text-red-500 text-xs">{errors.shop_price.message}</p>}
                             </div>
                         </CardContent>

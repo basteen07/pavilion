@@ -70,7 +70,8 @@ export default function ProductDetailPage({ productSlug }) {
   ]
 
   const discount = product.discount_percentage ? Math.round(product.discount_percentage) : 0
-  const finalPrice = product.mrp_price
+  const hasSalePrice = product.shop_price && Number(product.shop_price) > 0 && Number(product.shop_price) < Number(product.mrp_price);
+  const finalPrice = hasSalePrice ? product.shop_price : product.mrp_price;
 
 
   return (
@@ -146,8 +147,17 @@ export default function ProductDetailPage({ productSlug }) {
                 <div className="absolute top-0 right-0 w-32 h-32 bg-red-600 opacity-10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
                 <div className="relative z-10">
                   <div className="flex flex-col mb-1 flex-col">
-                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1">MRP Price</span>
-                    <span className="text-5xl font-black tracking-tighter">₹{finalPrice?.toLocaleString('en-IN')}</span>
+                    {hasSalePrice ? (
+                      <>
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1">MRP <span className="line-through">₹{product.mrp_price?.toLocaleString('en-IN')}</span></span>
+                        <span className="text-5xl font-black tracking-tighter text-red-500">₹{product.shop_price?.toLocaleString('en-IN')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1">MRP Price</span>
+                        <span className="text-5xl font-black tracking-tighter text-white">₹{product.mrp_price?.toLocaleString('en-IN')}</span>
+                      </>
+                    )}
                   </div>
                   <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-6">B2B Special Pricing Applicable</p>
 

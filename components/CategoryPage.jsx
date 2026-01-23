@@ -315,7 +315,7 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
   return (
     <>
       {/* Category Hero */}
-      <section className="bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 text-white py-8 relative overflow-hidden">
+      <section className="bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 text-white py-6 relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1540747913346-19e3adca174f?w=1920')] bg-cover bg-center opacity-10"></div>
         <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-transparent"></div>
         <div className="container relative z-10">
@@ -420,7 +420,7 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
                   </Link>
                 )
               })}
-              
+
               {/* Tags */}
               {tags.map((tag) => {
                 const tagSlug = tag.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
@@ -446,7 +446,7 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
 
       {/* Refine Search Chips (only show if on main category page) */}
       {!subcategorySlug && subCategories.length > 0 && (
-        <section className="py-12 bg-white border-b">
+        <section className="py-8 bg-white border-b">
           <div className="container">
             <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-red-600 mb-6 flex items-center gap-2">
               <span className="w-8 h-[2px] bg-red-600"></span>
