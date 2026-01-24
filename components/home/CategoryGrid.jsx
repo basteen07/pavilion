@@ -50,30 +50,27 @@ export function CategoryGrid({ initialCollections = [] }) {
 
                 {/* Enhanced Grid */}
                 {collections.length > 0 ? (
-                    <div className={`grid gap-3 md:gap-4 ${
-                        collections.length === 1 ? 'grid-cols-1 max-w-md mx-auto' :
-                        collections.length === 2 ? 'grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto' :
-                        collections.length === 3 ? 'grid-cols-1 sm:grid-cols-3 max-w-4xl mx-auto' :
-                        collections.length === 4 ? 'grid-cols-2 sm:grid-cols-4 max-w-5xl mx-auto' :
-                        collections.length === 5 ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 max-w-6xl mx-auto' :
-                        collections.length === 6 ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-6 max-w-7xl mx-auto' :
-                        'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
-                    }`}>
+                    <div className={`grid gap-3 md:gap-4 ${collections.length === 1 ? 'grid-cols-1 max-w-md mx-auto' :
+                            collections.length === 2 ? 'grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto' :
+                                collections.length === 3 ? 'grid-cols-1 sm:grid-cols-3 max-w-4xl mx-auto' :
+                                    collections.length === 4 ? 'grid-cols-2 sm:grid-cols-4 max-w-5xl mx-auto' :
+                                        collections.length === 5 ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 max-w-6xl mx-auto' :
+                                            collections.length === 6 ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-6 max-w-7xl mx-auto' :
+                                                'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
+                        }`}>
                         {collections.slice(0, 12).map((collection, idx) => (
                             <Link
                                 key={collection.id}
                                 href={`/${collection.slug}`}
-                                className={`group relative overflow-hidden rounded-xl bg-gray-100 transition-all duration-300 hover:shadow-xl hover:shadow-gray-900/10 hover:-translate-y-2 ${
-                                    collections.length === 1 ? 'aspect-[16/9]' :
-                                    collections.length <= 3 ? 'aspect-[4/3]' :
-                                    'aspect-[4/3]'
-                                }`}
+                                className={`group relative overflow-hidden rounded-xl bg-gray-100 transition-all duration-300 hover:shadow-xl hover:shadow-gray-900/10 hover:-translate-y-2 ${collections.length === 1 ? 'aspect-[16/9]' :
+                                        collections.length <= 3 ? 'aspect-[4/3]' :
+                                            'aspect-[4/3]'
+                                    }`}
                             >
-                                <div className={`relative ${
-                                    collections.length === 1 ? 'aspect-[16/9]' :
-                                    collections.length <= 3 ? 'aspect-[4/3]' :
-                                    'aspect-[4/3]'
-                                }`}>
+                                <div className={`relative ${collections.length === 1 ? 'aspect-[16/9]' :
+                                        collections.length <= 3 ? 'aspect-[4/3]' :
+                                            'aspect-[4/3]'
+                                    }`}>
                                     {collection.image_desktop || collection.image_mobile ? (
                                         <>
                                             <Image
@@ -83,18 +80,18 @@ export function CategoryGrid({ initialCollections = [] }) {
                                                 className="object-cover transition-transform duration-700 group-hover:scale-115"
                                                 sizes={
                                                     collections.length === 1 ? "(max-width: 768px) 100vw, 80vw" :
-                                                    collections.length === 2 ? "(max-width: 768px) 100vw, 45vw" :
-                                                    collections.length === 3 ? "(max-width: 768px) 33vw, 30vw" :
-                                                    collections.length === 4 ? "(max-width: 768px) 50vw, 25vw" :
-                                                    collections.length === 5 ? "(max-width: 768px) 33vw, 20vw" :
-                                                    collections.length === 6 ? "(max-width: 768px) 50vw, 16vw" :
-                                                    "(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
+                                                        collections.length === 2 ? "(max-width: 768px) 100vw, 45vw" :
+                                                            collections.length === 3 ? "(max-width: 768px) 33vw, 30vw" :
+                                                                collections.length === 4 ? "(max-width: 768px) 50vw, 25vw" :
+                                                                    collections.length === 5 ? "(max-width: 768px) 33vw, 20vw" :
+                                                                        collections.length === 6 ? "(max-width: 768px) 50vw, 16vw" :
+                                                                            "(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
                                                 }
                                                 priority={idx < 6}
                                             />
                                             {/* Enhanced Gradient overlay */}
                                             <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/50 to-transparent opacity-90 group-hover:opacity-80 transition-opacity duration-300"></div>
-                                            
+
                                             {/* Category Badge */}
                                             <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                                 <div className="px-2 py-1 bg-red-600 text-white text-xs font-bold rounded-full backdrop-blur-sm">
@@ -112,7 +109,7 @@ export function CategoryGrid({ initialCollections = [] }) {
                                             </div>
                                         </div>
                                     )}
-                                    
+
                                     {/* Enhanced Content */}
                                     <div className="absolute inset-0 p-3 md:p-4 flex flex-col justify-end">
                                         <div className="flex items-start justify-between gap-2">
@@ -172,7 +169,7 @@ export function CategoryGrid({ initialCollections = [] }) {
                                 <ArrowRight className="w-5 h-5" />
                             </Link>
                         </div>
-                        
+
                         {/* Additional Category Preview */}
                         <div className="mt-8 flex flex-wrap justify-center gap-2">
                             {collections.slice(12, 18).map((collection, idx) => (

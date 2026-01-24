@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -345,48 +345,16 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
         </div>
       </section>
 
-      {/* Category Quick Access Chips - Sticky with Header Offset */}
-      <div
+      {/* Category Quick Access Chips - Empty Container Removed */}
+      {/* <div
         className="bg-white/95 backdrop-blur-sm border-b sticky lg:static z-40 lg:z-auto shadow-sm transition-all duration-300 py-3"
         style={{ top: 'var(--nav-visible-height, 72px)' }}
       >
-        {/* <div className="w-full px-4 lg:px-6">
-          <div className="flex gap-3 overflow-x-auto pb-1.5 scrollbar-hide lg:flex-wrap lg:overflow-visible touch-pan-x snap-x">
-            {allCategories.map((cat) => (
-              <Link
-                key={cat.id}
-                href={`/${cat.slug}`}
-                className={`group flex items-center gap-2 pl-1.5 pr-4 py-1.5 rounded-full border shrink-0 snap-start
-                  ${cat.slug === categorySlug ? 'border-red-600 bg-red-50 ring-1 ring-red-600/20' : 'border-gray-200 bg-white hover:border-red-600 hover:bg-red-50/50'}
-                  transition-all duration-200 shadow-sm`}
-              >
-                <div className="w-7 h-7 rounded-full bg-gray-100 overflow-hidden border border-gray-100 group-hover:border-red-200 transition-colors">
-                  {cat.image_url ? (
-                    <Image
-                      src={cat.image_url}
-                      alt={cat.name}
-                      width={28}
-                      height={28}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-gray-400">
-                      {cat.name[0]}
-                    </div>
-                  )}
-                </div>
-                <span className={`text-[11px] font-bold whitespace-nowrap ${cat.slug === categorySlug ? 'text-red-700' : 'text-gray-700 group-hover:text-red-700'} transition-colors uppercase tracking-tight`}>
-                  {cat.name}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div> */}
-      </div>
+      </div> */}
 
       {/* Category-Specific Tags & Subcategories Chips */}
       {(tags.length > 0 || subCategories.length > 0) && (
-        <section className="py-0 bg-white border-b lg:relative lg:top-0 lg:z-auto sticky top-20 z-30 w-full">
+        <section className="py-0 bg-white border-b lg:relative lg:top-0 lg:z-auto w-full">
           <div className="w-full px-4 lg:px-6 py-2">
             <div className="flex gap-2 w-full overflow-x-auto pb-2 lg:pb-0 scrollbar-hide touch-pan-x snap-x lg:flex-wrap">
               {/* Subcategories */}
@@ -444,9 +412,9 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
         </section>
       )}
 
-      {/* Refine Search Chips (only show if on main category page) */}
-      {!subcategorySlug && subCategories.length > 0 && (
-        <section className="py-8 bg-white border-b">
+      {/* Refine Search Chips (only show if on main category page) - Commented out to avoid duplication and spacing */}
+      {/* {!subcategorySlug && subCategories.length > 0 && (
+        <section className="py-4 bg-white border-b">
           <div className="container">
             <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-red-600 mb-6 flex items-center gap-2">
               <span className="w-8 h-[2px] bg-red-600"></span>
@@ -489,17 +457,17 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
             </div>
           </div>
         </section>
-      )}
+      )} */}
 
 
       {/* Products Section */}
-      <section className="bg-gray-50 min-h-screen">
+      <section className="bg-gray-50 min-h-screen py-0">
         {/* Unified Full-Width Filter Bar - Desktop */}
         <div
           className="hidden lg:block sticky z-30 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm transition-all duration-300"
           style={{ top: 'var(--nav-visible-height, 80px)' }}
         >
-          <div className="w-full px-4 lg:px-6 py-3">
+          <div className="w-full px-3 lg:px-6 py-3">
             <div className="flex flex-wrap items-center gap-3">
               {/* Left Side: Category & Sub-Category */}
               <div className="flex items-center gap-2 p-1 bg-gray-50/50 rounded-lg border border-gray-100">
@@ -617,6 +585,14 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
                   <Button
                     variant="ghost"
                     size="icon"
+                    onClick={() => setViewMode('table')}
+                    className={`w-7 h-7 rounded-md ${viewMode === 'table' ? 'bg-white shadow-sm text-red-600' : 'text-gray-400 hover:text-gray-900'}`}
+                  >
+                    <TableProperties className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setViewMode('grid')}
                     className={`w-7 h-7 rounded-md ${viewMode === 'grid' ? 'bg-white shadow-sm text-red-600' : 'text-gray-400 hover:text-gray-900'}`}
                   >
@@ -629,14 +605,6 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
                     className={`w-7 h-7 rounded-md ${viewMode === 'list' ? 'bg-white shadow-sm text-red-600' : 'text-gray-400 hover:text-gray-900'}`}
                   >
                     <List className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setViewMode('table')}
-                    className={`w-7 h-7 rounded-md ${viewMode === 'table' ? 'bg-white shadow-sm text-red-600' : 'text-gray-400 hover:text-gray-900'}`}
-                  >
-                    <TableProperties className="w-3.5 h-3.5" />
                   </Button>
                 </div>
               </div>
@@ -644,156 +612,164 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
           </div>
         </div>
 
-        <div className="container py-12">
+        {/* Mobile Filter Bar (Sticky) - Full Width */}
+        <div
+          className="lg:hidden sticky z-30 border-b border-gray-200 bg-white/95 backdrop-blur-md transition-all duration-300"
+          style={{ top: 'var(--nav-visible-height, 64px)' }}
+        >
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="text-xs font-bold text-gray-900 uppercase tracking-wide">
+              {products.length} Products
+            </div>
 
-          {/* Mobile Filter Bar (Sticky) */}
-          <div
-            className="lg:hidden sticky z-30 mb-4 px-4 transition-all duration-300"
-            style={{ top: 'calc(var(--nav-visible-height, 64px) + 54px)' }}
-          >
-            <div className="flex items-center justify-between p-3 bg-white/95 backdrop-blur-md rounded-xl shadow-lg border border-gray-100">
-              <div className="text-xs font-bold text-gray-900">
-                {products.length} Products
+            <div className="flex items-center gap-3">
+              <div className="flex bg-gray-100 p-0.5 rounded-lg border border-gray-200">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setViewMode('table')}
+                  className={`w-7 h-7 rounded-md ${viewMode === 'table' ? 'bg-white shadow-sm text-red-600' : 'text-gray-400 hover:text-gray-900'}`}
+                >
+                  <TableProperties className="w-3.5 h-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setViewMode('grid')}
+                  className={`w-7 h-7 rounded-md ${viewMode === 'grid' ? 'bg-white shadow-sm text-red-600' : 'text-gray-400 hover:text-gray-900'}`}
+                >
+                  <Grid className="w-3.5 h-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setViewMode('list')}
+                  className={`w-7 h-7 rounded-md ${viewMode === 'list' ? 'bg-white shadow-sm text-red-600' : 'text-gray-400 hover:text-gray-900'}`}
+                >
+                  <List className="w-3.5 h-3.5" />
+                </Button>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="flex bg-gray-100 p-0.5 rounded-lg border border-gray-200">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setViewMode('grid')}
-                    className={`w-7 h-7 rounded-md ${viewMode === 'grid' ? 'bg-white shadow-sm text-red-600' : 'text-gray-400 hover:text-gray-900'}`}
-                  >
-                    <Grid className="w-3.5 h-3.5" />
+              <Sheet open={mobileFilterOpen} onOpenChange={setMobileFilterOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 gap-2 text-xs font-bold uppercase tracking-wider border-gray-200 bg-white">
+                    <Filter className="w-3.5 h-3.5" /> Filters
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setViewMode('list')}
-                    className={`w-7 h-7 rounded-md ${viewMode === 'list' ? 'bg-white shadow-sm text-red-600' : 'text-gray-400 hover:text-gray-900'}`}
-                  >
-                    <List className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl px-0">
+                  <SheetHeader className="px-6 mb-6">
+                    <SheetTitle className="text-left font-black uppercase tracking-tight">Filter Products</SheetTitle>
+                  </SheetHeader>
+                  <div className="px-6 overflow-y-auto h-full pb-20 space-y-6">
 
-                <Sheet open={mobileFilterOpen} onOpenChange={setMobileFilterOpen}>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-8 gap-2 text-xs font-bold uppercase tracking-wider border-gray-200">
-                      <Filter className="w-3.5 h-3.5" /> Filters
+                    <div className="space-y-3">
+                      <label className="text-xs font-bold text-gray-500 uppercase">Category</label>
+                      <Select value={categorySlug} onValueChange={(val) => router.push(val === 'all' ? '/products' : `/${val}`)}>
+                        <SelectTrigger className="w-full h-11 rounded-xl bg-gray-50 border-gray-200 font-bold">
+                          <SelectValue placeholder="Category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Categories</SelectItem>
+                          {allCategories.map(c => (
+                            <SelectItem key={c.id} value={c.slug}>{c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-3">
+                      <label className="text-xs font-bold text-gray-500 uppercase">Sub-Category</label>
+                      <Select
+                        value={activeSubCategory ? activeSubCategory.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : "all"}
+                        onValueChange={(val) => {
+                          if (val === 'all') {
+                            router.push(`/${categorySlug}`)
+                          } else {
+                            router.push(`/${categorySlug}/${val}`)
+                          }
+                        }}
+                        disabled={!subCategories.length}
+                      >
+                        <SelectTrigger className="w-full h-11 rounded-xl bg-gray-50 border-gray-200 font-bold disabled:opacity-50">
+                          <SelectValue placeholder="Sub-Category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Sub-Categories</SelectItem>
+                          {subCategories.map(sc => {
+                            const slug = sc.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+                            return (
+                              <SelectItem key={sc.id} value={slug}>{sc.name}</SelectItem>
+                            )
+                          })}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-3">
+                      <label className="text-xs font-bold text-gray-500 uppercase">Brand</label>
+                      <Select value={selectedBrand} onValueChange={setSelectedBrand}>
+                        <SelectTrigger className="w-full h-11 rounded-xl bg-gray-50 border-gray-200 font-bold">
+                          <SelectValue placeholder="Brand" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Brands</SelectItem>
+                          {brands.map(b => (
+                            <SelectItem key={b.id} value={b.slug || b.id.toString()}>{b.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {tags.length > 0 && (
+                      <div className="space-y-3">
+                        <label className="text-xs font-bold text-gray-500 uppercase">Tags</label>
+                        <Select value={selectedTag} onValueChange={setSelectedTag}>
+                          <SelectTrigger className="w-full h-11 rounded-xl bg-gray-50 border-gray-200 font-bold">
+                            <SelectValue placeholder="Tag" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Tags</SelectItem>
+                            {tags.map(t => (
+                              <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    <div className="space-y-3">
+                      <label className="text-xs font-bold text-gray-500 uppercase">Price Range</label>
+                      <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="flex justify-between mb-4 text-sm font-bold">
+                          <span>₹0</span>
+                          <span>₹2,00,000</span>
+                        </div>
+                        <Slider
+                          defaultValue={[0, 200000]}
+                          max={200000}
+                          step={1000}
+                          value={priceRange}
+                          onValueChange={setPriceRange}
+                          className="w-full"
+                        />
+                        <div className="mt-4 text-center font-black text-lg text-gray-900">
+                          ₹{priceRange[0].toLocaleString('en-IN')} - ₹{priceRange[1].toLocaleString('en-IN')}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-white">
+                    <Button className="w-full h-12 bg-red-600 text-white font-bold rounded-xl" onClick={() => setMobileFilterOpen(false)}>
+                      Show {products.length} Products
                     </Button>
-                  </SheetTrigger>
-                  <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl px-0">
-                    <SheetHeader className="px-6 mb-6">
-                      <SheetTitle className="text-left font-black uppercase tracking-tight">Filter Products</SheetTitle>
-                    </SheetHeader>
-                    <div className="px-6 overflow-y-auto h-full pb-20 space-y-6">
-
-                      <div className="space-y-3">
-                        <label className="text-xs font-bold text-gray-500 uppercase">Category</label>
-                        <Select value={categorySlug} onValueChange={(val) => router.push(val === 'all' ? '/products' : `/${val}`)}>
-                          <SelectTrigger className="w-full h-11 rounded-xl bg-gray-50 border-gray-200 font-bold">
-                            <SelectValue placeholder="Category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Categories</SelectItem>
-                            {allCategories.map(c => (
-                              <SelectItem key={c.id} value={c.slug}>{c.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-3">
-                        <label className="text-xs font-bold text-gray-500 uppercase">Sub-Category</label>
-                        <Select
-                          value={activeSubCategory ? activeSubCategory.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : "all"}
-                          onValueChange={(val) => {
-                            if (val === 'all') {
-                              router.push(`/${categorySlug}`)
-                            } else {
-                              router.push(`/${categorySlug}/${val}`)
-                            }
-                          }}
-                          disabled={!subCategories.length}
-                        >
-                          <SelectTrigger className="w-full h-11 rounded-xl bg-gray-50 border-gray-200 font-bold disabled:opacity-50">
-                            <SelectValue placeholder="Sub-Category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Sub-Categories</SelectItem>
-                            {subCategories.map(sc => {
-                              const slug = sc.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
-                              return (
-                                <SelectItem key={sc.id} value={slug}>{sc.name}</SelectItem>
-                              )
-                            })}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-3">
-                        <label className="text-xs font-bold text-gray-500 uppercase">Brand</label>
-                        <Select value={selectedBrand} onValueChange={setSelectedBrand}>
-                          <SelectTrigger className="w-full h-11 rounded-xl bg-gray-50 border-gray-200 font-bold">
-                            <SelectValue placeholder="Brand" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Brands</SelectItem>
-                            {brands.map(b => (
-                              <SelectItem key={b.id} value={b.slug || b.id.toString()}>{b.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {tags.length > 0 && (
-                        <div className="space-y-3">
-                          <label className="text-xs font-bold text-gray-500 uppercase">Tags</label>
-                          <Select value={selectedTag} onValueChange={setSelectedTag}>
-                            <SelectTrigger className="w-full h-11 rounded-xl bg-gray-50 border-gray-200 font-bold">
-                              <SelectValue placeholder="Tag" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Tags</SelectItem>
-                              {tags.map(t => (
-                                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
-
-                      <div className="space-y-3">
-                        <label className="text-xs font-bold text-gray-500 uppercase">Price Range</label>
-                        <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                          <div className="flex justify-between mb-4 text-sm font-bold">
-                            <span>₹0</span>
-                            <span>₹2,00,000</span>
-                          </div>
-                          <Slider
-                            defaultValue={[0, 200000]}
-                            max={200000}
-                            step={1000}
-                            value={priceRange}
-                            onValueChange={setPriceRange}
-                            className="w-full"
-                          />
-                          <div className="mt-4 text-center font-black text-lg text-gray-900">
-                            ₹{priceRange[0].toLocaleString('en-IN')} - ₹{priceRange[1].toLocaleString('en-IN')}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-white">
-                      <Button className="w-full h-12 bg-red-600 text-white font-bold rounded-xl" onClick={() => setMobileFilterOpen(false)}>
-                        Show {products.length} Products
-                      </Button>
-                    </div>
-                  </SheetContent>
-                </Sheet>
-              </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
+        </div>
+
+        <div className="container pt-0 pb-4">
 
           {productsLoading ? (
             <div className="flex flex-col items-center justify-center py-40">
@@ -807,7 +783,7 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
               <Button className="bg-red-600 hover:bg-red-700" onClick={() => router.push('/')}>Browse All Products</Button>
             </div>
           ) : (
-            <div className="space-y-12">
+            <div className="space-y-0">
               {/* Table View - Integrated Grouping Logic */}
               {viewMode === 'table' ? (
                 (() => {
@@ -834,59 +810,64 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
                   })
 
                   return (
-                    <div className="space-y-0">
-                      {primaryGroups.map(pName => (
-                        <div key={pName} className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-                          {/* Primary Header (e.g., Brand or Tag) */}
-                          <div className="bg-gray-900 py-2.5 px-6">
-                            <h3 className="text-white font-black uppercase tracking-widest text-base">
-                              {pName}
-                            </h3>
-                          </div>
-
-                          <div className="overflow-x-auto">
-                            {Object.keys(grouped[pName]).sort().map(sName => (
-                              <div key={sName} className="border-b last:border-b-0">
-                                <table className="w-full text-xs text-left">
-                                  <tbody className="divide-y divide-gray-200">
-                                    {grouped[pName][sName].map(product => (
-                                      <tr key={product.id} className="hover:bg-red-50/30 transition-colors group">
-                                        <td className="px-6 py-2 text-[12px] w-5/12">
-                                          <div className="font-bold text-gray-900">{product.name}</div>
-                                        </td>
-                                        <td className="px-6 py-2 text-[12px] text-gray-700 w-2/12">
-                                          {product.brand_name || '-'}
-                                        </td>
-                                        <td className="px-6 py-2 font-black text-gray-900 text-[12px] w-2/12">
-                                          ₹{product.mrp_price?.toLocaleString('en-IN') || '-'}
-                                        </td>
-                                        <td className="px-6 py-2 text-right w-3/12">
-                                          <div className="flex items-center justify-end gap-3">
-                                            <Link
-                                              href={`/product/${product.slug}`}
-                                              className="text-gray-400 hover:text-red-600 font-bold uppercase text-[10px] tracking-wide"
-                                            >
-                                              View
-                                            </Link>
-                                            <Button
-                                              variant="outline"
-                                              size="sm"
-                                              onClick={() => handleEnquire(product)}
-                                              className="h-7 px-3 text-[10px] font-black uppercase tracking-wider border-gray-200 hover:border-red-600 hover:text-red-600"
-                                            >
-                                              Enquire
-                                            </Button>
-                                          </div>
-                                        </td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
+                    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+                      {/* Unified Single Table */}
+                      <table className="w-full text-[10px] text-left table-fixed">
+                        <thead className="bg-gray-900 text-white text-sm font-bold uppercase">
+                          <tr>
+                            <th className="px-3 py-2 w-[40%]">Products</th>
+                            <th className="px-1 py-2 w-[15%]">Brand</th>
+                            <th className="px-1 py-2 w-[20%]">MRP<br />(Rs.)</th>
+                            <th className="px-2 py-2 w-[25%] ">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {primaryGroups.map(pName => (
+                            <React.Fragment key={pName}>
+                              {/* Red Group Header Row */}
+                              <tr className="bg-red-700">
+                                <td colSpan={4} className="py-2 px-4 text-center">
+                                  <h3 className="text-white font-black uppercase tracking-widest text-sm">
+                                    {pName}
+                                  </h3>
+                                </td>
+                              </tr>
+                              {/* Products in this Group */}
+                              {Object.keys(grouped[pName]).sort().map(sName => (
+                                grouped[pName][sName].map(product => (
+                                  <tr key={product.id} className="hover:bg-red-50/30 transition-colors group">
+                                    <td className="px-3 py-1.5 align-middle">
+                                      <div className="text-sm text-gray-600 leading-tight">{product.name}</div>
+                                    </td>
+                                    <td className="px-1 py-1.5 text-sm text-gray-500 align-middle">
+                                      {product.brand_name || '-'}
+                                    </td>
+                                    <td className="px-1 py-1.5 font-medium text-sm text-gray-500 align-middle">
+                                      Rs {(product.shop_price && product.shop_price > 0 ? product.shop_price : product.mrp_price)?.toLocaleString('en-IN') || '-'}
+                                    </td>
+                                    <td className="px-2 py-1.5 text-right align-middle">
+                                      <div className="flex flex-row items-end gap-1">
+                                        <Link
+                                          href={`/product/${product.slug}`}
+                                          className="text-gray-900 text-xs font-bold hover:underline uppercase hover:text-red-600"
+                                        >
+                                          View
+                                        </Link>
+                                        <button
+                                          onClick={() => handleEnquire(product)}
+                                          className="text-red-600 text-xs font-medium uppercase hover:underline"
+                                        >
+                                          Enquire
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))
+                              ))}
+                            </React.Fragment>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   )
                 })()
@@ -980,7 +961,7 @@ function ProductCard({ product, viewMode, onEnquire }) {
         {/* Price & Action */}
         <div className="flex flex-col items-center md:items-end gap-4 min-w-[200px] w-full md:w-auto mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-gray-100">
           <div className="text-center md:text-right">
-            {product.shop_price && product.shop_price < product.mrp_price ? (
+            {product.shop_price && product.shop_price > 0 && product.shop_price < product.mrp_price ? (
               <>
                 <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">MRP <span className="line-through">₹{product.mrp_price?.toLocaleString('en-IN')}</span></span>
                 <span className="block text-2xl font-black text-red-600 tracking-tighter leading-none">₹{product.shop_price?.toLocaleString('en-IN')}</span>
@@ -1047,7 +1028,7 @@ function ProductCard({ product, viewMode, onEnquire }) {
 
         <div className="flex items-end justify-between pt-2">
           <div className="flex-grow">
-            {product.shop_price && product.shop_price < product.mrp_price ? (
+            {product.shop_price && product.shop_price > 0 && product.shop_price < product.mrp_price ? (
               <>
                 <span className="block text-[8px] font-black text-gray-400 uppercase tracking-tighter">MRP <span className="line-through">₹{product.mrp_price?.toLocaleString('en-IN')}</span></span>
                 <span className="block text-lg font-black text-red-600 leading-none">₹{product.shop_price?.toLocaleString('en-IN')}</span>

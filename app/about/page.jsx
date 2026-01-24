@@ -73,23 +73,23 @@ export default function AboutPage() {
             <div>
               <h2 className="text-3xl font-bold mb-6">Our Story</h2>
               <p className="text-gray-600 mb-4">
-                Founded in 1988, Pavilion Sports started as a small sports equipment shop in Delhi. 
-                Over the years, we have grown to become India's leading B2B sports equipment supplier, 
+                Founded in 1988, Pavilion Sports started as a small sports equipment shop in Delhi.
+                Over the years, we have grown to become India's leading B2B sports equipment supplier,
                 serving schools, sports academies, retail stores, and corporate clients nationwide.
               </p>
               <p className="text-gray-600 mb-4">
-                Our commitment to quality and customer satisfaction has earned us the trust of over 
-                10,000 businesses across India. We partner with leading international and domestic 
+                Our commitment to quality and customer satisfaction has earned us the trust of over
+                10,000 businesses across India. We partner with leading international and domestic
                 brands to bring you the best in sports equipment.
               </p>
               <p className="text-gray-600">
-                Today, we offer a comprehensive catalog of over 1,000 products across cricket, football, 
-                basketball, tennis, badminton, and more, with competitive wholesale pricing and 
+                Today, we offer a comprehensive catalog of over 1,000 products across cricket, football,
+                basketball, tennis, badminton, and more, with competitive wholesale pricing and
                 reliable delivery across India.
               </p>
             </div>
             <div className="bg-gray-100 rounded-lg p-8">
-              <img 
+              <img
                 src="https://images.unsplash.com/photo-1461896836934- voices-sport-equipment?w=800"
                 alt="Sports Equipment"
                 className="w-full rounded-lg"
@@ -108,7 +108,7 @@ export default function AboutPage() {
               <CardContent className="p-6">
                 <h3 className="text-xl font-semibold mb-3 text-red-600">Quality First</h3>
                 <p className="text-gray-600">
-                  We never compromise on quality. Every product in our catalog is carefully selected 
+                  We never compromise on quality. Every product in our catalog is carefully selected
                   and verified to meet international standards.
                 </p>
               </CardContent>
@@ -117,7 +117,7 @@ export default function AboutPage() {
               <CardContent className="p-6">
                 <h3 className="text-xl font-semibold mb-3 text-red-600">Customer Focus</h3>
                 <p className="text-gray-600">
-                  Our customers are at the heart of everything we do. We provide personalized service, 
+                  Our customers are at the heart of everything we do. We provide personalized service,
                   competitive pricing, and reliable support.
                 </p>
               </CardContent>
@@ -126,7 +126,7 @@ export default function AboutPage() {
               <CardContent className="p-6">
                 <h3 className="text-xl font-semibold mb-3 text-red-600">Innovation</h3>
                 <p className="text-gray-600">
-                  We continuously evolve our product range and services to meet the changing needs 
+                  We continuously evolve our product range and services to meet the changing needs
                   of the sports industry and our valued partners.
                 </p>
               </CardContent>

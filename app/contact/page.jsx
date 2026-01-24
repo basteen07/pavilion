@@ -23,7 +23,7 @@ export default function ContactPage() {
   async function handleSubmit(e) {
     e.preventDefault()
     setLoading(true)
-    
+
     // Simulate form submission
     await new Promise(resolve => setTimeout(resolve, 1000))
     toast.success('Thank you for your message! We will get back to you soon.')
@@ -63,10 +63,10 @@ export default function ContactPage() {
             <div className="space-y-8">
               <h2 className="text-2xl font-bold">Get In Touch</h2>
               <p className="text-gray-600">
-                Have questions about our products or wholesale pricing? 
+                Have questions about our products or wholesale pricing?
                 We'd love to hear from you. Send us a message and we'll respond as soon as possible.
               </p>
-              
+
               <div className="space-y-6">
                 <Card>
                   <CardContent className="p-4 flex items-center gap-4">
@@ -79,7 +79,7 @@ export default function ContactPage() {
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card>
                   <CardContent className="p-4 flex items-center gap-4">
                     <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
@@ -91,7 +91,7 @@ export default function ContactPage() {
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card>
                   <CardContent className="p-4 flex items-center gap-4">
                     <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
@@ -103,7 +103,7 @@ export default function ContactPage() {
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card>
                   <CardContent className="p-4 flex items-center gap-4">
                     <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
@@ -131,7 +131,7 @@ export default function ContactPage() {
                       <Input
                         id="name"
                         value={formData.name}
-                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         required
                       />
                     </div>
@@ -141,7 +141,7 @@ export default function ContactPage() {
                         id="email"
                         type="email"
                         value={formData.email}
-                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         required
                       />
                     </div>
@@ -153,7 +153,7 @@ export default function ContactPage() {
                         id="phone"
                         type="tel"
                         value={formData.phone}
-                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       />
                     </div>
                     <div className="space-y-2">
@@ -161,7 +161,7 @@ export default function ContactPage() {
                       <Input
                         id="subject"
                         value={formData.subject}
-                        onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                         required
                       />
                     </div>
@@ -172,7 +172,7 @@ export default function ContactPage() {
                       id="message"
                       rows={5}
                       value={formData.message}
-                      onChange={(e) => setFormData({...formData, message: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                       required
                     />
                   </div>
