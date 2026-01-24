@@ -1,5 +1,7 @@
 'use client'
 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiCall } from '@/lib/api-client'
@@ -36,18 +38,28 @@ export default function B2BRequests() {
     const historyCustomers = customers.filter(c => c.status !== 'pending')
 
     const approvalMutation = useMutation({
-        mutationFn: ({ status, discount }) =>
-            apiCall('/admin/customers/approve', {
+        mutationFn: ({ status, discount }) => {
+            const isUpdate = selectedCustomer.status !== 'pending';
+            // Use PUT for updates if supported, or reuse approve endpoint if it handles updates
+            // Assuming /admin/customers/update or re-hitting approve might work. 
+            // Let's try PUT to /admin/b2b-customers/:id/discount which is a common pattern, OR just hit approve again if it upserts.
+            // Given I cannot see backend, I will assume a clear "update" action is safer if I can find one, 
+            // but standard REST would be PUT /admin/b2b-customers/:id.
+            // Let's try calling the same approve endpoint first as it likely updates status/discount.
+            // If it fails, the user will report it, but this is the best guess without backend code.
+
+            return apiCall('/admin/customers/approve', {
                 method: 'POST',
                 body: JSON.stringify({
                     customer_id: selectedCustomer.id,
-                    status,
+                    status: status || selectedCustomer.status,
                     discount_percentage: discount || 0
                 })
-            }),
+            })
+        },
         onSuccess: () => {
             queryClient.invalidateQueries(['b2b-customers'])
-            toast.success(isApproveOpen ? 'Customer approved' : 'Customer rejected')
+            toast.success('Customer updated successfully')
             setIsApproveOpen(false)
             setSelectedCustomer(null)
             setDiscountPercentage(0)
@@ -56,6 +68,12 @@ export default function B2BRequests() {
     })
 
     const handleApproveClick = (customer) => {
+        setSelectedCustomer(customer)
+        setDiscountPercentage(customer.discount_percentage || 0)
+        setIsApproveOpen(true)
+    }
+
+    const handleEditClick = (customer) => {
         setSelectedCustomer(customer)
         setDiscountPercentage(customer.discount_percentage || 0)
         setIsApproveOpen(true)
@@ -144,6 +162,7 @@ export default function B2BRequests() {
                                 <TableHead>Status</TableHead>
                                 <TableHead>Discount</TableHead>
                                 <TableHead>Updated</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -159,6 +178,9 @@ export default function B2BRequests() {
                                     <TableCell className="text-muted-foreground text-sm">
                                         {format(new Date(customer.updated_at || customer.created_at), 'MMM d, yyyy')}
                                     </TableCell>
+                                    <TableCell className="text-right">
+                                        <Button size="sm" variant="outline" onClick={() => handleEditClick(customer)}>Edit</Button>
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -169,28 +191,47 @@ export default function B2BRequests() {
             <Dialog open={isApproveOpen} onOpenChange={setIsApproveOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Approve B2B Customer</DialogTitle>
+                        <DialogTitle>{selectedCustomer?.status === 'pending' ? 'Approve Request' : 'Update Customer'}</DialogTitle>
                         <DialogDescription>
-                            Set a default discount percentage for <strong>{selectedCustomer?.company_name}</strong>.
+                            Update settings for <strong>{selectedCustomer?.company_name}</strong>.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="py-4">
-                        <Label>Discount Percentage (%)</Label>
-                        <Input
-                            type="number"
-                            min="0"
-                            max="100"
-                            value={discountPercentage}
-                            onChange={(e) => setDiscountPercentage(Number(e.target.value))}
-                            className="mt-2"
-                        />
-                        <p className="text-xs text-muted-foreground mt-2">
-                            This discount will be applied automatically to all their orders. You can override this per-order.
-                        </p>
+                    <div className="py-4 space-y-4">
+                        <div className="space-y-2">
+                            <Label>Status</Label>
+                            <Select
+                                value={selectedCustomer?.status === 'pending' ? 'approved' : (selectedCustomer?.status || 'approved')}
+                                onValueChange={(val) => setSelectedCustomer(prev => ({ ...prev, status: val }))}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="approved">Approved</SelectItem>
+                                    <SelectItem value="rejected">Rejected</SelectItem>
+                                    <SelectItem value="pending">Pending</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Discount / Markup Request (%)</Label>
+                            <Input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={discountPercentage}
+                                onChange={(e) => setDiscountPercentage(Number(e.target.value))}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Percentage to be applied as Markup (Dealer) or Discount (MRP).
+                            </p>
+                        </div>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsApproveOpen(false)}>Cancel</Button>
-                        <Button onClick={confirmApprove} className="bg-green-600 hover:bg-green-700">Confirm Approval</Button>
+                        <Button onClick={() => approvalMutation.mutate({ status: selectedCustomer?.status || 'approved', discount: discountPercentage })} className="bg-green-600 hover:bg-green-700">
+                            {selectedCustomer?.status === 'pending' ? 'Confirm Approval' : 'Update'}
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

@@ -9,7 +9,7 @@ import { usePathname } from 'next/navigation'
 
 export function SiteLayout({ children }) {
     const pathname = usePathname()
-    const isAdmin = pathname?.startsWith('/admin')
+    const isAdmin = pathname?.startsWith('/admin') || pathname?.startsWith('/b2b')
 
     const { data: categories = [] } = useQuery({
         queryKey: ['categories'],

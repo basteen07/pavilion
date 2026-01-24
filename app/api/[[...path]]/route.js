@@ -678,16 +678,17 @@ async function handleRoute(request, { params }) {
         subtotal += parseFloat(item.price) * item.quantity;
       });
 
-      const discount = (subtotal * (customer.discount_percentage || 0)) / 100;
-      const total = subtotal - discount;
+      const total = subtotal * 1.18; // 18% GST
+      const tax = subtotal * 0.18;
+      const discount = 0; // Standardized: No discount
       const orderNumber = `ORD-${Date.now()}`;
 
       const orderResult = await query(
         `INSERT INTO orders 
-         (order_number, customer_id, subtotal, discount, total, status) 
-         VALUES ($1, $2, $3, $4, $5, 'pending') 
+         (order_number, customer_id, subtotal, discount, tax, total, status) 
+         VALUES ($1, $2, $3, $4, $5, $6, 'pending') 
          RETURNING *`,
-        [orderNumber, customer.id, subtotal, discount, total]
+        [orderNumber, customer.id, subtotal, discount, tax, total]
       );
 
       const orderId = orderResult.rows[0].id;
@@ -723,6 +724,50 @@ async function handleRoute(request, { params }) {
       );
 
       return handleCORS(NextResponse.json(result.rows));
+    }
+
+    // Get Single B2B Order Details
+    if (route.startsWith('/b2b/orders/') && method === 'GET') {
+      const user = await authenticateRequest(request);
+      if (!user) {
+        return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+      }
+
+      const orderId = path[2];
+
+      // Check ownership
+      const customerResult = await query('SELECT id FROM b2b_customers WHERE user_id = $1', [user.id]);
+      if (customerResult.rows.length === 0) {
+        return handleCORS(NextResponse.json({ error: 'Customer profile not found' }, { status: 404 }));
+      }
+      const customerId = customerResult.rows[0].id;
+
+      const orderResult = await query(
+        'SELECT * FROM orders WHERE id = $1 AND customer_id = $2',
+        [orderId, customerId]
+      );
+
+      if (orderResult.rows.length === 0) {
+        return handleCORS(NextResponse.json({ error: 'Order not found' }, { status: 404 }));
+      }
+
+      const itemsResult = await query(`
+        SELECT oi.*, p.name as product_name, p.slug, p.images, p.category_id, c.name as category_name
+        FROM order_items oi
+        LEFT JOIN products p ON oi.product_id = p.id
+        LEFT JOIN categories c ON p.category_id = c.id
+        WHERE oi.order_id = $1
+      `, [orderId]);
+
+      const order = orderResult.rows[0];
+      // Ensure dates are ISO strings for consistent client parsing
+      order.created_at = new Date(order.created_at).toISOString();
+      order.updated_at = order.updated_at ? new Date(order.updated_at).toISOString() : null;
+
+      return handleCORS(NextResponse.json({
+        ...order,
+        items: itemsResult.rows
+      }));
     }
 
     // ============ ADMIN ENDPOINTS ============
@@ -1080,7 +1125,8 @@ async function handleRoute(request, { params }) {
         subtotal += parseFloat(item.unit_price) * parseInt(item.quantity);
       }
 
-      const total = subtotal - parseFloat(discount || 0) + parseFloat(tax || 0);
+      const total = subtotal + parseFloat(tax || 0); // Discount is 0
+      const auditInfo = `${user.name || 'Admin'} (${user.email})`;
 
       // Start "transaction" by deleting items and updating order
       await query('DELETE FROM order_items WHERE order_id = $1', [orderId]);
@@ -1094,10 +1140,10 @@ async function handleRoute(request, { params }) {
 
       const orderUpdateResult = await query(`
         UPDATE orders 
-        SET subtotal = $1, discount = $2, tax = $3, total = $4, notes = $5, status = $6, created_at = created_at
+        SET subtotal = $1, discount = 0, tax = $2, total = $3, notes = $4, status = $5, edited_by = $6, updated_at = CURRENT_TIMESTAMP
         WHERE id = $7
         RETURNING *
-      `, [subtotal, discount || 0, tax || 0, total, notes, status || 'pending', orderId]);
+      `, [subtotal, tax || 0, total, notes, status || 'pending', auditInfo, orderId]);
 
       return handleCORS(NextResponse.json(orderUpdateResult.rows[0]));
     }

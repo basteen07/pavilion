@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Eye, Search, X, Check, Loader2 } from 'lucide-react'
+import { Eye, Search, X, Check, Loader2, Trash2 } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
@@ -70,9 +70,11 @@ export function OrderManagement() {
                 method: 'POST',
                 body: JSON.stringify({ order_id: orderId, status })
             }),
-        onSuccess: () => {
+        onSuccess: (_, variables) => {
             queryClient.invalidateQueries(['admin-orders'])
             queryClient.invalidateQueries(['admin-order-details'])
+            // Update local state to prevent "Save Changes" from reverting status
+            setSelectedOrder(prev => ({ ...prev, status: variables.status }))
             toast.success('Order status updated')
         },
         onError: () => toast.error('Failed to update status')
@@ -112,8 +114,17 @@ export function OrderManagement() {
         return editedItems.reduce((acc, item) => acc + (parseFloat(item.unit_price || item.price) * item.quantity), 0)
     }
 
+    const calculateGST = () => {
+        return editedItems.reduce((acc, item) => {
+            const price = parseFloat(item.unit_price || item.price)
+            const qty = item.quantity
+            const rate = parseFloat(item.gst_percentage || 18)
+            return acc + (price * qty * (rate / 100))
+        }, 0)
+    }
+
     const calculateTotal = () => {
-        return calculateSubtotal() - editedDiscount
+        return calculateSubtotal() + calculateGST()
     }
 
     const orders = data?.orders || []
@@ -252,6 +263,14 @@ export function OrderManagement() {
                                     <p className="text-xs text-gray-500 uppercase tracking-wider font-bold">Status</p>
                                     <Badge className="uppercase mt-1">{selectedOrder.status}</Badge>
                                 </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-bold">Audit Log</p>
+                                    <div className="text-xs space-y-1 mt-1">
+                                        <p><span className="text-gray-400">Approved By:</span> <span className="font-medium">{selectedOrder.approved_by || 'System'}</span></p>
+                                        <p><span className="text-gray-400">Edited By:</span> <span className="font-medium">{selectedOrder.edited_by || '-'}</span></p>
+                                        <p><span className="text-gray-400">Last Update:</span> <span className="font-medium">{new Date(selectedOrder.updated_at || selectedOrder.created_at).toLocaleString()}</span></p>
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Line Items (Editable) */}
@@ -262,46 +281,84 @@ export function OrderManagement() {
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead>Product</TableHead>
-                                                <TableHead className="text-right">MRP</TableHead>
-                                                {isSuperAdmin && (
-                                                    <TableHead className="text-right text-blue-600 font-bold bg-blue-50/30">Dealer</TableHead>
-                                                )}
-                                                <TableHead className="text-right">Price</TableHead>
+                                                <TableHead className="text-right">Dealer Base</TableHead>
+                                                <TableHead className="text-right">Markup</TableHead>
+                                                <TableHead className="text-right">Sell Price (Ex GST)</TableHead>
+                                                <TableHead className="text-right">GST</TableHead>
                                                 <TableHead className="text-right w-24">Qty</TableHead>
-                                                <TableHead className="text-right">Total</TableHead>
+                                                <TableHead className="text-right">Total (Inc GST)</TableHead>
+                                                <TableHead className="w-[50px]"></TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {editedItems.map((item, idx) => (
-                                                <TableRow key={idx}>
-                                                    <TableCell>
-                                                        <div className="flex items-center gap-3">
-                                                            <div>
-                                                                <p className="font-bold text-sm">{item.product_name}</p>
-                                                                <p className="text-xs text-gray-500">SKU: {item.sku}</p>
+                                            {editedItems.map((item, idx) => {
+                                                const dealerPrice = parseFloat(item.data?.dealer_price || item.dealer_price || 0);
+                                                const unitPrice = parseFloat(item.unit_price || item.price);
+                                                const gstRate = parseFloat(item.gst_percentage || 18); // Default 18%
+                                                const gstAmount = unitPrice * (gstRate / 100);
+                                                const totalIncGst = (unitPrice + gstAmount) * item.quantity;
+                                                const markupAmount = unitPrice - dealerPrice;
+                                                const markupPercent = dealerPrice > 0 ? Math.round((markupAmount / dealerPrice) * 100) : 0;
+
+                                                return (
+                                                    <TableRow key={idx}>
+                                                        <TableCell>
+                                                            <div className="flex items-center gap-3">
+                                                                <div>
+                                                                    <p className="font-bold text-sm">{item.product_name}</p>
+                                                                    <p className="text-xs text-gray-500">SKU: {item.sku}</p>
+                                                                    <p className="text-[10px] text-gray-400">MRP: ₹{parseFloat(item.mrp || item.mrp_price || 0).toLocaleString()}</p>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="text-right text-gray-400 text-xs">
-                                                        ₹{parseFloat(item.mrp || item.mrp_price || 0).toLocaleString()}
-                                                    </TableCell>
-                                                    {isSuperAdmin && (
-                                                        <TableCell className="text-right bg-blue-50/20 text-blue-700 font-medium">
-                                                            ₹{parseFloat(item.dealer_price || 0).toLocaleString()}
                                                         </TableCell>
-                                                    )}
-                                                    <TableCell className="text-right font-medium">₹{parseFloat(item.unit_price || item.price).toLocaleString()}</TableCell>
-                                                    <TableCell className="text-right">
-                                                        <Input
-                                                            type="number"
-                                                            className="text-right h-8 font-bold"
-                                                            value={item.quantity}
-                                                            onChange={(e) => handleQuantityChange(idx, e.target.value)}
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell className="text-right font-bold">₹{(parseFloat(item.unit_price || item.price) * item.quantity).toLocaleString()}</TableCell>
-                                                </TableRow>
-                                            ))}
+                                                        <TableCell className="text-right font-medium text-gray-600">
+                                                            ₹{dealerPrice.toLocaleString()}
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            <div className="flex flex-col items-end">
+                                                                <span className="text-xs font-bold text-green-600">
+                                                                    +₹{markupAmount.toLocaleString()}
+                                                                </span>
+                                                                <Badge variant="outline" className="text-[10px] h-4 px-1">
+                                                                    {markupPercent}%
+                                                                </Badge>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-right font-bold text-gray-900">
+                                                            ₹{unitPrice.toLocaleString()}
+                                                        </TableCell>
+                                                        <TableCell className="text-right text-xs text-gray-600">
+                                                            <div>₹{gstAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+                                                            <div className="text-[10px] text-gray-400">@{gstRate}%</div>
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            <Input
+                                                                type="number"
+                                                                className="text-right h-8 font-bold"
+                                                                value={item.quantity}
+                                                                onChange={(e) => handleQuantityChange(idx, e.target.value)}
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="text-right font-black">
+                                                            ₹{totalIncGst.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-700 p-0"
+                                                                onClick={() => {
+                                                                    const newItems = [...editedItems];
+                                                                    newItems.splice(idx, 1);
+                                                                    setEditedItems(newItems);
+                                                                }}
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </Button>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )
+                                            })}
                                         </TableBody>
                                     </Table>
                                 </div>
@@ -324,25 +381,13 @@ export function OrderManagement() {
                                 </div>
                                 <div className="space-y-2 bg-gray-50 p-6 rounded-xl border border-gray-100 shadow-sm transition-all hover:bg-white hover:border-gray-200">
                                     <div className="flex justify-between items-center text-sm">
-                                        <span className="text-gray-500 font-medium">Subtotal</span>
+                                        <span className="text-gray-500 font-medium">Items Subtotal</span>
                                         <span className="font-bold">₹{calculateSubtotal().toLocaleString()}</span>
                                     </div>
-                                    <div className="flex justify-between items-center text-sm border-b border-dashed pb-2 mb-2">
-                                        <span className="text-gray-500 font-medium">Extra Discount</span>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-gray-400 font-bold">- ₹</span>
-                                            <Input
-                                                type="number"
-                                                className="w-24 h-8 text-right font-bold border-gray-200 focus:border-red-400 focus:ring-red-50 text-red-600"
-                                                value={editedDiscount}
-                                                onChange={(e) => setEditedDiscount(parseFloat(e.target.value) || 0)}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="flex justify-between items-center pt-2">
-                                        <span className="text-lg font-black text-gray-900 tracking-tight uppercase">Grand Total</span>
+                                    <div className="flex justify-between items-center pt-2 border-t border-dashed">
+                                        <span className="text-lg font-black text-gray-900 tracking-tight uppercase">Grand Total (Inc GST)</span>
                                         <span className="text-2xl font-black text-gray-900 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600">
-                                            ₹{calculateTotal().toLocaleString()}
+                                            ₹{calculateTotal().toLocaleString(undefined, { maximumFractionDigits: 2 })}
                                         </span>
                                     </div>
                                 </div>
@@ -353,7 +398,7 @@ export function OrderManagement() {
                                 <div className="flex items-center gap-4 w-full md:w-auto">
                                     <span className="text-xs font-black text-gray-400 uppercase tracking-widest hidden md:block">Status Control</span>
                                     <Select
-                                        defaultValue={selectedOrder.status}
+                                        value={selectedOrder.status}
                                         onValueChange={(val) => updateStatusMutation.mutate({ orderId: selectedOrder.id, status: val })}
                                     >
                                         <SelectTrigger className="w-full md:w-[200px] border-2 font-bold focus:ring-offset-0 focus:ring-0">
@@ -375,7 +420,8 @@ export function OrderManagement() {
                                         className="flex-1 md:flex-none font-bold bg-black hover:bg-gray-800 shadow-lg active:scale-95 transition-all h-10 px-6"
                                         onClick={() => updateOrderMutation.mutate({
                                             items: editedItems,
-                                            discount: editedDiscount,
+                                            discount: 0,
+                                            tax: calculateGST(),
                                             notes: editedNotes,
                                             status: selectedOrder.status
                                         })}
@@ -406,6 +452,6 @@ export function OrderManagement() {
                     )}
                 </DialogContent>
             </Dialog>
-        </div>
+        </div >
     )
 }
