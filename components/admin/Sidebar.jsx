@@ -101,24 +101,38 @@ const data = {
             ],
         },
         {
-            title: "Quotations",
-            url: "/admin/quotations",
+            title: "Sales",
+            url: "#",
             icon: FileText,
+            items: [
+                {
+                    title: "Quotations",
+                    url: "/admin/quotations",
+                    icon: FileText,
+                },
+                {
+                    title: "Customers",
+                    url: "/admin/customers",
+                    icon: Building2,
+                },
+            ],
         },
         {
-            title: "Orders",
-            url: "/admin/orders",
+            title: "Wholesale",
+            url: "#",
             icon: ShoppingCart,
-        },
-        {
-            title: "Customers",
-            url: "/admin/customers",
-            icon: Building2,
-        },
-        {
-            title: "Requests",
-            url: "/admin/requests",
-            icon: User2,
+            items: [
+                {
+                    title: "Orders",
+                    url: "/admin/orders",
+                    icon: ShoppingCart,
+                },
+                {
+                    title: "B2B Requests",
+                    url: "/admin/requests",
+                    icon: User2,
+                },
+            ],
         },
     ],
     cms: [

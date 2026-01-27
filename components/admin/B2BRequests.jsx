@@ -229,7 +229,10 @@ export default function B2BRequests() {
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsApproveOpen(false)}>Cancel</Button>
-                        <Button onClick={() => approvalMutation.mutate({ status: selectedCustomer?.status || 'approved', discount: discountPercentage })} className="bg-green-600 hover:bg-green-700">
+                        <Button onClick={() => approvalMutation.mutate({
+                            status: selectedCustomer?.status === 'pending' ? 'approved' : selectedCustomer?.status,
+                            discount: discountPercentage
+                        })} className="bg-green-600 hover:bg-green-700">
                             {selectedCustomer?.status === 'pending' ? 'Confirm Approval' : 'Update'}
                         </Button>
                     </DialogFooter>

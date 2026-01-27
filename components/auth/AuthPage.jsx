@@ -77,7 +77,7 @@ export function AuthPage({ mode = 'login' }) {
                         {mode === 'login' ? 'Login' : 'Register'}
                     </CardTitle>
                     <CardDescription className="text-center">
-                        Pavilion Sports B2B Portal
+                        Pavilion Sports Wholesale Portal
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

@@ -1,8 +1,8 @@
 import { B2BPortal } from '@/components/b2b/B2BPortal'
 
 export const metadata = {
-    title: 'B2B Portal - Pavilion',
-    description: 'Pavilion Sports B2B Portal',
+    title: 'Wholesale Portal - Pavilion',
+    description: 'Pavilion Sports Wholesale Portal',
 }
 
 export default function B2BPage() {

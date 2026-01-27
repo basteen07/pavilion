@@ -78,7 +78,7 @@ export function B2BCartProvider({ children }) {
                 price: parseFloat(item.dealer_price || item.selling_price || item.mrp_price || 0),
                 quantity: item.quantity
             })),
-            notes: notes || 'Order from B2B Portal'
+            notes: notes || 'Order from Wholesale Portal'
         }
 
         console.log('Placing order:', orderData)

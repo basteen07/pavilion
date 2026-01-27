@@ -77,7 +77,7 @@ export function SiteFooter({ categories = [] }) {
                             <li><Link href="/careers" className="text-gray-400 hover:text-white hover:translate-x-1 transition-all inline-block hover:font-semibold">Careers</Link></li>
                             <li><Link href="/contact" className="text-gray-400 hover:text-white hover:translate-x-1 transition-all inline-block hover:font-semibold">Contact Us</Link></li>
                             <li><Link href="/login" className="text-gray-400 hover:text-white hover:translate-x-1 transition-all inline-block hover:font-semibold">B2B Login</Link></li>
-                            <li><Link href="/b2b" className="text-red-500 hover:text-red-400 hover:translate-x-1 transition-all inline-block hover:font-bold">B2B Portal</Link></li>
+                            <li><Link href="/b2b" className="text-red-500 hover:text-red-400 hover:translate-x-1 transition-all inline-block hover:font-bold">Wholesale Portal</Link></li>
                         </ul>
                     </div>
 
