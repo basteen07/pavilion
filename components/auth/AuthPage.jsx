@@ -38,7 +38,7 @@ export function AuthPage({ mode = 'login' }) {
                         phone
                     })
                 })
-                toast.success('B2B Registration request submitted! Your account is pending admin approval.')
+                toast.success('Registration was successful. Once admin approved you will be notified via email. After that you can login.')
                 router.push('/login')
             } else {
                 const data = await apiCall('/auth/login', {

@@ -1,5 +1,5 @@
 import './globals.css'
-import { Toaster } from '@/components/ui/sonner'
+import { Toaster } from 'sonner'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
 import { B2BCartProvider } from '@/components/providers/B2BCartProvider'
@@ -96,6 +96,8 @@ export default async function RootLayout({ children }) {
             </B2BCartProvider>
           </AuthProvider>
         </QueryProvider>
+
+        <Toaster richColors closeButton />
 
         {/* Body Scripts */}
         {settings.body_scripts && (

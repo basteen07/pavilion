@@ -490,8 +490,8 @@ async function handleRoute(request, { params }) {
 
       if (!user.is_active) {
         return handleCORS(NextResponse.json({
-          error: 'Account pending approval',
-          message: 'Your account is currently pending admin approval. You will receive an email once it is activated.'
+          error: 'Admin has not yet approved your registration. Please wait until the request is approved.',
+          message: 'Admin has not yet approved your registration. Please wait until the request is approved.'
         }, { status: 403 }));
       }
 
@@ -633,7 +633,7 @@ async function handleRoute(request, { params }) {
         success: true,
         user: newUser,
         customer: b2bResult.rows[0],
-        message: 'B2B registration successful. Your account is pending approval.'
+        message: 'Registration was successful. Once admin approved you will be notified via email. After that you can login.'
       }));
     }
 
