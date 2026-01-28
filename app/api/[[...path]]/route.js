@@ -592,7 +592,11 @@ async function handleRoute(request, { params }) {
     // Register B2B customer (combined user + B2B registration)
     if (route === '/b2b/register' && method === 'POST') {
       const body = await request.json();
-      const { email, password, name, phone, company_name, gstin, business_type, address, city, state, pincode } = body;
+      const {
+        email, password, name, phone, company_name, gstin, pan_number,
+        business_type, address, address_line2, city, state, pincode,
+        first_name, last_name
+      } = body;
 
       if (!email || !password || !company_name) {
         return handleCORS(NextResponse.json({ error: 'Email, password, and company name required' }, { status: 400 }));
@@ -613,7 +617,7 @@ async function handleRoute(request, { params }) {
         `INSERT INTO users (email, password_hash, name, phone, role_id, mfa_enabled, is_active) 
          VALUES ($1, $2, $3, $4, $5, false, false) 
          RETURNING id, email, name, phone`,
-        [email, passwordHash, name || company_name || 'B2B User', phone || null, roleId]
+        [email, passwordHash, name || `${first_name} ${last_name}`.trim() || company_name || 'B2B User', phone || null, roleId]
       );
 
       const newUser = userResult.rows[0];
@@ -621,10 +625,19 @@ async function handleRoute(request, { params }) {
       // Create B2B customer record
       const b2bResult = await query(
         `INSERT INTO b2b_customers 
-         (user_id, company_name, gstin, business_type, address, city, state, pincode, status) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending') 
+         (user_id, company_name, gstin, pan_number, business_type, address, address_line2, city, state, pincode, first_name, last_name, status) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending') 
          RETURNING *`,
-        [newUser.id, company_name, gstin || null, business_type || null, address || null, city || null, state || null, pincode || null]
+        [
+          newUser.id, company_name, gstin || null, pan_number || null, business_type || null,
+          address || null, address_line2 || null, city || null, state || null, pincode || null,
+          first_name || null, last_name || null
+        ]
+      );
+
+      await query(
+        'INSERT INTO b2b_customer_events (customer_id, event_type, description) VALUES ($1, $2, $3)',
+        [b2bResult.rows[0].id, 'registration', 'New wholesale registration request received.']
       );
 
       await sendB2BApprovalEmail(email, 'pending');
@@ -1224,7 +1237,7 @@ async function handleRoute(request, { params }) {
         `SELECT c.*, u.email, u.name, u.phone
          FROM b2b_customers c
          LEFT JOIN users u ON c.user_id = u.id
-         ORDER BY c.created_at DESC`
+         ORDER BY (c.status = 'pending') DESC, c.created_at DESC`
       );
 
       return handleCORS(NextResponse.json(result.rows));
@@ -1238,21 +1251,40 @@ async function handleRoute(request, { params }) {
       }
 
       const body = await request.json();
-      const { customer_id, status, discount_percentage } = body;
+      const { customer_id, status, discount_percentage, is_active } = body;
+
+      // Get current state for event logging
+      const currentRes = await query('SELECT status, discount_percentage, is_active FROM b2b_customers WHERE id = $1', [customer_id]);
+      const current = currentRes.rows[0];
 
       const result = await query(
         `UPDATE b2b_customers 
-         SET status = $1, discount_percentage = $2, updated_at = CURRENT_TIMESTAMP
-         WHERE id = $3
+         SET status = $1, 
+             discount_percentage = $2, 
+             is_active = COALESCE($3, is_active),
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = $4
          RETURNING *`,
-        [status, discount_percentage || 0, customer_id]
+        [status, discount_percentage || 0, is_active === undefined ? null : is_active, customer_id]
       );
 
-      // Update user account activity based on approval
+      // Log the event
       if (result.rows.length > 0) {
-        const userId = result.rows[0].user_id;
-        const isActive = status === 'approved';
-        await query('UPDATE users SET is_active = $1 WHERE id = $2', [isActive, userId]);
+        const updated = result.rows[0];
+        let eventDescription = `Admin ${user.name} updated customer.`;
+        if (current.status !== status) eventDescription += ` Status: ${current.status} -> ${status}.`;
+        if (current.discount_percentage !== updated.discount_percentage) eventDescription += ` Discount: ${current.discount_percentage}% -> ${updated.discount_percentage}%.`;
+        if (is_active !== undefined && current.is_active !== is_active) eventDescription += ` Account: ${is_active ? 'Activated' : 'Deactivated'}.`;
+
+        await query(
+          'INSERT INTO b2b_customer_events (customer_id, admin_id, event_type, description, metadata) VALUES ($1, $2, $3, $4, $5)',
+          [customer_id, user.id, 'status_update', eventDescription, JSON.stringify({ old: current, new: updated })]
+        );
+
+        // Update user account activity based on approval OR manual toggle
+        const userId = updated.user_id;
+        const shouldBeActive = status === 'approved' ? (is_active !== undefined ? is_active : true) : false;
+        await query('UPDATE users SET is_active = $1 WHERE id = $2', [shouldBeActive, userId]);
       }
 
       const customerData = await query(
@@ -1260,8 +1292,15 @@ async function handleRoute(request, { params }) {
         [customer_id]
       );
 
-      if (customerData.rows.length > 0) {
+      if (customerData.rows.length > 0 && status !== 'pending') {
+        // Send email on any status update (approved/rejected)
         await sendB2BApprovalEmail(customerData.rows[0].email, status);
+
+        // Log email event
+        await query(
+          'INSERT INTO b2b_customer_events (customer_id, admin_id, event_type, description) VALUES ($1, $2, $3, $4)',
+          [customer_id, user.id, 'email_sent', `Approval email sent with status: ${status}`]
+        );
       }
 
       return handleCORS(NextResponse.json({ success: true, customer: result.rows[0] }));
@@ -1330,6 +1369,15 @@ async function handleRoute(request, { params }) {
       );
 
       const quotId = quotResult.rows[0].id;
+
+      // Log the event if it's a B2B customer
+      const b2bCheck = await query('SELECT id FROM b2b_customers WHERE id = $1', [customer_id]);
+      if (b2bCheck.rows.length > 0) {
+        await query(
+          'INSERT INTO b2b_customer_events (customer_id, admin_id, event_type, description, metadata) VALUES ($1, $2, $3, $4, $5)',
+          [customer_id, user.id, 'quotation_created', `Admin ${user.name} created quotation ${quotationNumber}.`, JSON.stringify({ quotation_id: quotId })]
+        );
+      }
 
       for (const item of products) {
         await query(
@@ -1486,6 +1534,15 @@ async function handleRoute(request, { params }) {
         return handleCORS(NextResponse.json({ error: 'Quotation not found' }, { status: 404 }));
       }
 
+      // Log the event if it's a B2B customer
+      const b2bCheck = await query('SELECT id FROM b2b_customers WHERE id = $1', [result.rows[0].customer_id]);
+      if (b2bCheck.rows.length > 0) {
+        await query(
+          'INSERT INTO b2b_customer_events (customer_id, admin_id, event_type, description, metadata) VALUES ($1, $2, $3, $4, $5)',
+          [result.rows[0].customer_id, user.id, 'quotation_status_update', `Admin ${user.name} updated quotation ${result.rows[0].quotation_number} status to ${status}.`, JSON.stringify({ quotation_id: quotationId, status })]
+        );
+      }
+
       // If status is 'sent', send email to customer
       if (status === 'sent') {
         // Get quotation details with customer info
@@ -1522,7 +1579,116 @@ async function handleRoute(request, { params }) {
 
 
 
-    // ============ SITE SETTINGS ENDPOINTS ============
+    // Get specific wholesale customer details for full page view
+    if (route.startsWith('/admin/wholesale-customers/') && method === 'GET' && path.length === 3) {
+      const user = await authenticateRequest(request);
+      if (!user || (user.role_name !== 'superadmin' && user.role_name !== 'admin')) {
+        return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+      }
+
+      const id = path[2];
+      const customer = await query(`
+            SELECT c.*, u.email, u.name, u.phone, u.created_at as user_created_at
+            FROM b2b_customers c
+            LEFT JOIN users u ON c.user_id = u.id
+            WHERE c.id = $1
+        `, [id]);
+
+      if (customer.rows.length === 0) {
+        return handleCORS(NextResponse.json({ error: 'Customer not found' }, { status: 404 }));
+      }
+
+      return handleCORS(NextResponse.json(customer.rows[0]));
+    }
+
+    // Update wholesale customer details (terms, comments)
+    if (route.startsWith('/admin/wholesale-customers/') && method === 'PUT' && path.length === 3) {
+      const user = await authenticateRequest(request);
+      if (!user || (user.role_name !== 'superadmin' && user.role_name !== 'admin')) {
+        return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+      }
+
+      const id = path[2];
+      const { terms_and_conditions, admin_comments } = await request.json();
+
+      // Get current values for logging
+      const current = await query('SELECT terms_and_conditions, admin_comments FROM b2b_customers WHERE id = $1', [id]);
+
+      const result = await query(`
+            UPDATE b2b_customers 
+            SET terms_and_conditions = $1, admin_comments = $2, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $3
+            RETURNING *
+        `, [terms_and_conditions, admin_comments, id]);
+
+      if (result.rows.length > 0) {
+        let logMsg = `Admin ${user.name} updated notes/terms.`;
+        if (current.rows[0].admin_comments !== admin_comments) logMsg += ' Comments updated.';
+        if (current.rows[0].terms_and_conditions !== terms_and_conditions) logMsg += ' Terms updated.';
+
+        await query(
+          'INSERT INTO b2b_customer_events (customer_id, admin_id, event_type, description) VALUES ($1, $2, $3, $4)',
+          [id, user.id, 'profile_update', logMsg]
+        );
+      }
+
+      return handleCORS(NextResponse.json(result.rows[0]));
+    }
+
+    // Get wholesale customer timeline
+    if (route.startsWith('/admin/wholesale-customers/') && route.endsWith('/timeline') && method === 'GET') {
+      const user = await authenticateRequest(request);
+      if (!user || (user.role_name !== 'superadmin' && user.role_name !== 'admin')) {
+        return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+      }
+
+      const id = path[2];
+      const events = await query(`
+            SELECT e.*, u.name as admin_name
+            FROM b2b_customer_events e
+            LEFT JOIN users u ON e.admin_id = u.id
+            WHERE e.customer_id = $1
+            ORDER BY e.created_at DESC
+        `, [id]);
+
+      return handleCORS(NextResponse.json(events.rows));
+    }
+
+    // Get wholesale customer orders
+    if (route.startsWith('/admin/wholesale-customers/') && route.endsWith('/orders') && method === 'GET') {
+      const user = await authenticateRequest(request);
+      if (!user || (user.role_name !== 'superadmin' && user.role_name !== 'admin')) {
+        return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+      }
+
+      const id = path[2]; // This is the b2b_customer.id
+      const orders = await query(`
+            SELECT * FROM orders 
+            WHERE customer_id = $1 
+            ORDER BY created_at DESC
+        `, [id]);
+
+      return handleCORS(NextResponse.json(orders.rows));
+    }
+
+    // Get wholesale customer quotations
+    if (route.startsWith('/admin/wholesale-customers/') && route.endsWith('/quotations') && method === 'GET') {
+      const user = await authenticateRequest(request);
+      if (!user || (user.role_name !== 'superadmin' && user.role_name !== 'admin')) {
+        return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+      }
+
+      const id = path[2]; // This is the b2b_customer.id
+      const quotations = await query(`
+            SELECT q.*, u.name as created_by_name
+            FROM quotations q
+            LEFT JOIN users u ON q.created_by = u.id
+            WHERE q.customer_id = $1 
+            ORDER BY q.created_at DESC
+        `, [id]);
+
+      return handleCORS(NextResponse.json(quotations.rows));
+    }
 
     // Get Site Settings
     if (route === '/site-settings' && method === 'GET') {

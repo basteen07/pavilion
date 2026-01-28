@@ -236,7 +236,7 @@ export function AdminDashboard() {
                                 </Card>
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle className="text-sm font-medium text-gray-600">B2B Customers</CardTitle>
+                                        <CardTitle className="text-sm font-medium text-gray-600">Wholesale Customers</CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         <p className="text-3xl font-bold">{stats.customers || 0}</p>
@@ -317,7 +317,7 @@ export function AdminDashboard() {
 
                     {currentView === 'customers' && (
                         <div className="space-y-6">
-                            <h2 className="text-3xl font-bold">B2B Customers</h2>
+                            <h2 className="text-3xl font-bold">Wholesale Customers</h2>
                             <Card>
                                 <Table>
                                     <TableHeader>
@@ -514,7 +514,7 @@ export function AdminDashboard() {
                     <DialogHeader>
                         <DialogTitle>Create Quotation</DialogTitle>
                         <DialogDescription>
-                            Build a quotation for your B2B customer with custom pricing
+                            Build a quotation for your Wholesale customer with custom pricing
                         </DialogDescription>
                     </DialogHeader>
 
@@ -534,7 +534,7 @@ export function AdminDashboard() {
                                     onValueChange={(value) => setQuotationBuilder({ ...quotationBuilder, customer_id: value })}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Choose approved B2B customer" />
+                                        <SelectValue placeholder="Choose approved Wholesale customer" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {customers.filter(c => c.status === 'approved').map((customer) => (

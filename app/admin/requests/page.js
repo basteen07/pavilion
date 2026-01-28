@@ -1,9 +1,9 @@
-import B2BRequests from '@/components/admin/B2BRequests'
+import WholesaleCustomers from '@/components/admin/B2BRequests'
 
 export const metadata = {
-    title: 'B2B Requests | Pavilion Admin',
+    title: 'Wholesale Customers | Pavilion Admin',
 }
 
 export default function RequestsPage() {
-    return <B2BRequests />
+    return <WholesaleCustomers />
 }

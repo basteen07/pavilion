@@ -128,7 +128,7 @@ const data = {
                     icon: ShoppingCart,
                 },
                 {
-                    title: "B2B Requests",
+                    title: "Wholesale Customers",
                     url: "/admin/requests",
                     icon: User2,
                 },

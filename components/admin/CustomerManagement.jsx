@@ -5,14 +5,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Search, Eye, Phone, Mail, Settings } from 'lucide-react'
+import { Plus, Search, Eye, Phone, Mail, Settings, CheckCircle2, XCircle, UserCheck, UserX } from 'lucide-react'
 import { apiCall } from '@/lib/api-client'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 export function CustomerManagement() {
     const router = useRouter()
+    const queryClient = useQueryClient()
     const [page, setPage] = useState(1)
     const [search, setSearch] = useState('')
     const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -48,6 +50,18 @@ export function CustomerManagement() {
 
     const customers = data?.customers || []
     const totalPages = data?.totalPages || 1
+
+    const statusMutation = useMutation({
+        mutationFn: ({ id, is_active }) => apiCall(`/customers/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify({ is_active })
+        }),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['customers'])
+            toast.success('Customer status updated')
+        },
+        onError: (err) => toast.error(err.message)
+    })
 
     return (
         <div className="space-y-6">
@@ -102,8 +116,10 @@ export function CustomerManagement() {
                         <TableRow>
                             <TableHead className="font-semibold text-gray-900">Customer / Company</TableHead>
                             <TableHead className="font-semibold text-gray-900">Type</TableHead>
+                            <TableHead className="font-semibold text-gray-900">Status</TableHead>
                             <TableHead className="font-semibold text-gray-900">Primary Contact</TableHead>
                             <TableHead className="font-semibold text-gray-900">Contact Channels</TableHead>
+                            <TableHead className="font-semibold text-gray-900">Account</TableHead>
                             <TableHead className="text-right font-semibold text-gray-900">Profile</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -152,24 +168,21 @@ export function CustomerManagement() {
                                                 {customer.customer_type_name || 'General'}
                                             </Badge>
                                         </TableCell>
-                                        <TableCell>
-                                            <div className="text-sm">
-                                                <div className="font-medium text-gray-900">{primaryContact?.name || '-'}</div>
-                                                <div className="text-xs text-gray-500">{primaryContact?.designation || 'Primary Contact'}</div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex flex-col text-[13px] text-gray-500 gap-1">
-                                                <div className="flex items-center gap-2 hover:text-red-600 transition-colors">
-                                                    <Mail className="w-3.5 h-3.5" /> {customer.email}
-                                                </div>
-                                                {(customer.phone || primaryContact?.phone) && (
-                                                    <div className="flex items-center gap-2">
-                                                        <Phone className="w-3.5 h-3.5" />
-                                                        {customer.phone || primaryContact?.phone}
-                                                    </div>
+                                        <TableCell onClick={(e) => e.stopPropagation()}>
+                                            <Badge
+                                                variant={customer.is_active ? "outline" : "destructive"}
+                                                className={`cursor-pointer transition-all hover:scale-105 ${customer.is_active ? 'border-green-300 text-green-600 bg-green-50/50' : 'bg-red-50 text-red-600 border-red-200'}`}
+                                                onClick={() => statusMutation.mutate({
+                                                    id: customer.id,
+                                                    is_active: !customer.is_active
+                                                })}
+                                            >
+                                                {customer.is_active ? (
+                                                    <span className="flex items-center gap-1"><UserCheck className="w-3" /> Active</span>
+                                                ) : (
+                                                    <span className="flex items-center gap-1"><UserX className="w-3" /> Inactive</span>
                                                 )}
-                                            </div>
+                                            </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <Link href={`/admin/customers/${customer.id}`} onClick={(e) => e.stopPropagation()}>

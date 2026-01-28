@@ -17,7 +17,7 @@ export function DashboardOverview({ stats = {}, user, onSetupMFA }) {
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-600">B2B Customers</CardTitle>
+                        <CardTitle className="text-sm font-medium text-gray-600">Wholesale Customers</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <p className="text-3xl font-bold">{stats.customers || 0}</p>

@@ -15,15 +15,29 @@ export function AuthPage({ mode = 'login' }) {
     const router = useRouter()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
-    const [fullName, setFullName] = useState('')
+    const [confirmPassword, setConfirmPassword] = useState('')
+    const [firstName, setFirstName] = useState('')
+    const [lastName, setLastName] = useState('')
     const [companyName, setCompanyName] = useState('')
     const [phone, setPhone] = useState('')
+    const [gstin, setGstin] = useState('')
+    const [pan, setPan] = useState('')
+    const [address1, setAddress1] = useState('')
+    const [address2, setAddress2] = useState('')
+    const [city, setCity] = useState('')
+    const [state, setState] = useState('')
+    const [pincode, setPincode] = useState('')
     const [mfaCode, setMfaCode] = useState('')
     const [mfaRequired, setMfaRequired] = useState(false)
     const [loading, setLoading] = useState(false)
 
     async function handleSubmit(e) {
         e.preventDefault()
+
+        if (mode === 'register' && password !== confirmPassword) {
+            return toast.error('Passwords do not match')
+        }
+
         setLoading(true)
 
         try {
@@ -33,9 +47,18 @@ export function AuthPage({ mode = 'login' }) {
                     body: JSON.stringify({
                         email,
                         password,
-                        name: fullName,
+                        first_name: firstName,
+                        last_name: lastName,
+                        name: `${firstName} ${lastName}`.trim(),
                         company_name: companyName,
-                        phone
+                        phone,
+                        gstin,
+                        pan_number: pan,
+                        address: address1,
+                        address_line2: address2,
+                        city,
+                        state,
+                        pincode
                     })
                 })
                 toast.success('Registration was successful. Once admin approved you will be notified via email. After that you can login.')
@@ -86,59 +109,175 @@ export function AuthPage({ mode = 'login' }) {
                             <>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="fullName">Full Name</Label>
+                                        <Label htmlFor="firstName">First Name</Label>
                                         <Input
-                                            id="fullName"
-                                            value={fullName}
-                                            onChange={(e) => setFullName(e.target.value)}
-                                            placeholder="Enter your full name"
+                                            id="firstName"
+                                            value={firstName}
+                                            onChange={(e) => setFirstName(e.target.value)}
+                                            placeholder="Enter first name"
                                             required
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="companyName">Company Name</Label>
+                                        <Label htmlFor="lastName">Last Name</Label>
                                         <Input
-                                            id="companyName"
-                                            value={companyName}
-                                            onChange={(e) => setCompanyName(e.target.value)}
-                                            placeholder="Enter your business name"
+                                            id="lastName"
+                                            value={lastName}
+                                            onChange={(e) => setLastName(e.target.value)}
+                                            placeholder="Enter last name"
                                             required
                                         />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="phone">Phone Number</Label>
+                                    <Label htmlFor="companyName">Business Name</Label>
                                     <Input
-                                        id="phone"
-                                        type="tel"
-                                        value={phone}
-                                        onChange={(e) => setPhone(e.target.value)}
-                                        placeholder="Enter your contact number"
+                                        id="companyName"
+                                        value={companyName}
+                                        onChange={(e) => setCompanyName(e.target.value)}
+                                        placeholder="Enter your business name"
+                                        required
+                                    />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="gstin">GSTIN</Label>
+                                        <Input
+                                            id="gstin"
+                                            value={gstin}
+                                            onChange={(e) => setGstin(e.target.value)}
+                                            placeholder="Enter GSTIN"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="pan">PAN</Label>
+                                        <Input
+                                            id="pan"
+                                            value={pan}
+                                            onChange={(e) => setPan(e.target.value)}
+                                            placeholder="Enter PAN"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="email">Email</Label>
+                                        <Input
+                                            id="email"
+                                            type="email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="phone">Phone Number</Label>
+                                        <Input
+                                            id="phone"
+                                            type="tel"
+                                            value={phone}
+                                            onChange={(e) => setPhone(e.target.value)}
+                                            placeholder="Enter contact number"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="address1">Business Address 1</Label>
+                                    <Input
+                                        id="address1"
+                                        value={address1}
+                                        onChange={(e) => setAddress1(e.target.value)}
+                                        placeholder="Street address, P.O. box"
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="address2">Address 2</Label>
+                                    <Input
+                                        id="address2"
+                                        value={address2}
+                                        onChange={(e) => setAddress2(e.target.value)}
+                                        placeholder="Apartment, suite, unit, building, floor, etc."
+                                    />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="city">City / Town</Label>
+                                        <Input
+                                            id="city"
+                                            value={city}
+                                            onChange={(e) => setCity(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="state">State</Label>
+                                        <Input
+                                            id="state"
+                                            value={state}
+                                            onChange={(e) => setState(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="pincode">Pincode</Label>
+                                        <Input
+                                            id="pincode"
+                                            value={pincode}
+                                            onChange={(e) => setPincode(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="password">Password</Label>
+                                        <Input
+                                            id="password"
+                                            type="password"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="confirmPassword">Confirm Password</Label>
+                                        <Input
+                                            id="confirmPassword"
+                                            type="password"
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                        {mode === 'login' && (
+                            <>
+                                <div>
+                                    <Label htmlFor="loginEmail">Email</Label>
+                                    <Input
+                                        id="loginEmail"
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="loginPassword">Password</Label>
+                                    <Input
+                                        id="loginPassword"
+                                        type="password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
                                         required
                                     />
                                 </div>
                             </>
                         )}
-                        <div>
-                            <Label htmlFor="email">Email</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <div>
-                            <Label htmlFor="password">Password</Label>
-                            <Input
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                        </div>
                         {mode === 'login' && mfaRequired && (
                             <div>
                                 <Label htmlFor="mfaCode">MFA Code</Label>
