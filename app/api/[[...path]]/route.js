@@ -73,13 +73,13 @@ async function authenticateRequest(request) {
     console.log('[Auth Debug] Superadmin bypass');
     // No timeout check for superadmin
   } else if (user.role_name === 'admin' || user.role_name === 'staff' || user.role_id === 1 || user.role_id === 2) {
-    // Admins/Staff: 120 minutes timeout
-    const TIMEOUT_MS = 120 * 60 * 1000;
+    // Admins/Staff: 1440 minutes (24 hours) timeout
+    const TIMEOUT_MS = 1440 * 60 * 1000;
     if (user.last_active_at) {
       const lastActive = new Date(user.last_active_at).getTime();
       const now = Date.now();
       const diff = now - lastActive;
-      console.log('[Auth Debug] Admin timeout check:', { email: user.email, diff_min: Math.round(diff / 60000), timeout_min: 120 });
+      console.log('[Auth Debug] Admin timeout check:', { email: user.email, diff_min: Math.round(diff / 60000), timeout_min: 1440 });
 
       if (diff > TIMEOUT_MS) {
         console.log('Session expired for:', user.email, 'Age:', Math.round(diff / 60000), 'min');
@@ -319,15 +319,24 @@ async function handleRoute(request, { params }) {
         return import('@/lib/api/customers').then(m => m.getCustomers(url.searchParams));
       }
       if (method === 'POST') {
-        return import('@/lib/api/customers').then(async m => m.createCustomer(await request.json()));
+        const user = await authenticateRequest(request);
+        const body = await request.json();
+        return import('@/lib/api/customers').then(async m => m.createCustomer({ ...body, adminId: user?.id }));
       }
     }
 
     if (route.startsWith('/customers/')) {
       const id = path[1];
       if (method === 'GET') return import('@/lib/api/customers').then(m => m.getCustomerById(id));
-      if (method === 'PUT') return import('@/lib/api/customers').then(async m => m.updateCustomer(id, await request.json()));
-      if (method === 'DELETE') return import('@/lib/api/customers').then(m => m.deleteCustomer(id));
+      if (method === 'PUT') {
+        const user = await authenticateRequest(request);
+        const body = await request.json();
+        return import('@/lib/api/customers').then(async m => m.updateCustomer(id, { ...body, adminId: user?.id }));
+      }
+      if (method === 'DELETE') {
+        const user = await authenticateRequest(request);
+        return import('@/lib/api/customers').then(m => m.deleteCustomer(id, user?.id));
+      }
     }
 
     // --- NEW: Customer Types API ---
@@ -426,8 +435,8 @@ async function handleRoute(request, { params }) {
         }
       });
 
-      // Update quotation status to 'Sent' if currently 'Draft'
-      if (quotation.status === 'Draft') {
+      // Update quotation status to 'Sent' if currently 'Draft' or 'Completed'
+      if (['Draft', 'Completed', 'Complete'].includes(quotation.status)) {
         await query('UPDATE quotations SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', ['Sent', quotationId]);
       }
 
@@ -1116,6 +1125,16 @@ async function handleRoute(request, { params }) {
         RETURNING id, email, name, role_id
       `, [email, passwordHash, name || null, phone || null, role_id]);
 
+      // Log Activity
+      await logActivity({
+        admin_id: currentUser.id,
+        customer_id: null,
+        quotation_id: null,
+        event_type: 'user_created',
+        description: `Created new admin/user: ${email} (${name || 'No Name'})`,
+        metadata: { email, name, role_id }
+      });
+
       return handleCORS(NextResponse.json(result.rows[0]));
     }
 
@@ -1127,7 +1146,23 @@ async function handleRoute(request, { params }) {
       }
 
       const targetId = path[2];
+
+      // Fetch user details for logging
+      const userRes = await query('SELECT email, name FROM users WHERE id = $1', [targetId]);
+      const targetUser = userRes.rows[0] || {};
+
       await query('DELETE FROM users WHERE id = $1', [targetId]);
+
+      // Log Activity
+      await logActivity({
+        admin_id: currentUser.id,
+        customer_id: null,
+        quotation_id: null,
+        event_type: 'user_deleted',
+        description: `Deleted user: ${targetUser.email || targetId} (${targetUser.name || 'Unknown'})`,
+        metadata: { userId: targetId, email: targetUser.email, name: targetUser.name }
+      });
+
       return handleCORS(NextResponse.json({ success: true }));
     }
 
@@ -1543,6 +1578,7 @@ async function handleRoute(request, { params }) {
       const limit = parseInt(url.searchParams.get('limit') || '10');
       const search = url.searchParams.get('search') || '';
       const status = url.searchParams.get('status'); // optional
+      const showInactive = url.searchParams.get('show_inactive') === 'true';
 
       const offset = (page - 1) * limit;
 
@@ -1568,6 +1604,10 @@ async function handleRoute(request, { params }) {
           queryText += ` AND c.status = $${paramIdx++}`;
           queryParams.push(status);
         }
+      }
+
+      if (!showInactive) {
+        queryText += ` AND c.is_active = true`;
       }
 
       // Count query

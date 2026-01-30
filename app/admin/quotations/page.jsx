@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { QuotationsList } from '@/components/admin/QuotationsList'
 import { QuotationBuilder } from '@/components/admin/QuotationBuilder'
 import { useSearchParams } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
 
-export default function QuotationsPage() {
+function QuotationsContent() {
     const searchParams = useSearchParams()
     const [showQuotationBuilder, setShowQuotationBuilder] = useState(false)
     const [editingId, setEditingId] = useState(null)
@@ -31,5 +32,17 @@ export default function QuotationsPage() {
                 />
             )}
         </div>
+    )
+}
+
+export default function QuotationsPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center p-12">
+                <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+            </div>
+        }>
+            <QuotationsContent />
+        </Suspense>
     )
 }

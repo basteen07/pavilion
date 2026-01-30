@@ -11,6 +11,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 
 import { PaginationControls } from '@/components/admin/PaginationControls'
 
@@ -39,7 +41,8 @@ export function CustomerManagement() {
                 page: page.toString(),
                 limit: pageSize.toString(),
                 search: debouncedSearch,
-                type: typeFilter
+                type: typeFilter,
+                show_inactive: 'true'
             })
             return apiCall(`/customers?${params}`)
         },
@@ -96,6 +99,8 @@ export function CustomerManagement() {
                             ))}
                         </SelectContent>
                     </Select>
+
+
                 </div>
 
                 <div className="flex gap-2">
@@ -123,14 +128,13 @@ export function CustomerManagement() {
                             <TableHead className="font-semibold text-gray-900">Status</TableHead>
                             <TableHead className="font-semibold text-gray-900">Primary Contact</TableHead>
                             <TableHead className="font-semibold text-gray-900">Contact Channels</TableHead>
-                            <TableHead className="font-semibold text-gray-900">Account</TableHead>
                             <TableHead className="text-right font-semibold text-gray-900">Profile</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="text-center py-12">
+                                <TableCell colSpan={6} className="text-center py-12">
                                     <div className="flex flex-col items-center gap-2">
                                         <div className="w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
                                         <span className="text-sm text-gray-500">Loading customers...</span>
@@ -139,7 +143,7 @@ export function CustomerManagement() {
                             </TableRow>
                         ) : customers.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="text-center py-20 text-gray-500">
+                                <TableCell colSpan={6} className="text-center py-20 text-gray-500">
                                     <div className="flex flex-col items-center gap-2">
                                         <div className="bg-gray-100 p-4 rounded-full mb-2">
                                             <Search className="w-8 h-8 text-gray-300" />
@@ -163,9 +167,6 @@ export function CustomerManagement() {
                                             <div className="font-semibold text-gray-900">
                                                 {customer.company_name || customer.name}
                                             </div>
-                                            {customer.company_name && customer.name && (
-                                                <div className="text-[11px] text-gray-400 font-medium uppercase tracking-wider mt-0.5">{customer.name}</div>
-                                            )}
                                         </TableCell>
                                         <TableCell>
                                             <Badge variant="outline" className="bg-white text-gray-700 border-gray-200 capitalize">
@@ -196,10 +197,6 @@ export function CustomerManagement() {
                                                 {customer.email && <div className="flex items-center gap-1"><Mail className="w-3 h-3" /> {customer.email}</div>}
                                                 {customer.phone && <div className="flex items-center gap-1"><Phone className="w-3 h-3" /> {customer.phone}</div>}
                                             </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            {/* Placeholder for Account info if needed */}
-                                            -
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <Link href={`/admin/customers/${customer.id}`} onClick={(e) => e.stopPropagation()}>

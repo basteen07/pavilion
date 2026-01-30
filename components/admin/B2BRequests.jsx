@@ -12,6 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { toast } from 'sonner'
 import { Loader2, CheckCircle2, XCircle, Building2, User, UserCheck, UserX } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
 import {
     Dialog,
     DialogContent,
@@ -46,7 +47,7 @@ export default function WholesaleCustomers() {
     // Query for Approved/History Requests (Paginated)
     const { data: historyData, isLoading: isLoadingHistory } = useQuery({
         queryKey: ['wholesale-history', page, pageSize],
-        queryFn: () => apiCall(`/admin/b2b-customers?status=history&page=${page}&limit=${pageSize}`)
+        queryFn: () => apiCall(`/admin/b2b-customers?status=history&page=${page}&limit=${pageSize}&show_inactive=true`)
     })
     const historyCustomers = historyData?.customers || []
     const totalHistoryItems = historyData?.total || 0
@@ -171,7 +172,9 @@ export default function WholesaleCustomers() {
             </div>
 
             <div className="space-y-4">
-                <h2 className="text-xl font-semibold tracking-tight text-muted-foreground">Approved Wholesale Customers</h2>
+                <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-semibold tracking-tight text-muted-foreground">Approved Wholesale Customers</h2>
+                </div>
                 <div className="rounded-md border bg-gray-50/50">
                     <Table>
                         <TableHeader>

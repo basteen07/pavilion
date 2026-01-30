@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/components/providers/AuthProvider'
 import Link from 'next/link'
@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
-import { Shield, Clock } from 'lucide-react'
+import { Shield, Clock, Loader2 } from 'lucide-react'
 
 const API_BASE = '/api'
 
@@ -36,7 +36,7 @@ async function apiCall(endpoint, options = {}) {
   return data
 }
 
-export default function AdminLoginPage() {
+function AdminLoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { login } = useAuth()
@@ -292,5 +292,17 @@ export default function AdminLoginPage() {
         </CardFooter>
       </Card>
     </div>
+  )
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <Loader2 className="w-8 h-8 animate-spin text-white" />
+      </div>
+    }>
+      <AdminLoginForm />
+    </Suspense>
   )
 }

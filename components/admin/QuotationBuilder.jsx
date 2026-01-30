@@ -13,7 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
-import { ShoppingCart, RotateCcw, Save, Eye, Building2, Plus, Download, Send, FileText, Trash2, Filter, Search, X, ChevronRight, ChevronDown, PenLine, AlertTriangle, Loader2, Check, ArrowRight, Settings, UserCircle2, Clock, MessageSquare } from 'lucide-react'
+import { ShoppingCart, RotateCcw, Save, Eye, Building2, Plus, Download, Send, FileText, Trash2, Filter, Search, X, ChevronRight, ChevronDown, PenLine, AlertTriangle, Loader2, Check, ArrowRight, ArrowLeft, CheckCircle2, Settings, UserCircle2, Clock, MessageSquare } from 'lucide-react'
 import jsPDF from 'jspdf'
 import { apiCall } from '@/lib/api-client'
 import { Badge } from '@/components/ui/badge'
@@ -76,7 +76,8 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
         show_total: true,
         tags: '',
         payment_terms: 'Net 30 Days',
-        comments: ''
+        comments: '',
+        status: 'Draft'
     })
 
     // --- New Customer Form State ---
@@ -492,6 +493,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                             terms_and_conditions: quote.terms_conditions || '',
                             show_total: quote.show_total !== undefined ? quote.show_total : true,
                             tags: '',
+                            status: quote.status || 'Draft'
                         });
                     }
                 } catch (e) {
@@ -506,11 +508,50 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
     }, [quoteId, urlCustomerId, customers]); // Depend on 'customers' to ensure list is loaded
 
     // --- Logic: Fetch Timeline on selection ---
+    // --- Logic: Fetch Timeline & Recalculate Prices on selection ---
     useEffect(() => {
         if (selectedCustomer) {
             fetchTimeline(selectedCustomer);
+
+            // Recalculate prices for all existing items based on new customer's grade
+            const customer = customers.find(c => c.id === selectedCustomer);
+            if (customer) {
+                const custType = customerTypes.find(t => String(t.id) === String(customer.customer_type_id));
+                const customerTypeBase = customer.base_price_type || custType?.base_price_type || 'mrp';
+                const percentage = parseFloat(customer.percentage || custType?.percentage || 0);
+
+                setQuotationItems(prevItems => prevItems.map(item => {
+                    let customPrice = 0;
+                    let discount = 0;
+
+                    // Re-apply pricing logic
+                    if (customerTypeBase === 'dealer') {
+                        // Dealer: base is dealer_price
+                        const basePrice = parseFloat(item.dealer_price) || parseFloat(item.mrp) || 0;
+                        // If no dealer price, fallback to MRP but treat as base
+
+                        customPrice = basePrice * (1 + percentage / 100);
+                        discount = percentage;
+                    } else {
+                        // MRP: base is MRP
+                        const basePrice = parseFloat(item.mrp) || 0;
+                        customPrice = basePrice * (1 - percentage / 100);
+                        discount = percentage;
+                    }
+
+                    // Fallback preservation if calculation fails or is zero (unlikely if data is good)
+                    if (customPrice <= 0) customPrice = parseFloat(item.custom_price);
+
+                    return {
+                        ...item,
+                        customer_type_base: customerTypeBase,
+                        custom_price: customPrice.toFixed(2),
+                        discount: discount
+                    };
+                }));
+            }
         }
-    }, [selectedCustomer]);
+    }, [selectedCustomer, customers, customerTypes]);
 
 
     // --- Handlers ---
@@ -765,9 +806,45 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
     };
 
     // --- Save ---
-    async function handleSave(status = 'Sent') {
+    async function handleMarkAsSent() {
+        const email = customerDetails?.email || quotationDetails.customer_snapshot?.email;
+        if (!email) return toast.error('No customer email found');
+
+        if (!confirm(`Are you sure you want to send this quotation to ${email}?`)) return;
+
+        setIsSaving(true);
+        try {
+            const res = await apiCall(`/admin/quotations/${quoteId}/send-email`, {
+                method: 'POST',
+                body: JSON.stringify({ email })
+            });
+
+            if (res.success) {
+                toast.success('Quotation sent successfully!');
+                setQuotationDetails(prev => ({ ...prev, status: 'Sent' }));
+                // Determine success data for the success view
+                const successPayload = {
+                    ...quotationDetails,
+                    status: 'Sent',
+                    quotation_number: quotationDetails.quotation_number || (res.data && res.data.quotation_number),
+                    customer_snapshot: { ...customerDetails, email }
+                };
+                setSuccessData(successPayload);
+            } else {
+                toast.error(res.error || 'Failed to send quotation');
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to send quotation');
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
+    async function handleSave(explicitStatus) {
         if (!selectedCustomer) { return toast.error('Please select a customer') }
         if (quotationItems.length === 0) { return toast.error('Please add at least one product') }
+
+        const statusToSave = explicitStatus || quotationDetails.status || 'Sent';
 
         setIsSaving(true)
         try {
@@ -775,7 +852,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             const payload = {
                 customer_id: selectedCustomer,
                 customer_snapshot: customer,
-                status: status,
+                status: statusToSave,
                 items: quotationItems.map(item => ({
                     product_id: item.product_id,
                     product_name: item.name,
@@ -801,29 +878,147 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             } else {
                 // Create
                 res = await apiCall('/admin/quotations', { method: 'POST', body: JSON.stringify(payload) })
-                toast.success(status === 'Draft' ? 'Draft saved!' : 'Quotation created!')
+                toast.success(statusToSave === 'Draft' ? 'Draft saved!' : 'Quotation created!')
             }
 
             // Redirect or callback
-            status === 'Sent' ? setSuccessData(res) : onSuccess && onSuccess();
+            statusToSave === 'Sent' ? setSuccessData(res) : onSuccess && onSuccess();
 
         } catch (error) { toast.error(error.message) } finally { setIsSaving(false) }
     }
+    // --- Success View ---
+    if (successData) {
+        return (
+            <div className="min-h-screen bg-[#f2f2f2] flex items-center justify-center p-4">
+                <Card className="max-w-md w-full border-none shadow-xl rounded-[2rem] overflow-hidden bg-white text-center p-8 space-y-6">
+                    <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-2 animate-in zoom-in duration-500">
+                        <CheckCircle2 className="w-10 h-10 text-green-500" />
+                    </div>
+                    <div className="space-y-2">
+                        <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Quotation Created!</h2>
+                        <p className="text-gray-500 text-sm">
+                            Quotation <span className="font-mono font-bold text-gray-900">#{successData.quotation_number}</span> has been successfully {successData.status === 'Sent' ? 'sent' : 'saved'} to <span className="font-bold text-blue-600">{successData.customer_snapshot?.company_name || successData.customer_snapshot?.name || 'Customer'}.</span>
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3 pt-4">
+                        <Button
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 rounded-xl font-bold flex items-center justify-center gap-2"
+                            onClick={handleDownloadPDF}
+                        >
+                            <Download className="w-4 h-4" /> Download PDF
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="w-full border-gray-100 hover:bg-gray-50 h-12 rounded-xl font-bold flex items-center justify-center gap-2"
+                            onClick={() => {
+                                setSuccessData(null);
+                                setSelectedCustomer('');
+                                setQuotationItems([]);
+                                // Reset other states if needed
+                                if (!quoteId) {
+                                    setQuotationDetails({
+                                        ...quotationDetails,
+                                        quotation_number: `QT-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+                                        status: 'Draft'
+                                    });
+                                }
+                            }}
+                        >
+                            <Plus className="w-4 h-4" /> Create Another
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            className="w-full text-gray-500 hover:text-gray-700 hover:bg-transparent h-10 rounded-xl font-medium flex items-center justify-center gap-2"
+                            onClick={onClose}
+                        >
+                            <ArrowRight className="w-4 h-4" /> Back to Quotations List
+                        </Button>
+                    </div>
+                </Card>
+            </div>
+        );
+    }
+
+    const isReadOnly = ['Completed', 'Sent', 'Cancelled'].includes(quotationDetails.status);
 
     return (
         <div className="bg-transparent min-h-screen p-4 md:p-8 font-sans text-gray-900">
-            {/* ... Header (Same) ... */}
+            {/* Header with Actions */}
             <div className="max-w-[1100px] mx-auto mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
-                    <FileText className="w-4 h-4" /> <span>Edit Quotation / Create Quotations</span>
+                    <FileText className="w-4 h-4" /> <span>{quoteId ? 'Edit Quotation' : 'Create New Quotation'}</span>
+                    <span className={`ml-2 px-2 py-0.5 rounded text-xs font-bold ${quotationDetails.status === 'Draft' ? 'bg-gray-100 text-gray-700' :
+                        quotationDetails.status === 'Completed' ? 'bg-blue-50 text-blue-700' :
+                            quotationDetails.status === 'Sent' ? 'bg-green-50 text-green-700' :
+                                'bg-red-50 text-red-700'
+                        }`}>
+                        {quotationDetails.status}
+                    </span>
                 </div>
                 <div className="flex gap-2">
                     <Button variant="ghost" onClick={onClose} className="text-gray-600 hover:bg-gray-200">Back to List</Button>
                     <Button variant="outline" onClick={() => setIsPreviewOpen(true)} className="gap-2"><Eye className="w-4 h-4" /> Preview</Button>
-                    <Button variant="outline" onClick={() => handleSave('Draft')} disabled={isSaving} className="border-gray-300 bg-white shadow-sm hover:bg-gray-50">Save as Draft</Button>
-                    <Button className="bg-[#1a1a1a] hover:bg-[#333] text-white shadow-sm" onClick={() => handleSave('Sent')} disabled={isSaving}>
-                        {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />} {quoteId ? 'Update' : 'Create'} Quotation
-                    </Button>
+
+                    {/* Draft Actions */}
+                    {quotationDetails.status === 'Draft' && (
+                        <>
+                            <Button
+                                variant="outline"
+                                onClick={() => handleSave('Draft')}
+                                disabled={isSaving}
+                                className="border-gray-200 bg-white shadow-sm hover:bg-gray-50 text-gray-600"
+                            >
+                                <Save className="w-4 h-4 mr-2" />
+                                Save Draft
+                            </Button>
+                            <Button
+                                className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm gap-2"
+                                onClick={() => handleSave('Completed')}
+                                disabled={isSaving}
+                            >
+                                <CheckCircle2 className="w-4 h-4" />
+                                Mark as Completed
+                            </Button>
+                        </>
+                    )}
+
+                    {/* Completed Actions */}
+                    {quotationDetails.status === 'Completed' && (
+                        <>
+                            <Button
+                                variant="outline"
+                                onClick={() => handleSave('Draft')}
+                                disabled={isSaving}
+                                className="border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100"
+                            >
+                                <PenLine className="w-4 h-4 mr-2" />
+                                Edit (Revert to Draft)
+                            </Button>
+                            <Button
+                                className="bg-green-600 hover:bg-green-700 text-white shadow-sm gap-2"
+                                onClick={handleMarkAsSent}
+                                disabled={isSaving}
+                            >
+                                <Send className="w-4 h-4" />
+                                Mark as Sent
+                            </Button>
+                        </>
+                    )}
+
+                    {/* Cancel Action (Available for Draft and Completed) */}
+                    {['Draft', 'Completed'].includes(quotationDetails.status) && (
+                        <Button
+                            variant="ghost"
+                            onClick={() => handleSave('Cancelled')}
+                            disabled={isSaving}
+                            className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                        >
+                            Cancel
+                        </Button>
+                    )}
+
+
                 </div>
             </div>
 
@@ -936,14 +1131,9 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                 <CardTitle className="text-base font-bold">Products</CardTitle>
                                 {/* Removed Global Detailed View Switch */}
                             </div>
-                            <div className="flex gap-2 mt-4">
-                                <div className="relative flex-1">
-                                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                                    {/* Main Screen Search -> Opens Modal for now to keep consistent, or can use Command here */}
-                                    <Input placeholder="Search products" className="pl-9 bg-white border-gray-300 rounded-lg cursor-pointer" readOnly onClick={() => setShowProductModal(true)} />
-                                </div>
-                                <Button variant="outline" className="border-gray-300 text-gray-700 bg-white shadow-sm" onClick={() => setShowProductModal(true)}>Browse</Button>
-                            </div>
+                            <Button variant="outline" className="border-gray-300 text-gray-700 bg-white shadow-sm w-full h-10 border-dashed" onClick={() => setShowProductModal(true)}>
+                                <Plus className="w-4 h-4 mr-2" /> Select Products
+                            </Button>
                         </CardHeader>
                         <div className="bg-white min-h-[100px]">
                             {quotationItems.length === 0 ? (
@@ -976,7 +1166,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                                         </span>
                                                     )}
                                                 </div>
-                                                <Button size="icon" variant="ghost" className="h-7 w-7 text-red-400 hover:text-red-600 hover:bg-red-50 -mt-1 -mr-1" onClick={() => removeItem(idx)}>
+                                                <Button size="icon" variant="ghost" className="h-7 w-7 text-red-400 hover:text-red-600 hover:bg-red-50 -mt-1 -mr-1" onClick={() => removeItem(idx)} disabled={isReadOnly}>
                                                     <Trash2 className="w-4 h-4" />
                                                 </Button>
                                             </div>
@@ -1026,6 +1216,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                                         className="h-6 w-10 p-0 text-center text-xs bg-transparent border-none focus-visible:ring-0 font-bold"
                                                         value={item.discount}
                                                         onChange={(e) => updateItem(idx, 'discount', e.target.value)}
+                                                        disabled={isReadOnly}
                                                     />
                                                 </div>
 
@@ -1036,6 +1227,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                                         className="h-6 w-10 p-0 text-center text-xs bg-transparent border-none focus-visible:ring-0 font-bold"
                                                         value={item.quantity}
                                                         onChange={(e) => updateItem(idx, 'quantity', e.target.value)}
+                                                        disabled={isReadOnly}
                                                     />
                                                 </div>
 
@@ -1092,12 +1284,23 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                     />
                                 </div>
                                 <div className="space-y-2">
+                                    <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Notes</Label>
+                                    <Textarea
+                                        placeholder="Add notes..."
+                                        className="min-h-[100px] resize-none"
+                                        value={quotationDetails.additional_notes}
+                                        onChange={(e) => setQuotationDetails({ ...quotationDetails, additional_notes: e.target.value })}
+                                        disabled={isReadOnly}
+                                    />
+                                </div>
+                                <div className="space-y-2">
                                     <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Terms & Conditions</Label>
                                     <Textarea
                                         placeholder="Add terms, warranty info, etc."
                                         className="text-xs min-h-[100px]"
                                         value={quotationDetails.terms_and_conditions}
                                         onChange={(e) => setQuotationDetails({ ...quotationDetails, terms_and_conditions: e.target.value })}
+                                        disabled={isReadOnly}
                                     />
                                 </div>
                             </div>
@@ -1140,7 +1343,14 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                         value={quotationDetails.valid_until}
                                         onChange={(e) => setQuotationDetails({ ...quotationDetails, valid_until: e.target.value })}
                                         className="h-9 border-gray-200 text-sm"
+                                        disabled={isReadOnly}
                                     />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-[10px] font-bold text-gray-400 uppercase">Status</Label>
+                                    <div className="flex items-center h-9 px-3 rounded-md border border-gray-200 bg-gray-50 text-sm font-medium text-gray-700">
+                                        {quotationDetails.status}
+                                    </div>
                                 </div>
                             </div>
                         </CardContent>
@@ -1671,6 +1881,6 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                     </Card>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

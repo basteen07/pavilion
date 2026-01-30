@@ -346,7 +346,7 @@ export default function CustomerDetailPage({ params }) {
                     <div>
                         <div className="flex items-center gap-2">
                             <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-                                {customer.company_name || customer.name}
+                                {customer.entity_type === 'business' ? (customer.company_name || customer.name) : customer.name}
                             </h1>
                             <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
                                 {customer.customer_type_name || 'General'}
@@ -383,9 +383,40 @@ export default function CustomerDetailPage({ params }) {
                                 <form onSubmit={handleSave} className="space-y-4">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <Label htmlFor="company_name">Company Name</Label>
-                                            <Input id="company_name" name="company_name" defaultValue={customer.company_name} />
+                                            <Label>Entity Type</Label>
+                                            <div className="flex gap-4 pt-2">
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input
+                                                        type="radio"
+                                                        name="entity_type"
+                                                        value="individual"
+                                                        defaultChecked={customer.entity_type === 'individual' || !customer.entity_type}
+                                                        className="accent-red-600 w-4 h-4"
+                                                        onChange={(e) => {
+                                                            // Optional: visual toggle logic if needed, but form submission handles it
+                                                            // For full reactivity, might need state, but this is simple edit form
+                                                        }}
+                                                    />
+                                                    <span className="text-sm font-medium">Individual</span>
+                                                </label>
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input
+                                                        type="radio"
+                                                        name="entity_type"
+                                                        value="business"
+                                                        defaultChecked={customer.entity_type === 'business'}
+                                                        className="accent-red-600 w-4 h-4"
+                                                    />
+                                                    <span className="text-sm font-medium">Business</span>
+                                                </label>
+                                            </div>
                                         </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="company_name">Company Name</Label>
+                                            <Input id="company_name" name="company_name" defaultValue={customer.company_name} placeholder={customer.entity_type === 'individual' ? '(Optional)' : 'Required for Business'} />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="name">Display Name *</Label>
                                             <Input id="name" name="name" defaultValue={customer.name} required />

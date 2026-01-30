@@ -19,6 +19,7 @@ export default function NewCustomerPage() {
     const [contacts, setContacts] = useState([
         { name: '', email: '', phone: '', designation: '', is_primary: true }
     ]);
+    const [entityType, setEntityType] = useState('individual');
 
     const { data: customerTypes = [] } = useQuery({
         queryKey: ['customer-types'],
@@ -62,6 +63,7 @@ export default function NewCustomerPage() {
         e.preventDefault();
         const formData = new FormData(e.target);
         const data = Object.fromEntries(formData.entries());
+        data.entity_type = entityType;
         data.contacts = contacts;
         createMutation.mutate(data);
     }
@@ -91,14 +93,45 @@ export default function NewCustomerPage() {
                                 <CardTitle className="text-lg">Company / Basic Info</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="company_name">Company Name</Label>
-                                        <Input id="company_name" name="company_name" placeholder="e.g. Pavilion Sports Pvt Ltd" />
+                                        <Label>Entity Type</Label>
+                                        <div className="flex gap-4">
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="entity_type"
+                                                    value="individual"
+                                                    checked={entityType === 'individual'}
+                                                    onChange={() => setEntityType('individual')}
+                                                    className="accent-red-600 w-4 h-4"
+                                                />
+                                                <span className="text-sm font-medium">Individual</span>
+                                            </label>
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="entity_type"
+                                                    value="business"
+                                                    checked={entityType === 'business'}
+                                                    onChange={() => setEntityType('business')}
+                                                    className="accent-red-600 w-4 h-4"
+                                                />
+                                                <span className="text-sm font-medium">Business</span>
+                                            </label>
+                                        </div>
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="gst_number">GST Number</Label>
-                                        <Input id="gst_number" name="gst_number" placeholder="22AAAAA0000A1Z5" />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {entityType === 'business' && (
+                                            <div className="space-y-2">
+                                                <Label htmlFor="company_name">Company Name *</Label>
+                                                <Input id="company_name" name="company_name" required placeholder="e.g. Pavilion Sports Pvt Ltd" />
+                                            </div>
+                                        )}
+                                        <div className="space-y-2">
+                                            <Label htmlFor="gst_number">GST Number</Label>
+                                            <Input id="gst_number" name="gst_number" placeholder="22AAAAA0000A1Z5" />
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">

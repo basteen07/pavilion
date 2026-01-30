@@ -140,17 +140,39 @@ export function QuotationsList({ onCreate, onEdit }) {
         }
     }
 
-    async function handleSend(quoteId) {
+    async function handleStatusChange(quoteId, newStatus) {
         setActionLoading(quoteId)
         try {
             await apiCall(`/quotations/${quoteId}`, {
                 method: 'PUT',
-                body: JSON.stringify({ status: 'Sent' })
+                body: JSON.stringify({ status: newStatus })
             })
-            toast.success('Quotation marked as Sent')
+            toast.success(`Quotation marked as ${newStatus}`)
             queryClient.invalidateQueries(['quotations'])
         } catch (error) {
             toast.error('Failed to update status')
+        } finally {
+            setActionLoading(null)
+        }
+    }
+
+    async function handleMarkAsSent(quote) {
+        if (!confirm(`Are you sure you want to send quotation ${quote.quotation_number} to ${quote.customer_snapshot?.email || quote.customer_email}?`)) return;
+
+        setActionLoading(quote.id)
+        try {
+            const res = await apiCall(`/admin/quotations/${quote.id}/send-email`, {
+                method: 'POST',
+                body: JSON.stringify({ email: quote.customer_snapshot?.email || quote.customer_email })
+            })
+            if (res.success) {
+                toast.success('Quotation sent successfully')
+                queryClient.invalidateQueries(['quotations'])
+            } else {
+                toast.error(res.error || 'Failed to send quotation')
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to send quotation')
         } finally {
             setActionLoading(null)
         }
@@ -248,37 +270,59 @@ export function QuotationsList({ onCreate, onEdit }) {
                 doc.text(qty.toString(), 120, y);
                 doc.text(price.toFixed(2), 140, y);
                 doc.text(total.toFixed(2), 170, y);
-
-                // Add View Product link if slug is available
-                if (item.product_slug || item.slug) {
-                    const slug = item.product_slug || item.slug;
-                    const productLink = `${window.location.origin}/product/${slug}`;
-                    doc.setFontSize(8);
-                    doc.setTextColor(220, 38, 38);
-                    doc.text('View Product', 14, y + 4);
-                    doc.link(14, y + 2, 20, 4, { url: productLink });
-                    doc.setFontSize(10);
-                    doc.setTextColor(40);
-                    y += 14;
-                } else {
-                    y += 10;
-                }
+                y += 6; // Reduced spacing
             });
 
-            y += 10;
+            y += 4;
             doc.line(14, y, 196, y);
-            y += 10;
+            y += 8;
 
-            const total = parseFloat(quote.total_amount);
+            // Summary
+            const subtotal = parseFloat(quote.subtotal || 0);
+            const discount = parseFloat(quote.discount_value || 0);
+            const gst = parseFloat(quote.gst || quote.tax || 0);
+            const total = parseFloat(quote.total_amount || 0);
+
             doc.setFont("helvetica", "bold");
-            doc.text(`Total Amount: ₹${total.toFixed(2)}`, 140, y);
+            doc.text("Subtotal:", 140, y);
+            doc.text(subtotal.toFixed(2), 170, y);
+            y += 6;
 
-            doc.save(`${quote.quotation_number}.pdf`);
-            toast.success('Download started')
+            if (discount > 0) {
+                doc.setTextColor(220, 38, 38);
+                doc.text(`Discount (${quote.discount_type === 'percentage' ? quote.discount_value + '%' : 'Flat'}):`, 140, y);
+                doc.text(`-${quote.discount_algorithm_value || ((subtotal * discount) / 100).toFixed(2)}`, 170, y);
+                doc.setTextColor(40);
+                y += 6;
+            }
 
-        } catch (error) {
-            console.error(error)
-            toast.error('Failed to download PDF')
+            doc.text(`GST (${quote.tax_rate || 18}%):`, 140, y);
+            doc.text(gst.toFixed(2), 170, y);
+            y += 8;
+
+            doc.setFontSize(12);
+            doc.text("Total Amount:", 140, y);
+            doc.text(`Rs. ${total.toFixed(2)}`, 170, y);
+
+            // Footer / Banking
+            y += 20;
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.text("Bank Details:", 14, y);
+            y += 5;
+            doc.setFont("helvetica", "normal");
+            doc.text("Account Name: Pavilion Sports", 14, y);
+            y += 5;
+            doc.text("Account Number: 1234567890", 14, y);
+            y += 5;
+            doc.text("IFSC Code: HDFC0001234", 14, y);
+            y += 5;
+            doc.text("Bank: HDFC Bank", 14, y);
+
+            doc.save(`Quotation-${quote.quotation_number}.pdf`)
+        } catch (e) {
+            console.error(e)
+            toast.error("Failed to generate PDF")
         } finally {
             setActionLoading(null)
         }
@@ -363,6 +407,8 @@ export function QuotationsList({ onCreate, onEdit }) {
                                 <SelectItem value="all">All Status</SelectItem>
                                 <SelectItem value="Draft">Draft</SelectItem>
                                 <SelectItem value="Sent">Sent</SelectItem>
+                                <SelectItem value="Completed">Completed</SelectItem>
+                                <SelectItem value="Cancelled">Cancelled</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -480,16 +526,28 @@ export function QuotationsList({ onCreate, onEdit }) {
                                     </TableCell>
                                     <TableCell className="text-gray-500">{format(new Date(quote.created_at), 'dd MMM yyyy')}</TableCell>
                                     <TableCell>
-                                        <Badge
-                                            variant="outline"
-                                            className={
-                                                quote.status === 'Sent' ? "bg-green-50 text-green-700 border-green-200" :
-                                                    quote.status === 'Draft' ? "bg-gray-100 text-gray-700 border-gray-200" :
-                                                        "bg-blue-50 text-blue-700 border-blue-200"
-                                            }
+                                        <Select
+                                            value={quote.status}
+                                            onValueChange={(val) => handleStatusChange(quote.id, val)}
+                                            disabled={actionLoading === quote.id}
                                         >
-                                            {quote.status}
-                                        </Badge>
+                                            <SelectTrigger
+                                                className={`h-7 w-[110px] text-xs font-semibold border-none shadow-none focus:ring-0 px-2 rounded-full ${quote.status === 'Sent' ? "bg-green-100 text-green-700 hover:bg-green-200" :
+                                                    quote.status === 'Draft' ? "bg-gray-100 text-gray-700 hover:bg-gray-200" :
+                                                        quote.status === 'Completed' || quote.status === 'Complete' ? "bg-blue-100 text-blue-700 hover:bg-blue-200" :
+                                                            quote.status === 'Cancelled' ? "bg-red-100 text-red-700 hover:bg-red-200" :
+                                                                "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                                    }`}
+                                            >
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Draft">Draft</SelectItem>
+                                                <SelectItem value="Sent">Sent</SelectItem>
+                                                <SelectItem value="Complete">Complete</SelectItem>
+                                                <SelectItem value="Cancelled">Cancelled</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </TableCell>
                                     <TableCell className="text-right pr-6">
                                         <div className="flex justify-end items-center gap-2">
@@ -506,26 +564,29 @@ export function QuotationsList({ onCreate, onEdit }) {
                                                     >
                                                         <Eye className="w-4 h-4" />
                                                     </Button>
-                                                    <Button
-                                                        size="icon"
-                                                        variant="ghost"
-                                                        className="h-8 w-8 text-amber-600 hover:bg-amber-50"
-                                                        onClick={() => onEdit(quote.id)}
-                                                        title="Edit Quotation"
-                                                    >
-                                                        <PenLine className="w-4 h-4" />
-                                                    </Button>
                                                     {quote.status === 'Draft' && (
                                                         <Button
                                                             size="icon"
                                                             variant="ghost"
+                                                            className="h-8 w-8 text-amber-600 hover:bg-amber-50"
+                                                            onClick={() => onEdit(quote.id)}
+                                                            title="Edit Quotation"
+                                                        >
+                                                            <PenLine className="w-4 h-4" />
+                                                        </Button>
+                                                    )}
+                                                    {['Completed', 'Complete'].includes(quote.status) && (
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
                                                             className="h-8 w-8 text-blue-600 hover:bg-blue-50"
-                                                            onClick={() => handleSend(quote.id)}
-                                                            title="Mark as Sent"
+                                                            onClick={() => handleMarkAsSent(quote)}
+                                                            title="Mark as Sent (Send Email)"
                                                         >
                                                             <Send className="w-4 h-4" />
                                                         </Button>
                                                     )}
+
                                                     <Button
                                                         size="icon"
                                                         variant="ghost"
