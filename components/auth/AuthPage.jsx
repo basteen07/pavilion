@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -30,6 +30,15 @@ export function AuthPage({ mode = 'login' }) {
     const [mfaCode, setMfaCode] = useState('')
     const [mfaRequired, setMfaRequired] = useState(false)
     const [loading, setLoading] = useState(false)
+
+    // Force clear session whenever login page is visited
+    useEffect(() => {
+        if (mode === 'login') {
+            localStorage.removeItem('token')
+            localStorage.removeItem('user')
+            localStorage.removeItem('lastActivity')
+        }
+    }, [mode])
 
     async function handleSubmit(e) {
         e.preventDefault()

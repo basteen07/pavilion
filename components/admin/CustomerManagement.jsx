@@ -12,10 +12,13 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
+import { PaginationControls } from '@/components/admin/PaginationControls'
+
 export function CustomerManagement() {
     const router = useRouter()
     const queryClient = useQueryClient()
     const [page, setPage] = useState(1)
+    const [pageSize, setPageSize] = useState(10)
     const [search, setSearch] = useState('')
     const [debouncedSearch, setDebouncedSearch] = useState('')
     const [typeFilter, setTypeFilter] = useState('all')
@@ -30,11 +33,11 @@ export function CustomerManagement() {
     }, [search])
 
     const { data, isLoading } = useQuery({
-        queryKey: ['customers', page, debouncedSearch, typeFilter],
+        queryKey: ['customers', page, pageSize, debouncedSearch, typeFilter],
         queryFn: () => {
             const params = new URLSearchParams({
                 page: page.toString(),
-                limit: '10',
+                limit: pageSize.toString(),
                 search: debouncedSearch,
                 type: typeFilter
             })
@@ -50,6 +53,7 @@ export function CustomerManagement() {
 
     const customers = data?.customers || []
     const totalPages = data?.totalPages || 1
+    const totalItems = data?.total || 0
 
     const statusMutation = useMutation({
         mutationFn: ({ id, is_active }) => apiCall(`/customers/${id}`, {
@@ -126,7 +130,7 @@ export function CustomerManagement() {
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-12">
+                                <TableCell colSpan={7} className="text-center py-12">
                                     <div className="flex flex-col items-center gap-2">
                                         <div className="w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
                                         <span className="text-sm text-gray-500">Loading customers...</span>
@@ -135,7 +139,7 @@ export function CustomerManagement() {
                             </TableRow>
                         ) : customers.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-20 text-gray-500">
+                                <TableCell colSpan={7} className="text-center py-20 text-gray-500">
                                     <div className="flex flex-col items-center gap-2">
                                         <div className="bg-gray-100 p-4 rounded-full mb-2">
                                             <Search className="w-8 h-8 text-gray-300" />
@@ -184,6 +188,19 @@ export function CustomerManagement() {
                                                 )}
                                             </Badge>
                                         </TableCell>
+                                        <TableCell>
+                                            {primaryContact ? primaryContact.name : '-'}
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-col gap-1 text-xs text-gray-500">
+                                                {customer.email && <div className="flex items-center gap-1"><Mail className="w-3 h-3" /> {customer.email}</div>}
+                                                {customer.phone && <div className="flex items-center gap-1"><Phone className="w-3 h-3" /> {customer.phone}</div>}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            {/* Placeholder for Account info if needed */}
+                                            -
+                                        </TableCell>
                                         <TableCell className="text-right">
                                             <Link href={`/admin/customers/${customer.id}`} onClick={(e) => e.stopPropagation()}>
                                                 <Button size="sm" variant="ghost" className="h-8 w-8 p-0 group-hover:bg-red-50 group-hover:text-red-600">
@@ -198,34 +215,14 @@ export function CustomerManagement() {
                     </TableBody>
                 </Table>
 
-                {/* Pagination */}
-                {totalPages > 1 && (
-                    <div className="p-4 flex justify-between items-center border-t bg-gray-50/30">
-                        <p className="text-sm text-gray-500">
-                            Showing page <span className="font-medium">{page}</span> of <span className="font-medium">{totalPages}</span>
-                        </p>
-                        <div className="flex gap-2">
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-8"
-                                disabled={page === 1}
-                                onClick={() => setPage(p => Math.max(1, p - 1))}
-                            >
-                                Previous
-                            </Button>
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-8"
-                                disabled={page === totalPages}
-                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                            >
-                                Next
-                            </Button>
-                        </div>
-                    </div>
-                )}
+                <PaginationControls
+                    currentPage={page}
+                    totalPages={totalPages}
+                    onPageChange={setPage}
+                    itemsPerPage={pageSize}
+                    onItemsPerPageChange={setPageSize}
+                    totalItems={totalItems}
+                />
             </Card>
         </div>
     )

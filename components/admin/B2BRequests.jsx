@@ -23,6 +23,7 @@ import {
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { format } from 'date-fns'
+import { PaginationControls } from '@/components/admin/PaginationControls'
 
 export default function WholesaleCustomers() {
     const router = useRouter()
@@ -31,13 +32,25 @@ export default function WholesaleCustomers() {
     const [isApproveOpen, setIsApproveOpen] = useState(false)
     const [discountPercentage, setDiscountPercentage] = useState(0)
 
-    const { data: customers = [], isLoading } = useQuery({
-        queryKey: ['wholesale-customers'],
-        queryFn: () => apiCall('/admin/b2b-customers')
-    })
+    // Pagination state for history/approved list
+    const [page, setPage] = useState(1)
+    const [pageSize, setPageSize] = useState(10)
 
-    const pendingCustomers = customers.filter(c => c.status === 'pending')
-    const historyCustomers = customers.filter(c => c.status !== 'pending')
+    // Query for Pending Requests
+    const { data: pendingData, isLoading: isLoadingPending } = useQuery({
+        queryKey: ['wholesale-pending'],
+        queryFn: () => apiCall('/admin/b2b-customers?status=pending&limit=100')
+    })
+    const pendingCustomers = pendingData?.customers || []
+
+    // Query for Approved/History Requests (Paginated)
+    const { data: historyData, isLoading: isLoadingHistory } = useQuery({
+        queryKey: ['wholesale-history', page, pageSize],
+        queryFn: () => apiCall(`/admin/b2b-customers?status=history&page=${page}&limit=${pageSize}`)
+    })
+    const historyCustomers = historyData?.customers || []
+    const totalHistoryItems = historyData?.total || 0
+    const totalHistoryPages = historyData?.totalPages || 1
 
     const approvalMutation = useMutation({
         mutationFn: ({ status, discount, is_active, customer_id }) => {
@@ -55,7 +68,8 @@ export default function WholesaleCustomers() {
             })
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(['wholesale-customers'])
+            queryClient.invalidateQueries(['wholesale-pending'])
+            queryClient.invalidateQueries(['wholesale-history'])
             toast.success('Customer updated successfully')
             setIsApproveOpen(false)
             setSelectedCustomer(null)
@@ -85,7 +99,7 @@ export default function WholesaleCustomers() {
         })
     }
 
-    if (isLoading) return <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
+    if (isLoadingPending) return <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
 
     return (
         <div className="space-y-8">
@@ -211,6 +225,14 @@ export default function WholesaleCustomers() {
                             ))}
                         </TableBody>
                     </Table>
+                    <PaginationControls
+                        currentPage={page}
+                        totalPages={totalHistoryPages}
+                        onPageChange={setPage}
+                        itemsPerPage={pageSize}
+                        onItemsPerPageChange={setPageSize}
+                        totalItems={totalHistoryItems}
+                    />
                 </div>
             </div>
 

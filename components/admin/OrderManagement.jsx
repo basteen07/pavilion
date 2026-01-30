@@ -8,6 +8,7 @@ import { Eye, Search, X, Check, Loader2, Trash2 } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
+import { PaginationControls } from '@/components/admin/PaginationControls'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiCall } from '@/lib/api-client'
@@ -17,13 +18,14 @@ export function OrderManagement() {
     const { user } = useAuth()
     const isSuperAdmin = user?.role === 'superadmin'
     const [page, setPage] = useState(1)
+    const [pageSize, setPageSize] = useState(10)
     const [search, setSearch] = useState('')
     const [debouncedSearch, setDebouncedSearch] = useState('')
     const [selectedOrderId, setSelectedOrderId] = useState(null)
     const [editedItems, setEditedItems] = useState([])
     const [editedDiscount, setEditedDiscount] = useState(0)
     const [editedNotes, setEditedNotes] = useState('')
-    const [dateFilter, setDateFilter] = useState('today')
+    const [dateFilter, setDateFilter] = useState('all')
     const queryClient = useQueryClient()
 
     // Debounce search
@@ -36,11 +38,11 @@ export function OrderManagement() {
     }, [search])
 
     const { data, isLoading } = useQuery({
-        queryKey: ['admin-orders', page, debouncedSearch, dateFilter],
+        queryKey: ['admin-orders', page, pageSize, debouncedSearch, dateFilter],
         queryFn: () => {
             const params = new URLSearchParams({
                 page: page.toString(),
-                limit: '10',
+                limit: pageSize.toString(),
                 search: debouncedSearch,
                 dateFilter: dateFilter
             })
@@ -129,6 +131,7 @@ export function OrderManagement() {
 
     const orders = data?.orders || []
     const totalPages = data?.totalPages || 1
+    const totalItems = data?.totalOrders || 0
 
     return (
         <div className="space-y-6">
@@ -210,30 +213,14 @@ export function OrderManagement() {
                     </TableBody>
                 </Table>
 
-                {/* Pagination */}
-                {totalPages > 1 && (
-                    <div className="p-4 flex justify-center gap-2 border-t">
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={page === 1}
-                            onClick={() => setPage(p => Math.max(1, p - 1))}
-                        >
-                            Previous
-                        </Button>
-                        <span className="flex items-center text-sm text-gray-600 px-2">
-                            Page {page} of {totalPages}
-                        </span>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={page === totalPages}
-                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                        >
-                            Next
-                        </Button>
-                    </div>
-                )}
+                <PaginationControls
+                    currentPage={page}
+                    totalPages={totalPages}
+                    onPageChange={setPage}
+                    itemsPerPage={pageSize}
+                    onItemsPerPageChange={setPageSize}
+                    totalItems={totalItems}
+                />
             </Card>
 
             {/* Order Details Dialog */}

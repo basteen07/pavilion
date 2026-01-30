@@ -60,6 +60,19 @@ export async function POST(request) {
 
     const token = await createToken({ userId: user.id, email: user.email, role: user.role_name });
 
+    // Log login activity
+    try {
+      const { logActivity } = await import('@/lib/activity-logger');
+      await logActivity({
+        admin_id: user.id,
+        event_type: 'login',
+        description: `Admin ${user.name || user.email} logged in successfully.`,
+        metadata: { email: user.email, role: user.role_name }
+      });
+    } catch (logErr) {
+      console.error('Failed to log login activity:', logErr.message);
+    }
+
     return handleCORS(NextResponse.json({
       success: true,
       token,

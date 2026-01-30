@@ -23,7 +23,19 @@ import { useRouter } from "next/navigation"
 export function UserNav({ user }) {
     const router = useRouter()
 
-    function handleLogout() {
+    async function handleLogout() {
+        try {
+            // Call server to log the logout event
+            await fetch('/api/admin/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            })
+        } catch (error) {
+            console.error('Failed to log logout on server:', error)
+        }
+
         localStorage.removeItem('token')
         localStorage.removeItem('user')
         router.push('/admin/login')

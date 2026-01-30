@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useEffect, useRef, useCallback, Fragment } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback, Fragment } from 'react'
 import { useQuery, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -13,7 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
-import { ShoppingCart, RotateCcw, Save, Eye, Building2, Plus, Download, Send, FileText, Trash2, Filter, Search, X, ChevronRight, ChevronDown, PenLine, AlertTriangle, Loader2, Check, ArrowRight, Settings, UserCircle2 } from 'lucide-react'
+import { ShoppingCart, RotateCcw, Save, Eye, Building2, Plus, Download, Send, FileText, Trash2, Filter, Search, X, ChevronRight, ChevronDown, PenLine, AlertTriangle, Loader2, Check, ArrowRight, Settings, UserCircle2, Clock, MessageSquare } from 'lucide-react'
 import jsPDF from 'jspdf'
 import { apiCall } from '@/lib/api-client'
 import { Badge } from '@/components/ui/badge'
@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils"
 import { useAuth } from '@/components/providers/AuthProvider'
 import { Switch } from '@/components/ui/switch'
 import { QuotationPreviewModal } from '@/components/admin/QuotationPreviewModal'
+import ActivityTimeline from './ActivityTimeline'
 
 // --- Utility: Get Image ---
 const getFirstImage = (images) => {
@@ -53,6 +54,10 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
     const [isPreviewOpen, setIsPreviewOpen] = useState(false)
     const [successData, setSuccessData] = useState(null)
     const [isSaving, setIsSaving] = useState(false)
+    const [timeline, setTimeline] = useState([])
+    const [isTimelineLoading, setIsTimelineLoading] = useState(false)
+    const [adminComment, setAdminComment] = useState('')
+    const [isPostingComment, setIsPostingComment] = useState(false)
     const [customerSearchOpen, setCustomerSearchOpen] = useState(false)
     const [discardDialogOpen, setDiscardDialogOpen] = useState(false)
     const [clearCustomerDialogOpen, setClearCustomerDialogOpen] = useState(false)
@@ -457,29 +462,40 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                 try {
                     const quote = await apiCall(`/quotations/${quoteId}`);
                     if (quote) {
+                        // Fetch specific customer details to ensure we have pricing logic
+                        const customer = await apiCall(`/customers/${quote.customer_id}`);
+
                         setSelectedCustomer(quote.customer_id);
+                        fetchTimeline(quote.customer_id);
                         setQuotationItems(quote.items.map(item => ({
                             ...item,
                             name: item.product_name, // Mapping back for UI
-                            mrp: item.mrp,
+                            mrp: parseFloat(item.mrp) || parseFloat(item.current_mrp) || 0,
+                            dealer_price: parseFloat(item.dealer_price) || parseFloat(item.current_dealer_price) || 0,
                             custom_price: item.unit_price,
                             gst_rate: '18%', // Default if missing
+                            customer_type_base: customer?.base_price_type || 'mrp', // Critical for edit logic
+                            discount: item.discount || 0,
+                            is_detailed: item.is_detailed ?? false, // Preserve or default to false
+                            short_description: item.short_description || '',
+                            image: item.image || ''
                         })));
                         setQuotationDetails({
                             quotation_number: quote.quotation_number,
                             issue_date: new Date(quote.created_at).toISOString().split('T')[0],
-                            valid_until: new Date(quote.valid_until).toISOString().split('T')[0],
+                            valid_until: quote.valid_until ? new Date(quote.valid_until).toISOString().split('T')[0] : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                             shipping_cost: quote.shipping_cost || 0,
                             discount_type: quote.discount_type || 'percentage',
                             discount_value: quote.discount_value || 0,
-                            tax_rate: (quote.tax / (quote.subtotal - quote.discount_amount + quote.shipping_cost) * 100).toFixed(0) || 18, // Approximate fallback
+                            tax_rate: quote.tax_rate || 18,
                             additional_notes: quote.notes || '',
                             terms_and_conditions: quote.terms_conditions || '',
-                            show_total: true,
+                            show_total: quote.show_total !== undefined ? quote.show_total : true,
                             tags: '',
                         });
                     }
                 } catch (e) {
+                    console.error("Edit load error:", e);
                     toast.error("Failed to load quotation for editing");
                 }
             };
@@ -489,11 +505,12 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
         }
     }, [quoteId, urlCustomerId, customers]); // Depend on 'customers' to ensure list is loaded
 
-    // --- Logic: Apply Customer Pricing Rule ---
+    // --- Logic: Fetch Timeline on selection ---
     useEffect(() => {
-        // Only run this if NOT in edit mode initially, or handle carefully
-        // We probably don't want to auto-recalc prices when loading an existing quote unless customer changes
-    }, [selectedCustomer, customers])
+        if (selectedCustomer) {
+            fetchTimeline(selectedCustomer);
+        }
+    }, [selectedCustomer]);
 
 
     // --- Handlers ---
@@ -541,13 +558,13 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
         const customerTypeBase = customer?.base_price_type || custType?.base_price_type || 'mrp';
         const percentage = parseFloat(customer?.percentage || custType?.percentage || 0);
 
-        let customPrice = parseFloat(product.shop_price || product.mrp_price);
+        let customPrice = parseFloat(product.shop_price) || parseFloat(product.mrp_price);
         let discount = 0;
 
         // Apply pricing logic based on customer type
         if (customerTypeBase === 'dealer') {
             // Dealer: base is dealer_price, ADD markup percentage
-            const basePrice = parseFloat(product.dealer_price || product.shop_price || product.mrp_price);
+            const basePrice = parseFloat(product.dealer_price) || parseFloat(product.shop_price) || parseFloat(product.mrp_price);
             customPrice = basePrice * (1 + percentage / 100);
             // For dealer, discount is the markup percentage (stored as positive for markup)
             discount = percentage;
@@ -560,7 +577,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
         }
 
         // If no customer type, fallback to dealer price if available
-        if (!customer?.base_price_type && !custType && product.dealer_price) {
+        if (!customer?.base_price_type && !custType && parseFloat(product.dealer_price)) {
             customPrice = parseFloat(product.dealer_price);
             discount = ((parseFloat(product.mrp_price) - customPrice) / parseFloat(product.mrp_price) * 100).toFixed(2);
         }
@@ -576,7 +593,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             brand_name: product.brand_name || product.brand || '',
             image: getFirstImage(product.images),
             mrp: parseFloat(product.mrp_price) || 0,
-            dealer_price: parseFloat(product.dealer_price) || 0,
+            dealer_price: parseFloat(product.dealer_price) || parseFloat(product.shop_price) || parseFloat(product.mrp_price) || 0,
             discount: discount,
             custom_price: customPrice.toFixed(2),
             quantity: 1,
@@ -710,6 +727,43 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
         total_amount: total
     }
 
+    // --- Timeline Logic ---
+    const fetchTimeline = async (custId) => {
+        if (!custId) return;
+        setIsTimelineLoading(true);
+        try {
+            const data = await apiCall(`/admin/activity-logs/customer/${custId}`);
+            setTimeline(data || []);
+        } catch (e) {
+            console.error("Timeline load error:", e);
+        } finally {
+            setIsTimelineLoading(false);
+        }
+    };
+
+    const handlePostComment = async () => {
+        if (!selectedCustomer || !adminComment.trim()) return;
+        setIsPostingComment(true);
+        try {
+            await apiCall('/admin/activity-logs', {
+                method: 'POST',
+                body: JSON.stringify({
+                    customer_id: selectedCustomer,
+                    quotation_id: id || null,
+                    description: adminComment,
+                    event_type: 'comment_added'
+                })
+            });
+            setAdminComment('');
+            fetchTimeline(selectedCustomer);
+            toast.success("Comment added to timeline");
+        } catch (e) {
+            toast.error("Failed to post comment");
+        } finally {
+            setIsPostingComment(false);
+        }
+    };
+
     // --- Save ---
     async function handleSave(status = 'Sent') {
         if (!selectedCustomer) { return toast.error('Please select a customer') }
@@ -728,6 +782,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                     quantity: parseInt(item.quantity),
                     unit_price: parseFloat(item.custom_price),
                     mrp: parseFloat(item.mrp),
+                    dealer_price: parseFloat(item.dealer_price || 0),
                     discount: parseFloat(item.discount),
                     slug: item.slug,
                     category_name: item.category_name,
@@ -741,11 +796,11 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             let res;
             if (quoteId) {
                 // Update
-                res = await apiCall(`/quotations/${quoteId}`, { method: 'PUT', body: JSON.stringify(payload) })
+                res = await apiCall(`/admin/quotations/${quoteId}`, { method: 'PUT', body: JSON.stringify(payload) })
                 toast.success('Quotation updated!')
             } else {
                 // Create
-                res = await apiCall('/quotations', { method: 'POST', body: JSON.stringify(payload) })
+                res = await apiCall('/admin/quotations', { method: 'POST', body: JSON.stringify(payload) })
                 toast.success(status === 'Draft' ? 'Draft saved!' : 'Quotation created!')
             }
 
@@ -756,24 +811,24 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
     }
 
     return (
-        <div className="bg-[#f1f1f1] min-h-screen p-4 md:p-8 font-sans text-gray-900">
+        <div className="bg-transparent min-h-screen p-4 md:p-8 font-sans text-gray-900">
             {/* ... Header (Same) ... */}
             <div className="max-w-[1100px] mx-auto mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
-                    <FileText className="w-4 h-4" /> <span>Create order</span>
+                    <FileText className="w-4 h-4" /> <span>Edit Quotation / Create Quotations</span>
                 </div>
                 <div className="flex gap-2">
                     <Button variant="ghost" onClick={onClose} className="text-gray-600 hover:bg-gray-200">Back to List</Button>
                     <Button variant="outline" onClick={() => setIsPreviewOpen(true)} className="gap-2"><Eye className="w-4 h-4" /> Preview</Button>
                     <Button variant="outline" onClick={() => handleSave('Draft')} disabled={isSaving} className="border-gray-300 bg-white shadow-sm hover:bg-gray-50">Save as Draft</Button>
                     <Button className="bg-[#1a1a1a] hover:bg-[#333] text-white shadow-sm" onClick={() => handleSave('Sent')} disabled={isSaving}>
-                        {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />} Create Quotation
+                        {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />} {quoteId ? 'Update' : 'Create'} Quotation
                     </Button>
                 </div>
             </div>
 
             {/* NEW LAYOUT: Customer Section at Top (Reduced Width) */}
-            <Card className="max-w-[1100px] mx-auto mb-6 border-none shadow-sm rounded-xl">
+            <Card className="max-w-[1100px] mx-auto mb-6 border-none shadow-sm rounded-2xl overflow-hidden">
                 <CardHeader className="bg-white border-b border-gray-100 py-3 px-4 flex flex-row items-center justify-between">
                     <CardTitle className="text-sm font-bold">Customer Details</CardTitle>
                     {selectedCustomer && (
@@ -846,8 +901,8 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                         </div>
                                         <div className="text-[10px] text-gray-500">
                                             {baseType === 'dealer'
-                                                ? `Proposed = Dealer Price + ${percentage}% markup`
-                                                : `Proposed = MRP - ${percentage}% discount`
+                                                ? `Your Price = Dealer Price + ${percentage}% markup`
+                                                : `Your Price = MRP - ${percentage}% discount`
                                             }
                                         </div>
                                     </div>
@@ -872,17 +927,14 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                 </CardContent>
             </Card>
 
-            <div className="max-w-[1100px] mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 space-y-6">
+            <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 pb-20">
+                <div className="lg:col-span-8 space-y-6">
                     {/* Products Card - NOW DISABLED IF NO CUSTOMER */}
-                    <Card className={cn("border-none shadow-sm rounded-xl overflow-hidden transition-all", !selectedCustomer && "opacity-60 pointer-events-none grayscale")}>
+                    <Card className={cn("border-none shadow-sm rounded-2xl overflow-hidden transition-all", !selectedCustomer && "opacity-60 pointer-events-none grayscale")}>
                         <CardHeader className="bg-white pb-4 border-b border-gray-100">
                             <div className="flex justify-between items-center">
                                 <CardTitle className="text-base font-bold">Products</CardTitle>
-                                <div className="flex items-center gap-2">
-                                    <Label className="text-xs font-medium text-gray-500">Detailed View</Label>
-                                    <Switch checked={showDetailed} onCheckedChange={setShowDetailed} className="scale-75" />
-                                </div>
+                                {/* Removed Global Detailed View Switch */}
                             </div>
                             <div className="flex gap-2 mt-4">
                                 <div className="relative flex-1">
@@ -908,79 +960,102 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                             ) : (
                                 <div className="divide-y divide-gray-100">
                                     {quotationItems.map((item, idx) => (
-                                        <div key={idx} className="flex items-center gap-4 p-4 hover:bg-gray-50 group border-b border-gray-100 last:border-0 relative">
-                                            {/* Per-Product Detailed View Checkbox */}
-                                            <div className="flex items-center gap-3">
-                                                <Checkbox
-                                                    checked={item.is_detailed}
-                                                    onCheckedChange={() => toggleItemDetail(idx)}
-                                                    className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
-                                                    title="Show detailed view for this product"
-                                                />
-                                            </div>
-
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-start gap-3">
-
-                                                    {item.is_detailed && (
-                                                        <div className="w-16 h-16 rounded bg-gray-100 shrink-0 overflow-hidden border">
-                                                            <img src={item.image} className="w-full h-full object-cover" />
-                                                        </div>
-                                                    )}
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-[10px] text-gray-400 font-bold uppercase">{item.brand || 'No Brand'}</span>
-                                                            <p className="text-sm font-bold text-gray-900 truncate leading-tight">{item.name}</p>
-                                                        </div>
-                                                        {item.is_detailed && item.short_description && (
-                                                            <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.short_description}</p>
-                                                        )}
-                                                        <div className="flex items-center gap-2 mt-1">
-                                                            <span className="text-[10px] text-gray-400 font-mono">#{item.sku}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center gap-4 mt-2 pl-7">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[10px] text-gray-400 font-bold uppercase">{item.customer_type_base === 'dealer' ? 'Proposed Price' : 'Your Price'}</span>
-                                                        <span className="text-sm font-bold text-gray-900">{parseFloat(item.custom_price).toLocaleString()}</span>
-                                                    </div>
-                                                    <div className="flex flex-col border-l border-gray-100 pl-4">
-                                                        <span className="text-[10px] text-gray-400 font-bold uppercase">{item.customer_type_base === 'dealer' ? 'Dealer Price' : 'MRP'}</span>
-                                                        <span className={`text-xs text-gray-500 ${item.customer_type_base === 'dealer' ? '' : 'line-through'}`}>
-                                                            {parseFloat(item.customer_type_base === 'dealer' ? item.dealer_price : item.mrp).toLocaleString()}
+                                        <div key={idx} className="flex flex-col gap-2 p-4 hover:bg-gray-50 group border-b border-gray-100 last:border-0 relative">
+                                            {/* Row 1: Brand (if present) + Top Actions */}
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    {/* Toggle Switch (No text label as requested) */}
+                                                    <Switch
+                                                        checked={item.is_detailed}
+                                                        onCheckedChange={() => toggleItemDetail(idx)}
+                                                        className="scale-75 data-[state=checked]:bg-blue-600"
+                                                    />
+                                                    {(item.brand || item.brand_name) && (
+                                                        <span className="text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+                                                            {item.brand_name || item.brand}
                                                         </span>
-                                                    </div>
-                                                    {item.customer_type_base === 'dealer' && (
-                                                        <div className="flex flex-col border-l border-gray-100 pl-4">
-                                                            <span className="text-[10px] text-gray-400 font-bold uppercase">MRP</span>
-                                                            <span className="text-xs text-gray-500 line-through">{parseFloat(item.mrp).toLocaleString()}</span>
-                                                        </div>
                                                     )}
+                                                </div>
+                                                <Button size="icon" variant="ghost" className="h-7 w-7 text-red-400 hover:text-red-600 hover:bg-red-50 -mt-1 -mr-1" onClick={() => removeItem(idx)}>
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            </div>
 
-                                                    <div className="flex items-center gap-2 ml-2 border-l border-gray-100 pl-4">
-                                                        <span className="text-[10px] text-gray-400 font-bold uppercase pt-0.5">Qty</span>
-                                                        <Input className="w-14 h-8 text-xs p-1 text-center font-bold bg-white" value={item.quantity} onChange={(e) => updateItem(idx, 'quantity', e.target.value)} />
+                                            {/* Row 2: Product Title + Description (if detailed) */}
+                                            <div className="flex gap-4">
+                                                {item.is_detailed && item.image && (
+                                                    <div className="w-16 h-16 rounded bg-white shrink-0 overflow-hidden border shadow-sm">
+                                                        <img src={item.image} className="w-full h-full object-cover" />
                                                     </div>
+                                                )}
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-baseline gap-2">
+                                                        <p className="text-sm font-bold text-gray-900 leading-tight">{item.name}</p>
+                                                        <span className="text-[9px] text-gray-400 font-mono tracking-tighter">#{item.sku}</span>
+                                                    </div>
+                                                    {item.is_detailed && item.short_description && (
+                                                        <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">{item.short_description}</p>
+                                                    )}
                                                 </div>
                                             </div>
 
-                                            {/* Item Discount/Markup */}
-                                            <div className="flex flex-col items-end gap-1 min-w-[100px]">
-                                                <div className={`flex items-center rounded px-2 py-1 ${item.customer_type_base === 'dealer' ? 'bg-green-50' : 'bg-gray-100'}`}>
-                                                    <span className={`text-[10px] mr-2 font-bold uppercase ${item.customer_type_base === 'dealer' ? 'text-green-600' : 'text-gray-500'}`}>
+                                            {/* Row 3: Pricing & Quantity Management */}
+                                            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-1 bg-gray-50/50 p-2 rounded-lg border border-gray-100/50">
+                                                {/* Dealer Price (Conditional) */}
+                                                {item.customer_type_base === 'dealer' && (
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">Dealer Price</span>
+                                                        <span className="text-xs font-semibold text-gray-600">₹{parseFloat(item.dealer_price || 0).toLocaleString()}</span>
+                                                    </div>
+                                                )}
+
+                                                {/* MRP */}
+                                                <div className="flex flex-col">
+                                                    <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">MRP</span>
+                                                    <span className={`text-xs font-medium ${item.customer_type_base === 'dealer' ? 'text-gray-400 line-through' : 'text-gray-500'}`}>
+                                                        ₹{parseFloat(item.mrp || 0).toLocaleString()}
+                                                    </span>
+                                                </div>
+
+                                                {/* Discount / Markup */}
+                                                <div className="flex items-center gap-2 bg-white px-2 py-0.5 rounded border border-gray-200 shadow-sm">
+                                                    <span className={`text-[9px] font-bold uppercase ${item.customer_type_base === 'dealer' ? 'text-green-600' : 'text-blue-600'}`}>
                                                         {item.customer_type_base === 'dealer' ? 'Markup%' : 'Disc%'}
                                                     </span>
-                                                    <Input className="h-6 w-12 p-0 text-center text-xs bg-white border border-gray-200 focus-visible:ring-1 font-bold rounded shadow-sm" value={item.discount} onChange={(e) => updateItem(idx, 'discount', e.target.value)} />
+                                                    <Input
+                                                        className="h-6 w-10 p-0 text-center text-xs bg-transparent border-none focus-visible:ring-0 font-bold"
+                                                        value={item.discount}
+                                                        onChange={(e) => updateItem(idx, 'discount', e.target.value)}
+                                                    />
                                                 </div>
-                                                <div className="text-[10px] text-gray-400 mt-1 font-medium">GST: {item.gst_rate || '18%'}</div>
-                                            </div>
 
-                                            <div className="text-right min-w-[100px]">
-                                                <p className="text-[10px] text-gray-400 font-bold uppercase">Total</p>
-                                                <p className="text-base font-bold text-gray-900">{(parseFloat(item.custom_price) * parseInt(item.quantity)).toLocaleString()}</p>
-                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:bg-red-50 absolute right-2 top-2" onClick={() => removeItem(idx)}><Trash2 className="w-4 h-4" /></Button>
+                                                {/* Quantity */}
+                                                <div className="flex items-center gap-2 bg-white px-2 py-0.5 rounded border border-gray-200 shadow-sm">
+                                                    <span className="text-[9px] text-gray-400 font-bold uppercase pr-1 border-r border-gray-100">Qty</span>
+                                                    <Input
+                                                        className="h-6 w-10 p-0 text-center text-xs bg-transparent border-none focus-visible:ring-0 font-bold"
+                                                        value={item.quantity}
+                                                        onChange={(e) => updateItem(idx, 'quantity', e.target.value)}
+                                                    />
+                                                </div>
+
+                                                {/* GST */}
+                                                <div className="flex flex-col">
+                                                    <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">GST</span>
+                                                    <span className="text-xs font-medium text-gray-500">{item.gst_rate || '18%'}</span>
+                                                </div>
+
+                                                {/* Your Price (Custom Price) */}
+                                                <div className="flex flex-col ml-auto text-right">
+                                                    <span className="text-[9px] text-blue-600 font-bold uppercase tracking-tight">Your Price</span>
+                                                    <span className="text-xs font-bold text-gray-900">₹{parseFloat(item.custom_price || 0).toLocaleString()}</span>
+                                                </div>
+
+                                                {/* Line Total */}
+                                                <div className="flex flex-col text-right min-w-[80px]">
+                                                    <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">Total</span>
+                                                    <span className="text-sm font-black text-blue-600">₹{(parseFloat(item.custom_price || 0) * parseInt(item.quantity || 1)).toLocaleString()}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
@@ -990,7 +1065,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                     </Card>
 
                     {/* Payment Card */}
-                    <Card className="border-none shadow-sm rounded-xl">
+                    <Card className="border-none shadow-sm rounded-2xl overflow-hidden">
                         <CardHeader className="bg-white border-b border-gray-100 pb-3"><CardTitle className="text-base font-bold">Payment</CardTitle></CardHeader>
                         <CardContent className="bg-white pt-4 space-y-3">
                             <div className="flex justify-between text-sm"><span className="text-gray-400">Total MRP (Reference)</span><span className="font-medium text-gray-500">{quotationItems.reduce((sum, item) => sum + (parseFloat(item.mrp || 0) * parseInt(item.quantity || 1)), 0).toFixed(2)}</span></div>
@@ -1030,9 +1105,10 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                     </Card>
                 </div>
 
-                <div className="space-y-6">
+                <div className="lg:col-span-4 space-y-6">
+                    {/* --- DETAILS & METADATA --- */}
                     {/* Notes, Customer (With Type Badge), etc. */}
-                    <Card className="border-none shadow-sm rounded-xl">
+                    <Card className="border-none shadow-sm rounded-2xl overflow-hidden">
                         <CardHeader className="bg-white border-b border-gray-100 pb-3">
                             <CardTitle className="text-sm font-bold">Quotation Details</CardTitle>
                         </CardHeader>
@@ -1071,7 +1147,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                     </Card>
 
                     <div className="space-y-6">
-                        <Card className="border-none shadow-sm rounded-xl">
+                        <Card className="border-none shadow-sm rounded-2xl overflow-hidden">
                             <CardHeader className="bg-white border-b border-gray-100 pb-3">
                                 <CardTitle className="text-sm font-bold">Quotation Metadata</CardTitle>
                             </CardHeader>
@@ -1236,7 +1312,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                                                                 const customer = customers.find(c => c.id === selectedCustomer);
                                                                                 const custType = customerTypes.find(t => String(t.id) === String(customer?.customer_type_id));
                                                                                 const baseType = custType?.base_price_type || 'mrp';
-                                                                                return baseType === 'dealer' ? 'Proposed Price' : 'Your Price';
+                                                                                return baseType === 'dealer' ? 'Your Price' : 'Your Price';
                                                                             })()}
                                                                         </TableHead>
                                                                         <TableHead className="bg-white w-[50px]"></TableHead>
@@ -1394,11 +1470,11 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                                 </Button>
                                             </div>
                                         </div>
-                                    </DialogContent >
-                                </Dialog >
+                                    </DialogContent>
+                                </Dialog>
 
                                 {/* New Customer Dialog & Manage Types */}
-                                < Dialog open={isCustomerModalOpen} onOpenChange={setIsCustomerModalOpen} >
+                                <Dialog open={isCustomerModalOpen} onOpenChange={setIsCustomerModalOpen}>
                                     <DialogContent className="sm:max-w-[600px] bg-white">
                                         {!manageTypesOpen ? (
                                             <>
@@ -1480,10 +1556,10 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                             </>
                                         )}
                                     </DialogContent>
-                                </Dialog >
+                                </Dialog>
 
                                 {/* Discard Dialog */}
-                                < AlertDialog open={discardDialogOpen} onOpenChange={setDiscardDialogOpen} >
+                                <AlertDialog open={discardDialogOpen} onOpenChange={setDiscardDialogOpen}>
                                     <AlertDialogContent>
                                         <AlertDialogHeader>
                                             <AlertDialogTitle>Discard changes?</AlertDialogTitle>
@@ -1494,7 +1570,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                             <AlertDialogAction onClick={() => { onClose && onClose() }} className="bg-red-600">Discard</AlertDialogAction>
                                         </AlertDialogFooter>
                                     </AlertDialogContent>
-                                </AlertDialog >
+                                </AlertDialog>
 
                                 {/* Customer Clear Warning Dialog */}
                                 <AlertDialog open={clearCustomerDialogOpen} onOpenChange={setClearCustomerDialogOpen}>
@@ -1530,13 +1606,71 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                     open={isPreviewOpen}
                                     onOpenChange={setIsPreviewOpen}
                                     quotation={previewData}
-                                    onDownload={handleDownloadPDF}
                                 />
-                            </CardContent >
-                        </Card >
-                    </div >
-                </div >
-            </div >
-        </div >
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* --- INTERACTION HISTORY & ADMIN NOTE --- */}
+                    <Card className="flex-1 flex flex-col border-none shadow-sm rounded-2xl overflow-hidden bg-white min-h-[400px]">
+                        <CardHeader className="bg-white border-b border-gray-100 pb-3 flex flex-row items-center justify-between">
+                            <CardTitle className="text-sm font-bold flex items-center gap-2">
+                                <Clock className="w-4 h-4 text-blue-500" /> Interaction History
+                            </CardTitle>
+                            {selectedCustomer && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 text-[10px] uppercase font-bold text-gray-400 hover:text-blue-600"
+                                    onClick={() => fetchTimeline(selectedCustomer)}
+                                    disabled={isTimelineLoading}
+                                >
+                                    {isTimelineLoading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <RotateCcw className="w-3 h-3 mr-1" />}
+                                    Refresh
+                                </Button>
+                            )}
+                        </CardHeader>
+                        <CardContent className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                            {selectedCustomer ? (
+                                <ActivityTimeline events={timeline} isLoading={isTimelineLoading} />
+                            ) : (
+                                <div className="text-center py-20 text-gray-400">
+                                    <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        <Clock className="w-6 h-6 text-gray-200" />
+                                    </div>
+                                    <p className="text-xs font-medium">Select a customer</p>
+                                    <p className="text-[10px] mt-1 text-gray-400">to view their interaction history</p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-none shadow-sm rounded-2xl overflow-hidden bg-white">
+                        <CardHeader className="bg-gray-50/50 border-b border-gray-100 py-3">
+                            <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-2">
+                                <Plus className="w-3 h-3" /> Quick Admin Note
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4 space-y-4">
+                            <Textarea
+                                placeholder="Type an internal note or comment about this customer..."
+                                className="min-h-[120px] text-xs resize-none bg-gray-50/50 border-gray-100 focus:bg-white transition-colors"
+                                value={adminComment}
+                                onChange={(e) => setAdminComment(e.target.value)}
+                                disabled={!selectedCustomer}
+                            />
+                            <Button
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white h-9 text-xs font-bold"
+                                onClick={handlePostComment}
+                                disabled={!selectedCustomer || !adminComment.trim() || isPostingComment}
+                            >
+                                {isPostingComment ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <MessageSquare className="w-4 h-4 mr-2" />}
+                                Post to Timeline
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        </div>
     );
 }

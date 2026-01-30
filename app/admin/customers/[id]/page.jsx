@@ -13,7 +13,7 @@ import {
     ArrowLeft, Save, Plus, Trash2, Mail, Phone,
     MapPin, Building2, UserCircle2, FileText, Send,
     MoreVertical, ExternalLink, Calculator, Pencil, Search, Calendar,
-    ChevronLeft, ChevronRight, Download, Eye, PenLine, Loader2
+    ChevronLeft, ChevronRight, Download, Eye, PenLine, Loader2, Clock
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -28,6 +28,7 @@ import {
     DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { QuotationPreviewModal } from '@/components/admin/QuotationPreviewModal';
+import { PaginationControls } from '@/components/admin/PaginationControls';
 import jsPDF from 'jspdf';
 
 export default function CustomerDetailPage({ params }) {
@@ -77,9 +78,14 @@ export default function CustomerDetailPage({ params }) {
         },
     });
 
+    const { data: timeline = [], isLoading: isLoadingTimeline } = useQuery({
+        queryKey: ['customer-timeline', id],
+        queryFn: () => apiCall(`/admin/activity-logs/customer/${id}`)
+    });
+
     // Checkbox handlers (moved after quotationsData is defined)
     const allSelected = quotationsData?.quotations?.length > 0 && selectedIds.size === quotationsData.quotations.length;
-    
+
     const handleSelectAll = (checked) => {
         if (checked) {
             setSelectedIds(new Set(quotationsData.quotations.map(q => q.id)));
@@ -547,218 +553,214 @@ export default function CustomerDetailPage({ params }) {
                     </Card>
                 </div>
 
-                {/* Bottom Row: Quotation History */}
-                <Card className="border-none shadow-sm overflow-hidden">
-                    <CardHeader className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b pb-4">
-                        <div className="flex items-center gap-4">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <FileText className="w-5 h-5 text-gray-400" />
-                                Quotation History
-                            </CardTitle>
-                            <Badge variant="outline" className="bg-gray-100">{quotationsData.total}</Badge>
-                        </div>
-                        <div className="flex items-center gap-3 w-full sm:w-auto">
-                            <div className="relative w-full sm:w-[200px]">
-                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
-                                <Input
-                                    placeholder="Search Quote # or Customer..."
-                                    className="pl-9 h-9 text-xs"
-                                    value={quoteSearch}
-                                    onChange={(e) => {
-                                        setQuoteSearch(e.target.value);
-                                        setPage(1);
-                                    }}
-                                />
+                {/* Bottom Row: Quotation History & Timeline */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Quotation History - Left 2 columns */}
+                    <Card className="lg:col-span-2 border-none shadow-sm overflow-hidden">
+                        <CardHeader className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b pb-4">
+                            <div className="flex items-center gap-4">
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    <FileText className="w-5 h-5 text-gray-400" />
+                                    Quotation History
+                                </CardTitle>
+                                <Badge variant="outline" className="bg-gray-100">{quotationsData.total}</Badge>
                             </div>
-                            <div className="relative w-full sm:w-[150px]">
-                                <Input
-                                    type="date"
-                                    className="h-9 text-xs"
-                                    value={quoteDateFilter}
-                                    onChange={(e) => {
-                                        setQuoteDateFilter(e.target.value);
-                                        setPage(1);
-                                    }}
-                                />
+                            <div className="flex items-center gap-3 w-full sm:w-auto">
+                                <div className="relative w-full sm:w-[200px]">
+                                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+                                    <Input
+                                        placeholder="Search Quote # or Customer..."
+                                        className="pl-9 h-9 text-xs"
+                                        value={quoteSearch}
+                                        onChange={(e) => {
+                                            setQuoteSearch(e.target.value);
+                                            setPage(1);
+                                        }}
+                                    />
+                                </div>
+                                <div className="relative w-full sm:w-[150px]">
+                                    <Input
+                                        type="date"
+                                        className="h-9 text-xs"
+                                        value={quoteDateFilter}
+                                        onChange={(e) => {
+                                            setQuoteDateFilter(e.target.value);
+                                            setPage(1);
+                                        }}
+                                    />
+                                </div>
                             </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <Table>
-                            <TableHeader className="bg-gray-50">
-                                <TableRow>
-                                    <TableHead className="w-[50px] pl-6">
-                                        <Checkbox
-                                            checked={allSelected}
-                                            onCheckedChange={handleSelectAll}
-                                        />
-                                    </TableHead>
-                                    <TableHead>Ref No.</TableHead>
-                                    <TableHead>Customer</TableHead>
-                                    <TableHead>Primary Contact</TableHead>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-right pr-6">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {isLoadingQuotes ? (
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <Table>
+                                <TableHeader className="bg-gray-50">
                                     <TableRow>
-                                        <TableCell colSpan={7} className="text-center py-8">
-                                            <Loader2 className="w-6 h-6 animate-spin mx-auto text-gray-400" />
-                                        </TableCell>
+                                        <TableHead className="w-[50px] pl-6">
+                                            <Checkbox
+                                                checked={allSelected}
+                                                onCheckedChange={handleSelectAll}
+                                            />
+                                        </TableHead>
+                                        <TableHead>Ref No.</TableHead>
+                                        <TableHead>Customer</TableHead>
+                                        <TableHead>Primary Contact</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead className="text-right pr-6">Actions</TableHead>
                                     </TableRow>
-                                ) : quotationsData.quotations.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                                            <div className="text-center py-12 text-muted-foreground">
-                                                <FileText className="w-12 h-12 mx-auto text-gray-200 mb-4" />
-                                                <p className="text-sm mb-4">No quotations generated yet</p>
-                                                <Link href={`/admin/quotations?new=true&customer_id=${id}`}>
-                                                    <Button variant="outline" size="sm">Create First Quote</Button>
-                                                </Link>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    quotationsData.quotations.map((quote) => (
-                                        <TableRow key={quote.id} className="hover:bg-gray-50/50">
-                                            <TableCell className="pl-6">
-                                                <Checkbox
-                                                    checked={selectedIds.has(quote.id)}
-                                                    onCheckedChange={(checked) => handleSelectOne(quote.id, checked)}
-                                                />
+                                </TableHeader>
+                                <TableBody>
+                                    {isLoadingQuotes ? (
+                                        <TableRow>
+                                            <TableCell colSpan={7} className="text-center py-8">
+                                                <Loader2 className="w-6 h-6 animate-spin mx-auto text-gray-400" />
                                             </TableCell>
-                                            <TableCell className="font-medium">{quote.reference_number || quote.quotation_number}</TableCell>
-                                            <TableCell>
-                                                <div className="font-medium text-gray-900">{quote.company_name || quote.customer_name || 'Walking Customer'}</div>
-                                                <div className="text-xs text-gray-500">{quote.customer_snapshot?.email || quote.customer_email}</div>
-                                            </TableCell>
-                                            <TableCell className="max-w-[200px]">
-                                                <div className="truncate">
-                                                    <div className="font-medium text-sm flex items-center gap-1">
-                                                        {getPrimaryContact(quote).name}
-                                                        {getPrimaryContact(quote).designation && <span className="text-xs text-gray-400">({getPrimaryContact(quote).designation})</span>}
-                                                    </div>
-                                                    <div className="text-xs text-gray-500">{getPrimaryContact(quote).phone}</div>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="text-gray-500">{format(new Date(quote.created_at), 'dd MMM yyyy')}</TableCell>
-                                            <TableCell>
-                                                <Badge
-                                                    variant="outline"
-                                                    className={
-                                                        quote.status === 'Sent' ? "bg-green-50 text-green-700 border-green-200" :
-                                                            quote.status === 'Draft' ? "bg-gray-100 text-gray-700 border-gray-200" :
-                                                                "bg-blue-50 text-blue-700 border-blue-200"
-                                                    }
-                                                >
-                                                    {quote.status}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-right pr-6">
-                                                <div className="flex justify-end items-center gap-2">
-                                                    <Button
-                                                        size="icon"
-                                                        variant="ghost"
-                                                        className="h-8 w-8 text-gray-500 hover:bg-gray-100"
-                                                        onClick={() => handleView(quote.id)}
-                                                        title="View Quotation"
-                                                    >
-                                                        <Eye className="w-4 h-4" />
-                                                    </Button>
-                                                    {quote.status === 'Draft' && (
-                                                        <Link href={`/admin/quotations?new=true&id=${quote.id}`}>
-                                                            <Button size="icon" variant="ghost" className="h-8 w-8 text-amber-600 hover:bg-amber-50" title="Edit Quote">
-                                                                <PenLine className="w-4 h-4" />
-                                                            </Button>
-                                                        </Link>
-                                                    )}
-                                                    <Button
-                                                        size="icon"
-                                                        variant="ghost"
-                                                        className="h-8 w-8 text-gray-500 hover:bg-gray-100"
-                                                        onClick={() => handleDownload(quote.id)}
-                                                        title="Download PDF"
-                                                    >
-                                                        <Download className="w-4 h-4" />
-                                                    </Button>
+                                        </TableRow>
+                                    ) : quotationsData.quotations.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                                                <div className="text-center py-12 text-muted-foreground">
+                                                    <FileText className="w-12 h-12 mx-auto text-gray-200 mb-4" />
+                                                    <p className="text-sm mb-4">No quotations generated yet</p>
+                                                    <Link href={`/admin/quotations?new=true&customer_id=${id}`}>
+                                                        <Button variant="outline" size="sm">Create First Quote</Button>
+                                                    </Link>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
+                                    ) : (
+                                        quotationsData.quotations.map((quote) => (
+                                            <TableRow key={quote.id} className="hover:bg-gray-50/50">
+                                                <TableCell className="pl-6">
+                                                    <Checkbox
+                                                        checked={selectedIds.has(quote.id)}
+                                                        onCheckedChange={(checked) => handleSelectOne(quote.id, checked)}
+                                                    />
+                                                </TableCell>
+                                                <TableCell className="font-medium">{quote.reference_number || quote.quotation_number}</TableCell>
+                                                <TableCell>
+                                                    <div className="font-medium text-gray-900">{quote.company_name || quote.customer_name || 'Walking Customer'}</div>
+                                                    <div className="text-xs text-gray-500">{quote.customer_snapshot?.email || quote.customer_email}</div>
+                                                </TableCell>
+                                                <TableCell className="max-w-[200px]">
+                                                    <div className="truncate">
+                                                        <div className="font-medium text-sm flex items-center gap-1">
+                                                            {getPrimaryContact(quote).name}
+                                                            {getPrimaryContact(quote).designation && <span className="text-xs text-gray-400">({getPrimaryContact(quote).designation})</span>}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500">{getPrimaryContact(quote).phone}</div>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-gray-500">{format(new Date(quote.created_at), 'dd MMM yyyy')}</TableCell>
+                                                <TableCell>
+                                                    <Badge
+                                                        variant="outline"
+                                                        className={
+                                                            quote.status === 'Sent' ? "bg-green-50 text-green-700 border-green-200" :
+                                                                quote.status === 'Draft' ? "bg-gray-100 text-gray-700 border-gray-200" :
+                                                                    "bg-blue-50 text-blue-700 border-blue-200"
+                                                        }
+                                                    >
+                                                        {quote.status}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell className="text-right pr-6">
+                                                    <div className="flex justify-end items-center gap-2">
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="h-8 w-8 text-gray-500 hover:bg-gray-100"
+                                                            onClick={() => handleView(quote.id)}
+                                                            title="View Quotation"
+                                                        >
+                                                            <Eye className="w-4 h-4" />
+                                                        </Button>
+                                                        {quote.status === 'Draft' && (
+                                                            <Link href={`/admin/quotations?new=true&id=${quote.id}`}>
+                                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-amber-600 hover:bg-amber-50" title="Edit Quote">
+                                                                    <PenLine className="w-4 h-4" />
+                                                                </Button>
+                                                            </Link>
+                                                        )}
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="h-8 w-8 text-gray-500 hover:bg-gray-100"
+                                                            onClick={() => handleDownload(quote.id)}
+                                                            title="Download PDF"
+                                                        >
+                                                            <Download className="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
 
-                        {/* Enhanced Pagination */}
-                        {quotationsData.totalPages > 1 && (
-                            <div className="p-4 flex justify-between items-center border-t bg-white">
-                                <div className="flex items-center gap-4">
-                                    <span className="text-sm text-gray-600">
-                                        Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, quotationsData.total)} of {quotationsData.total} quotations
-                                    </span>
-                                    <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(parseInt(value))}>
-                                        <SelectTrigger className="w-20 h-8">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="5">5</SelectItem>
-                                            <SelectItem value="10">10</SelectItem>
-                                            <SelectItem value="20">20</SelectItem>
-                                            <SelectItem value="50">50</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    disabled={page === 1}
-                                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                                >
-                                    Previous
-                                </Button>
-                                <div className="flex items-center gap-1">
-                                    {/* Page numbers */}
-                                    {Array.from({ length: Math.min(5, quotationsData.totalPages) }, (_, i) => {
-                                        let pageNum;
-                                        if (quotationsData.totalPages <= 5) {
-                                            pageNum = i + 1;
-                                        } else if (page <= 3) {
-                                            pageNum = i + 1;
-                                        } else if (page >= quotationsData.totalPages - 2) {
-                                            pageNum = quotationsData.totalPages - 4 + i;
-                                        } else {
-                                            pageNum = page - 2 + i;
-                                        }
-                                        
-                                        return (
-                                            <Button
-                                                key={pageNum}
-                                                size="sm"
-                                                variant={page === pageNum ? "default" : "outline"}
-                                                className="w-8 h-8 p-0"
-                                                onClick={() => setPage(pageNum)}
-                                            >
-                                                {pageNum}
-                                            </Button>
-                                        );
-                                    })}
+                            {/* Enhanced Pagination */}
+                            <PaginationControls
+                                currentPage={page}
+                                totalPages={quotationsData.totalPages}
+                                onPageChange={setPage}
+                                itemsPerPage={pageSize}
+                                onItemsPerPageChange={setPageSize}
+                                totalItems={quotationsData.total}
+                            />
+                        </CardContent>
+                    </Card>
+
+                    {/* Event Timeline - Right column */}
+                    <Card className="h-full flex flex-col shadow-sm">
+                        <CardHeader className="border-b bg-gray-50/30">
+                            <CardTitle className="text-lg flex items-center gap-2">
+                                <Clock className="w-5 h-5 text-amber-600" /> Event Timeline
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="pt-6 flex-grow overflow-y-auto max-h-[500px] scrollbar-thin">
+                            {isLoadingTimeline ? (
+                                <div className="flex justify-center py-8">
+                                    <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
                                 </div>
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    disabled={page === quotationsData.totalPages}
-                                    onClick={() => setPage(p => Math.min(quotationsData.totalPages, p + 1))}
-                                >
-                                    Next
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-                    </CardContent>
-                </Card>
+                            ) : timeline.length === 0 ? (
+                                <div className="text-center py-8 text-muted-foreground">
+                                    <Clock className="w-12 h-12 mx-auto text-gray-200 mb-4" />
+                                    <p className="text-sm">No activity yet</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4 relative before:absolute before:inset-0 before:left-2 before:w-0.5 before:bg-gray-100 before:h-full">
+                                    {timeline.map((event) => (
+                                        <div key={event.id} className="relative pl-8 pb-1">
+                                            <div className={`absolute left-[0px] top-1 w-5 h-5 rounded-full border-2 bg-white z-10 flex items-center justify-center
+                                                ${event.event_type.includes('quotation') ? 'border-orange-500 text-orange-500 bg-orange-50' :
+                                                    event.event_type === 'email_sent' ? 'border-blue-500 text-blue-500 bg-blue-50' :
+                                                        event.event_type === 'profile_update' ? 'border-indigo-500 text-indigo-500 bg-indigo-50' :
+                                                            'border-gray-300'}`}
+                                            >
+                                                {event.event_type.includes('quotation') ? <FileText className="w-2.5 h-2.5" /> :
+                                                    event.event_type === 'email_sent' ? <Mail className="w-2.5 h-2.5" /> :
+                                                        <Clock className="w-2.5 h-2.5" />}
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <div className="flex items-center justify-between gap-4">
+                                                    <span className="text-xs font-bold text-gray-900 capitalize">{event.event_type.replace(/_/g, ' ')}</span>
+                                                    <span className="text-[10px] text-muted-foreground">{format(new Date(event.created_at), 'MMM d, h:mm a')}</span>
+                                                </div>
+                                                <p className="text-sm mt-1 text-gray-600 leading-snug">{event.description}</p>
+                                                {event.admin_name && (
+                                                    <span className="text-[10px] text-gray-500 mt-1 font-medium bg-gray-100 px-2 py-0.5 rounded-full w-fit">
+                                                        by {event.admin_name}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
             {/* Contact Edit Modal */}
             <Dialog open={contactModalOpen} onOpenChange={setContactModalOpen}>

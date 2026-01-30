@@ -13,20 +13,28 @@ import { Textarea } from '@/components/ui/textarea'
 import {
     ArrowLeft, Loader2, Save, Building2, User, Mail, Phone,
     MapPin, FileText, ShoppingCart, Clock, MessageSquare,
-    CheckCircle2, XCircle, AlertCircle, Trash2, Send, Pencil
+    CheckCircle2, XCircle, AlertCircle, Trash2, Send, Pencil,
+    RotateCcw, Ban, Edit3, Eye
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import Link from 'next/link'
+import { PaginationControls } from '@/components/admin/PaginationControls'
 
-export default function WholesaleCustomerDetailPage({ params }) {
-    const id = params.id
+export function WholesaleCustomerDetail({ id }) {
     const router = useRouter()
     const queryClient = useQueryClient()
+    const [isApproveOpen, setIsApproveOpen] = useState(false)
+    const [terms, setTerms] = useState('')
+    const [comments, setComments] = useState('')
 
-    const { data: customer, isLoading: isLoadingCustomer } = useQuery({
+    // Pagination State
+    const [ordersPage, setOrdersPage] = useState(1)
+    const [ordersPageSize, setOrdersPageSize] = useState(5)
+
+    const { data: customer, isLoading } = useQuery({
         queryKey: ['wholesale-customer', id],
         queryFn: () => apiCall(`/admin/wholesale-customers/${id}`)
     })
@@ -36,18 +44,14 @@ export default function WholesaleCustomerDetailPage({ params }) {
         queryFn: () => apiCall(`/admin/wholesale-customers/${id}/timeline`)
     })
 
-    const { data: orders = [], isLoading: isLoadingOrders } = useQuery({
-        queryKey: ['wholesale-orders', id],
-        queryFn: () => apiCall(`/admin/wholesale-customers/${id}/orders`)
+    const { data: ordersData, isLoading: isLoadingOrders } = useQuery({
+        queryKey: ['wholesale-orders', id, ordersPage, ordersPageSize],
+        queryFn: () => apiCall(`/admin/wholesale-customers/${id}/orders?page=${ordersPage}&limit=${ordersPageSize}`)
     })
+    const orders = ordersData?.orders || []
+    const totalOrders = ordersData?.total || 0
+    const totalOrdersPages = ordersData?.totalPages || 1
 
-    const { data: quotations = [], isLoading: isLoadingQuotations } = useQuery({
-        queryKey: ['wholesale-quotations', id],
-        queryFn: () => apiCall(`/admin/wholesale-customers/${id}/quotations`)
-    })
-
-    const [terms, setTerms] = useState('')
-    const [comments, setComments] = useState('')
     const [discount, setDiscount] = useState(0)
     const [status, setStatus] = useState('')
 
@@ -72,6 +76,19 @@ export default function WholesaleCustomerDetailPage({ params }) {
         }
     })
 
+    const cancelQuotationMutation = useMutation({
+        mutationFn: (quotationId) => apiCall(`/admin/quotations/${quotationId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ status: 'cancelled' })
+        }),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['wholesale-quotations', id])
+            queryClient.invalidateQueries(['wholesale-timeline', id])
+            toast.success('Quotation cancelled')
+        },
+        onError: (err) => toast.error(err.message)
+    })
+
     const approveMutation = useMutation({
         mutationFn: (data) => apiCall('/admin/customers/approve', {
             method: 'POST',
@@ -90,7 +107,7 @@ export default function WholesaleCustomerDetailPage({ params }) {
         onError: (err) => toast.error(err.message)
     })
 
-    if (isLoadingCustomer) return <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin" /></div>
+    if (isLoading) return <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin" /></div>
     if (!customer) return <div className="p-8 text-center text-red-500">Customer not found</div>
 
     return (
@@ -221,36 +238,36 @@ export default function WholesaleCustomerDetailPage({ params }) {
                 <div className="lg:col-span-2 space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Orders List */}
-                        <Card className="h-full flex flex-col">
-                            <CardHeader className="border-b bg-gray-50/30">
+                        <Card className="h-full flex flex-col shadow-sm border-gray-100">
+                            <CardHeader className="border-b bg-gray-50/30 py-3">
                                 <div className="flex items-center justify-between">
-                                    <CardTitle className="text-lg flex items-center gap-2">
-                                        <ShoppingCart className="w-5 h-5 text-blue-600" /> Order History
+                                    <CardTitle className="text-sm font-bold flex items-center gap-2">
+                                        <ShoppingCart className="w-4 h-4 text-blue-600" /> Order History
                                     </CardTitle>
-                                    <Badge variant="outline">{orders.length}</Badge>
+                                    <Badge variant="secondary" className="text-[10px]">{totalOrders}</Badge>
                                 </div>
                             </CardHeader>
-                            <CardContent className="p-0 flex-grow overflow-y-auto max-h-[400px]">
+                            <CardContent className="p-0 flex-grow overflow-y-auto max-h-[350px]">
                                 <Table>
                                     <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Order #</TableHead>
-                                            <TableHead>Date</TableHead>
-                                            <TableHead className="text-right">Total</TableHead>
-                                            <TableHead>Status</TableHead>
+                                        <TableRow className="hover:bg-transparent">
+                                            <TableHead className="text-[10px] uppercase font-bold">Order #</TableHead>
+                                            <TableHead className="text-[10px] uppercase font-bold">Date</TableHead>
+                                            <TableHead className="text-[10px] uppercase font-bold text-right">Total</TableHead>
+                                            <TableHead className="text-[10px] uppercase font-bold">Status</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {orders.length === 0 ? (
-                                            <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">No orders yet</TableCell></TableRow>
+                                            <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground text-xs italic">No orders yet</TableCell></TableRow>
                                         ) : (
                                             orders.map(order => (
-                                                <TableRow key={order.id}>
-                                                    <TableCell className="font-mono text-xs">{order.order_number}</TableCell>
-                                                    <TableCell className="text-xs">{format(new Date(order.created_at), 'dd MMM yy')}</TableCell>
-                                                    <TableCell className="text-right text-xs">₹{parseFloat(order.total_amount).toLocaleString()}</TableCell>
+                                                <TableRow key={order.id} className="hover:bg-gray-50/50">
+                                                    <TableCell className="font-mono text-[11px] font-bold">{order.order_number}</TableCell>
+                                                    <TableCell className="text-[11px]">{format(new Date(order.created_at), 'dd MMM yy')}</TableCell>
+                                                    <TableCell className="text-right text-[11px] font-bold">₹{parseFloat(order.total_amount).toLocaleString()}</TableCell>
                                                     <TableCell>
-                                                        <Badge variant="outline" className="text-[10px] py-0">{order.status}</Badge>
+                                                        <Badge variant="outline" className="text-[9px] py-0 px-1 font-bold">{order.status}</Badge>
                                                     </TableCell>
                                                 </TableRow>
                                             ))
@@ -258,6 +275,14 @@ export default function WholesaleCustomerDetailPage({ params }) {
                                     </TableBody>
                                 </Table>
                             </CardContent>
+                            <PaginationControls
+                                currentPage={ordersPage}
+                                totalPages={totalOrdersPages}
+                                onPageChange={setOrdersPage}
+                                itemsPerPage={ordersPageSize}
+                                onItemsPerPageChange={setOrdersPageSize}
+                                totalItems={totalOrders}
+                            />
                         </Card>
 
                         {/* Event History / Timeline */}
@@ -270,16 +295,22 @@ export default function WholesaleCustomerDetailPage({ params }) {
                                     {timeline.map((event, i) => (
                                         <div key={event.id} className="relative pl-8 pb-1">
                                             <div className={`absolute left-[0px] top-1 w-5 h-5 rounded-full border-2 bg-white z-10 flex items-center justify-center
-                                                ${event.event_type.includes('quotation') ? 'border-orange-500 text-orange-500' :
-                                                    event.event_type === 'status_update' ? 'border-amber-500 text-amber-500' :
-                                                        event.event_type === 'email_sent' ? 'border-blue-500 text-blue-500' :
-                                                            event.event_type === 'registration' ? 'border-green-500 text-green-500' : 'border-gray-300'}`}
+                                                ${event.event_type === 'quotation_updated' ? 'border-amber-500 text-amber-500 bg-amber-50' :
+                                                    event.description.includes('cancelled') ? 'border-red-500 text-red-500 bg-red-50' :
+                                                        event.event_type.includes('quotation') ? 'border-orange-500 text-orange-500 bg-orange-50' :
+                                                            event.event_type === 'status_update' ? 'border-amber-500 text-amber-500 bg-amber-50' :
+                                                                event.event_type === 'email_sent' ? 'border-blue-500 text-blue-500 bg-blue-50' :
+                                                                    event.event_type === 'profile_update' ? 'border-indigo-500 text-indigo-500 bg-indigo-50' :
+                                                                        event.event_type === 'registration' ? 'border-green-500 text-green-500 bg-green-50' : 'border-gray-300'}`}
                                             >
-                                                {event.event_type.includes('quotation') ? <Send className="w-2.5 h-2.5" /> :
-                                                    event.event_type === 'status_update' ? <RotateCcw className="w-2.5 h-2.5" /> :
-                                                        event.event_type === 'email_sent' ? <Mail className="w-2.5 h-2.5" /> :
-                                                            event.event_type === 'registration' ? <CheckCircle2 className="w-2.5 h-2.5" /> :
-                                                                <Clock className="w-2.5 h-2.5" />}
+                                                {event.event_type === 'quotation_updated' ? <Edit3 className="w-2.5 h-2.5" /> :
+                                                    event.description.includes('cancelled') ? <Ban className="w-2.5 h-2.5" /> :
+                                                        event.event_type.includes('quotation') ? <FileText className="w-2.5 h-2.5" /> :
+                                                            event.event_type === 'status_update' ? <RotateCcw className="w-2.5 h-2.5" /> :
+                                                                event.event_type === 'email_sent' ? <Mail className="w-2.5 h-2.5" /> :
+                                                                    event.event_type === 'profile_update' ? <Eye className="w-2.5 h-2.5" /> :
+                                                                        event.event_type === 'registration' ? <CheckCircle2 className="w-2.5 h-2.5" /> :
+                                                                            <Clock className="w-2.5 h-2.5" />}
                                             </div>
                                             <div className="flex flex-col">
                                                 <div className="flex items-center justify-between gap-4">

@@ -21,6 +21,7 @@ import {
     Grid3X3,
     Tag,
     Store,
+    Clock,
 } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
@@ -131,6 +132,18 @@ const data = {
                     title: "Wholesale Customers",
                     url: "/admin/requests",
                     icon: User2,
+                },
+            ],
+        },
+        {
+            title: "Pages",
+            url: "#",
+            icon: LayoutList,
+            items: [
+                {
+                    title: "Activity History",
+                    url: "/admin/activity-history",
+                    icon: Clock,
                 },
             ],
         },

@@ -10,7 +10,8 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { toast } from 'sonner'
-import { ShoppingCart, LogOut, Home, Package, Search, Filter, ChevronRight, User, Settings, Plus, Trash2, Loader2, X, Check, Save } from 'lucide-react'
+import { ShoppingCart, LogOut, Home, Package, Search, Filter, ChevronRight, User, Settings, Plus, Trash2, Loader2, X, Check, Save, Clock, FileText, Edit3, Ban, CheckCircle2, Mail, Eye, RotateCcw } from 'lucide-react'
+import { format } from 'date-fns'
 import { apiCall } from '@/lib/api-client'
 import Image from 'next/image'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -45,6 +46,7 @@ export function B2BPortal() {
 
     // --- Main Data ---
     const [orders, setOrders] = useState([])
+    const [timeline, setTimeline] = useState([])
     const [cart, setCart] = useState([]) // "Quotation Items"
 
     // --- Navigation & UI State ---
@@ -79,15 +81,17 @@ export function B2BPortal() {
 
     async function loadData() {
         try {
-            const [profileData, ordersData, categoriesData, brandsData, customerTypesData] = await Promise.all([
+            const [profileData, ordersData, categoriesData, brandsData, customerTypesData, timelineData] = await Promise.all([
                 apiCall('/b2b/profile'),
                 apiCall('/b2b/orders'),
                 apiCall('/categories'),
                 apiCall('/brands'),
-                apiCall('/customer-types')
+                apiCall('/customer-types'),
+                apiCall('/b2b/timeline')
             ])
             setProfile(profileData)
             setOrders(ordersData)
+            setTimeline(timelineData || [])
             setCategories(categoriesData || [])
             setBrands(brandsData || [])
 
@@ -405,6 +409,14 @@ export function B2BPortal() {
                         >
                             <ShoppingCart className="w-4 h-4 mr-2" />
                             Order History
+                        </Button>
+                        <Button
+                            variant={currentView === 'activity-history' ? 'secondary' : 'ghost'}
+                            className="w-full justify-start font-bold"
+                            onClick={() => setCurrentView('activity-history')}
+                        >
+                            <Clock className="w-4 h-4 mr-2" />
+                            Activity History
                         </Button>
                         <div className="pt-4 mt-4 border-t border-gray-100">
                             <Button
@@ -740,6 +752,67 @@ export function B2BPortal() {
                                     <Settings className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                                     <p>Account settings are managed by the administrator.</p>
                                     <p className="text-sm">Please contact support to update your credentials.</p>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
+
+                    {currentView === 'activity-history' && (
+                        <div className="max-w-[800px] mx-auto space-y-6">
+                            <h2 className="text-2xl font-bold">Activity History</h2>
+                            <Card className="h-full flex flex-col shadow-sm border-gray-100">
+                                <CardHeader className="border-b bg-gray-50/30">
+                                    <CardTitle className="text-lg flex items-center gap-2"><Clock className="w-5 h-5 text-amber-600" /> Interaction Timeline</CardTitle>
+                                    <CardDescription>Comprehensive history of your wholesale interactions and orders.</CardDescription>
+                                </CardHeader>
+                                <CardContent className="pt-8 flex-grow">
+                                    <div className="space-y-6 relative before:absolute before:inset-0 before:left-2.5 before:w-0.5 before:bg-gray-100 before:h-full">
+                                        {timeline.length === 0 ? (
+                                            <div className="pl-10 py-10 text-gray-400 italic">No activity recorded yet.</div>
+                                        ) : (
+                                            timeline.map((event, i) => (
+                                                <div key={i} className="relative pl-10 pb-2">
+                                                    <div className={`absolute left-0 top-1.5 w-5 h-5 rounded-full border-2 bg-white z-10 flex items-center justify-center
+                                                        ${event.event_type === 'quotation_updated' ? 'border-amber-500 text-amber-500 bg-amber-50' :
+                                                            event.description?.includes('cancelled') ? 'border-red-500 text-red-500 bg-red-50' :
+                                                                event.event_type?.includes('quotation') ? 'border-orange-500 text-orange-500 bg-orange-50' :
+                                                                    ['status_update', 'order_status_updated', 'order_update'].includes(event.event_type) ? 'border-amber-500 text-amber-500 bg-amber-50' :
+                                                                        event.event_type === 'email_sent' ? 'border-blue-500 text-blue-500 bg-blue-50' :
+                                                                            event.event_type === 'profile_update' ? 'border-indigo-500 text-indigo-500 bg-indigo-50' :
+                                                                                event.event_type === 'registration' ? 'border-green-500 text-green-500 bg-green-50' : 'border-gray-300'}`}
+                                                    >
+                                                        {event.event_type === 'quotation_updated' ? <Edit3 className="w-2.5 h-2.5" /> :
+                                                            event.description?.includes('cancelled') ? <Ban className="w-2.5 h-2.5" /> :
+                                                                event.event_type?.includes('quotation') ? <FileText className="w-2.5 h-2.5" /> :
+                                                                    ['status_update', 'order_status_updated', 'order_update'].includes(event.event_type) ? <RotateCcw className="w-2.5 h-2.5" /> :
+                                                                        event.event_type === 'email_sent' ? <Mail className="w-2.5 h-2.5" /> :
+                                                                            event.event_type === 'profile_update' ? <Eye className="w-2.5 h-2.5" /> :
+                                                                                event.event_type === 'registration' ? <CheckCircle2 className="w-2.5 h-2.5" /> :
+                                                                                    <Clock className="w-2.5 h-2.5" />}
+                                                    </div>
+                                                    <div className="flex flex-col bg-white p-4 rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                                                        <div className="flex items-center justify-between mb-1">
+                                                            <span className="text-xs font-black text-gray-900 uppercase tracking-tighter">
+                                                                {event.event_type?.replace(/_/g, ' ')}
+                                                            </span>
+                                                            <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-200 uppercase">
+                                                                {format(new Date(event.created_at), 'MMM d, yyyy h:mm a')}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-sm font-medium text-gray-600 leading-tight">{event.description}</p>
+                                                        {event.admin_name && (
+                                                            <div className="flex items-center gap-1.5 mt-2">
+                                                                <div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
+                                                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                                                                    Verified by Administration
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
                                 </CardContent>
                             </Card>
                         </div>

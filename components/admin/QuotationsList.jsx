@@ -17,6 +17,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Label } from "@/components/ui/label"
 import { QuotationPreviewModal } from '@/components/admin/QuotationPreviewModal'
+import { PaginationControls } from '@/components/admin/PaginationControls'
 
 export function QuotationsList({ onCreate, onEdit }) {
     const [page, setPage] = useState(1)
@@ -68,6 +69,7 @@ export function QuotationsList({ onCreate, onEdit }) {
 
     const quotations = data?.quotations || []
     const totalPages = data?.totalPages || 1
+    const totalItems = data?.total || 0
 
     // Select All
     const handleSelectAll = (checked) => {
@@ -552,72 +554,14 @@ export function QuotationsList({ onCreate, onEdit }) {
                     </TableBody>
                 </Table>
 
-                {/* Enhanced Pagination */}
-                {totalPages > 1 && (
-                    <div className="p-4 flex justify-between items-center border-t bg-white">
-                        <div className="flex items-center gap-4">
-                            <span className="text-sm text-gray-600">
-                                Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, data?.total || 0)} of {data?.total || 0} quotations
-                            </span>
-                            <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(parseInt(value))}>
-                                <SelectTrigger className="w-20 h-8">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="5">5</SelectItem>
-                                    <SelectItem value="10">10</SelectItem>
-                                    <SelectItem value="20">20</SelectItem>
-                                    <SelectItem value="50">50</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                disabled={page === 1}
-                                onClick={() => setPage(p => Math.max(1, p - 1))}
-                            >
-                                Previous
-                            </Button>
-                            <div className="flex items-center gap-1">
-                                {/* Page numbers */}
-                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                    let pageNum;
-                                    if (totalPages <= 5) {
-                                        pageNum = i + 1;
-                                    } else if (page <= 3) {
-                                        pageNum = i + 1;
-                                    } else if (page >= totalPages - 2) {
-                                        pageNum = totalPages - 4 + i;
-                                    } else {
-                                        pageNum = page - 2 + i;
-                                    }
-
-                                    return (
-                                        <Button
-                                            key={pageNum}
-                                            size="sm"
-                                            variant={page === pageNum ? "default" : "outline"}
-                                            className="w-8 h-8 p-0"
-                                            onClick={() => setPage(pageNum)}
-                                        >
-                                            {pageNum}
-                                        </Button>
-                                    );
-                                })}
-                            </div>
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                disabled={page === totalPages}
-                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                            >
-                                Next
-                            </Button>
-                        </div>
-                    </div>
-                )}
+                <PaginationControls
+                    currentPage={page}
+                    totalPages={totalPages}
+                    onPageChange={setPage}
+                    itemsPerPage={pageSize}
+                    onItemsPerPageChange={setPageSize}
+                    totalItems={totalItems}
+                />
             </Card>
 
             {/* Delete Confirmation Dialog */}

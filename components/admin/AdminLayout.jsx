@@ -84,8 +84,8 @@ export function AdminLayout({ children }) {
                         <UserNav user={user} />
                     </div>
                 </header>
-                <main className="flex flex-1 flex-col gap-4 p-4 pt-0 bg-gray-50/50">
-                    <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min pt-6">
+                <main className="flex flex-1 flex-col gap-4 p-4 pt-0 bg-[#f2f2f2]">
+                    <div className="min-h-[100vh] flex-1 rounded-xl bg-[#f2f2f2] md:min-h-min pt-6">
                         {children}
                     </div>
                 </main>

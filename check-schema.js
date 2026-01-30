@@ -1,37 +1,27 @@
-const { Client } = require('pg');
-require('dotenv').config();
+const { query } = require('./lib/simple-db');
 
 async function checkSchema() {
-    const client = new Client({
-        connectionString: process.env.DATABASE_URL,
-        ssl: {
-            rejectUnauthorized: false
-        }
-    });
     try {
-        await client.connect();
-        const res = await client.query("SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'customers'");
-        const columns = res.rows;
+        console.log('--- Quotations Schema ---');
+        const qRes = await query(`
+            SELECT column_name, data_type 
+            FROM information_schema.columns 
+            WHERE table_name = 'quotations';
+        `);
+        qRes.rows.forEach(row => console.log(`${row.column_name}: ${row.data_type}`));
 
-        const typesTableRes = await client.query("SELECT table_name FROM information_schema.tables WHERE table_name = 'customer_types'");
-        const tableExists = typesTableRes.rows.length > 0;
+        console.log('\n--- Quotation Items Schema ---');
+        const qiRes = await query(`
+            SELECT column_name, data_type 
+            FROM information_schema.columns 
+            WHERE table_name = 'quotation_items';
+        `);
+        qiRes.rows.forEach(row => console.log(`${row.column_name}: ${row.data_type}`));
 
-        let types = [];
-        if (tableExists) {
-            const typesRes = await client.query("SELECT * FROM customer_types");
-            types = typesRes.rows;
-        }
-
-        console.log(JSON.stringify({
-            columns: columns,
-            customer_types_table_exists: tableExists,
-            customer_types: types
-        }, null, 2));
-
-    } catch (err) {
-        console.error(err);
-    } finally {
-        await client.end();
+        process.exit(0);
+    } catch (error) {
+        console.error('Error checking schema:', error);
+        process.exit(1);
     }
 }
 

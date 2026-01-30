@@ -1,4 +1,4 @@
-import WholesaleCustomerDetail from '@/components/admin/WholesaleCustomerDetail'
+import { WholesaleCustomerDetail } from '@/components/admin/WholesaleCustomerDetail'
 
 export const metadata = {
     title: 'Wholesale Customer Detail - Admin - Pavilion',
@@ -6,5 +6,5 @@ export const metadata = {
 }
 
 export default function Page({ params }) {
-    return <WholesaleCustomerDetail params={params} />
+    return <WholesaleCustomerDetail id={params.id} />
 }
