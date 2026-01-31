@@ -5,12 +5,12 @@ import Image from 'next/image'
 import Link from 'next/link'
 
 const feed = [
-    'https://images.unsplash.com/photo-1540747913346-19e3adca174f?w=600',
-    'https://images.unsplash.com/photo-1610450294178-f1e30562db21?w=600',
-    'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=600',
-    'https://images.unsplash.com/photo-1546519150-13867664653a?w=600',
-    'https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=600',
-    'https://images.unsplash.com/photo-1544919982-b61976f0ba43?w=600'
+    'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=600&q=80', // Cricket Bat & Ball
+    'https://images.unsplash.com/photo-1624526267942-ab0ff8a3e972?w=600&q=80', // Cricket Field
+    'https://images.unsplash.com/photo-1593341646261-28469d45e0d3?w=600&q=80', // Cricket Wickets
+    'https://images.unsplash.com/photo-1544919982-b61976f0ba43?w=600&q=80', // Cricket Ball Red
+    'https://images.unsplash.com/photo-1606925797300-0b35e9d17dcb?w=600&q=80', // Cricket Player
+    'https://images.unsplash.com/photo-1588665791763-7eb92b7c6c74?w=600&q=80'  // Cricket Gear/Nets
 ]
 
 export function InstagramFeed() {
@@ -29,7 +29,7 @@ export function InstagramFeed() {
                 {/* Header */}
                 <div className="flex flex-col items-center text-center mb-8">
                     <Link
-                        href="https://instagram.com/pavilionsports"
+                        href="https://instagram.com/thepavilionsports"
                         target="_blank"
                         className="group inline-flex items-center gap-2 mb-4"
                     >
@@ -37,7 +37,7 @@ export function InstagramFeed() {
                             <Instagram className="w-5 h-5 text-white" />
                         </div>
                         <span className="font-semibold text-gray-900 group-hover:text-red-600 transition-colors">
-                            @pavilionsports
+                            @thepavilionsports
                         </span>
                     </Link>
 
@@ -54,7 +54,7 @@ export function InstagramFeed() {
                     {feed.map((img, idx) => (
                         <Link
                             key={idx}
-                            href="https://instagram.com/pavilionsports"
+                            href="https://instagram.com/thepavilionsports"
                             target="_blank"
                             className="group relative aspect-square overflow-hidden rounded-lg"
                         >
@@ -76,7 +76,7 @@ export function InstagramFeed() {
                 {/* CTA */}
                 <div className="text-center mt-6">
                     <Link
-                        href="https://instagram.com/pavilionsports"
+                        href="https://instagram.com/thepavilionsports"
                         target="_blank"
                         className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 hover:bg-red-600 text-white text-sm font-semibold rounded-lg transition-colors"
                     >

@@ -357,6 +357,24 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
         <section className="py-0 bg-white border-b lg:relative lg:top-0 lg:z-auto w-full">
           <div className="w-full px-4 lg:px-6 py-2">
             <div className="flex gap-2 w-full overflow-x-auto pb-2 lg:pb-0 scrollbar-hide touch-pan-x snap-x lg:flex-wrap">
+            {/* Tags */}
+              {tags.map((tag) => {
+                const tagSlug = tag.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+                return (
+                  <Link
+                    key={tag.id}
+                    href={`/${categorySlug}/${tagSlug}`}
+                    className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-50 border border-green-200 hover:border-green-600 hover:bg-green-100 transition-all duration-300 shadow-sm hover:shadow-md shrink-0 snap-start"
+                  >
+                    <div className="w-6 h-6 rounded-full bg-green-100 overflow-hidden flex-shrink-0 border border-green-300 flex items-center justify-center">
+                      <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                    </div>
+                    <span className="text-[10px] font-bold text-green-700 group-hover:text-green-800 transition-colors uppercase tracking-tight">
+                      {tag.name}
+                    </span>
+                  </Link>
+                )
+              })}
               {/* Subcategories */}
               {subCategories.map((subCat) => {
                 const subCatSlug = subCat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
@@ -384,25 +402,6 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
                     </div>
                     <span className="text-[10px] font-bold text-blue-700 group-hover:text-blue-800 transition-colors uppercase tracking-tight">
                       {subCat.name}
-                    </span>
-                  </Link>
-                )
-              })}
-
-              {/* Tags */}
-              {tags.map((tag) => {
-                const tagSlug = tag.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
-                return (
-                  <Link
-                    key={tag.id}
-                    href={`/${categorySlug}/${tagSlug}`}
-                    className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-50 border border-green-200 hover:border-green-600 hover:bg-green-100 transition-all duration-300 shadow-sm hover:shadow-md shrink-0 snap-start"
-                  >
-                    <div className="w-6 h-6 rounded-full bg-green-100 overflow-hidden flex-shrink-0 border border-green-300 flex items-center justify-center">
-                      <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                    </div>
-                    <span className="text-[10px] font-bold text-green-700 group-hover:text-green-800 transition-colors uppercase tracking-tight">
-                      {tag.name}
                     </span>
                   </Link>
                 )

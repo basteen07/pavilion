@@ -93,7 +93,7 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                 <div className="w-full px-4 md:px-6 lg:px-8 xl:px-12 flex justify-between items-center text-xs">
                     <div className="flex items-center gap-8">
                         <a href="tel:+911234567890" className="flex items-center gap-2 hover:text-red-400 transition-colors">
-                            <Phone className="w-3.5 h-3.5" /> +91 12345 67890
+                            <Phone className="w-3.5 h-3.5" /> +91-44-28418975
                         </a>
                         <a href="mailto:info@pavilionsports.com" className="flex items-center gap-2 hover:text-red-400 transition-colors">
                             <Mail className="w-3.5 h-3.5" /> info@pavilionsports.com

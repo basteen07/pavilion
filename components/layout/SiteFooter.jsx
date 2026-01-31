@@ -30,7 +30,7 @@ export function SiteFooter({ categories = [] }) {
                         </Link>
 
                         <p className="text-gray-400 max-w-sm leading-relaxed text-sm">
-                            India's premier B2B sports equipment supplier. With over 36 years of experience, we provide professional-grade sporting gear to schools, clubs, and stores across the nation.
+                            India's premier Wholesale sports equipment supplier. With over 36 years of experience, we provide professional-grade sporting gear to schools, clubs, and stores across the nation.
                         </p>
 
                         <div className="space-y-3">
@@ -40,7 +40,7 @@ export function SiteFooter({ categories = [] }) {
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Call Us</p>
-                                    <p className="text-sm font-semibold">+91 12345 67890</p>
+                                    <p className="text-sm font-semibold">+91-44-28418975</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-4 group">
@@ -49,7 +49,7 @@ export function SiteFooter({ categories = [] }) {
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">WhatsApp</p>
-                                    <p className="text-sm font-semibold">+91 12345 67890</p>
+                                    <p className="text-sm font-semibold">+91-44-28418975</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-4 group">
@@ -76,8 +76,7 @@ export function SiteFooter({ categories = [] }) {
                             <li><Link href="/gallery" className="text-gray-400 hover:text-white hover:translate-x-1 transition-all inline-block hover:font-semibold">Gallery</Link></li>
                             <li><Link href="/careers" className="text-gray-400 hover:text-white hover:translate-x-1 transition-all inline-block hover:font-semibold">Careers</Link></li>
                             <li><Link href="/contact" className="text-gray-400 hover:text-white hover:translate-x-1 transition-all inline-block hover:font-semibold">Contact Us</Link></li>
-                            <li><Link href="/login" className="text-gray-400 hover:text-white hover:translate-x-1 transition-all inline-block hover:font-semibold">B2B Login</Link></li>
-                            <li><Link href="/b2b" className="text-red-500 hover:text-red-400 hover:translate-x-1 transition-all inline-block hover:font-bold">Wholesale Portal</Link></li>
+                            <li><Link href="/login" className="text-gray-400 hover:text-white hover:translate-x-1 transition-all inline-block hover:font-semibold">Wholesale Login</Link></li>
                         </ul>
                     </div>
 
@@ -112,7 +111,7 @@ export function SiteFooter({ categories = [] }) {
                             <span className="absolute -bottom-2 left-0 w-8 h-1 bg-red-600 rounded-full"></span>
                         </h4>
                         <div className="space-y-4 p-6 bg-white/5 rounded-2xl border border-white/10">
-                            <p className="text-sm text-gray-400">Subscribe for exclusive B2B offers, new arrivals and industry insights.</p>
+                            <p className="text-sm text-gray-400">Subscribe for exclusive Wholesale offers, new arrivals and industry insights.</p>
                             <div className="flex gap-2">
                                 <Input
                                     placeholder="Email address"
@@ -123,19 +122,19 @@ export function SiteFooter({ categories = [] }) {
                                 </Button>
                             </div>
                             <div className="flex items-center gap-4 pt-2">
-                                <a href="#" className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-red-600 transition-colors duration-300" aria-label="Instagram">
+                                <a href="https://www.instagram.com/thepavilionsports/" className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-red-600 transition-colors duration-300" aria-label="Instagram">
                                     <Instagram className="w-4 h-4" />
                                 </a>
-                                <a href="#" className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-blue-600 transition-colors duration-300" aria-label="Facebook">
+                                <a href="https://www.facebook.com/thepavilionsports" className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-blue-600 transition-colors duration-300" aria-label="Facebook">
                                     <Facebook className="w-4 h-4" />
                                 </a>
-                                <a href="#" className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-sky-500 transition-colors duration-300" aria-label="Twitter">
+                                <a href="https://x.com/thepavilionshop" className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-sky-500 transition-colors duration-300" aria-label="Twitter">
                                     <Twitter className="w-4 h-4" />
                                 </a>
-                                <a href="#" className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-green-600 transition-colors duration-300" aria-label="WhatsApp">
+                                <a href="https://wa.me/+91-44-28418975" className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-green-600 transition-colors duration-300" aria-label="WhatsApp">
                                     <MessageCircle className="w-4 h-4" />
                                 </a>
-                                <a href="#" className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-red-700 transition-colors duration-300" aria-label="YouTube">
+                                <a href="https://www.youtube.com/channel/UCABPzIMZoTAncl6cfbVBA7g" className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-red-700 transition-colors duration-300" aria-label="YouTube">
                                     <Youtube className="w-4 h-4" />
                                 </a>
                             </div>
