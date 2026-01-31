@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
+import { PasswordInput } from '@/components/ui/password-input'
 import { apiCall } from '@/lib/api-client'
 
 export function AuthPage({ mode = 'login' }) {
@@ -31,6 +32,11 @@ export function AuthPage({ mode = 'login' }) {
     const [mfaRequired, setMfaRequired] = useState(false)
     const [loading, setLoading] = useState(false)
 
+    // Email Validation State
+    const [isEmailValid, setIsEmailValid] = useState(true)
+    const [emailValidationMsg, setEmailValidationMsg] = useState('')
+    const [validatingEmail, setValidatingEmail] = useState(false)
+
     // Force clear session whenever login page is visited
     useEffect(() => {
         if (mode === 'login') {
@@ -40,11 +46,44 @@ export function AuthPage({ mode = 'login' }) {
         }
     }, [mode])
 
+    async function validateEmailAddress(emailToValidate) {
+        if (!emailToValidate) return;
+        if (mode === 'login') return; // Skip for login to avoid leaking info or slowing down
+
+        setValidatingEmail(true);
+        setEmailValidationMsg('');
+
+        try {
+            const res = await fetch('/api/validate-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: emailToValidate })
+            });
+            const data = await res.json();
+
+            setIsEmailValid(data.valid);
+            if (!data.valid) {
+                setEmailValidationMsg(data.message || 'Invalid email domain');
+            }
+        } catch (error) {
+            console.error('Validation error:', error);
+            // On error we might want to be permissive or restrictive. 
+            // Let's be permissive to not block users on network glitch, but show warning.
+        } finally {
+            setValidatingEmail(false);
+        }
+    }
+
     async function handleSubmit(e) {
         e.preventDefault()
 
-        if (mode === 'register' && password !== confirmPassword) {
-            return toast.error('Passwords do not match')
+        if (mode === 'register') {
+            if (password !== confirmPassword) {
+                return toast.error('Passwords do not match')
+            }
+            if (!isEmailValid) {
+                return toast.error('Please enter a valid email address with an active domain')
+            }
         }
 
         setLoading(true)
@@ -175,9 +214,17 @@ export function AuthPage({ mode = 'login' }) {
                                             id="email"
                                             type="email"
                                             value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
+                                            onChange={(e) => {
+                                                setEmail(e.target.value);
+                                                setIsEmailValid(true); // Reset on change
+                                                setEmailValidationMsg('');
+                                            }}
+                                            onBlur={() => validateEmailAddress(email)}
+                                            className={!isEmailValid ? "border-red-500 focus-visible:ring-red-500" : ""}
                                             required
                                         />
+                                        {validatingEmail && <p className="text-xs text-blue-600 mt-1">Checking domain...</p>}
+                                        {!isEmailValid && <p className="text-xs text-red-600 mt-1">{emailValidationMsg}</p>}
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="phone">Phone Number</Label>
@@ -242,9 +289,8 @@ export function AuthPage({ mode = 'login' }) {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="password">Password</Label>
-                                        <Input
+                                        <PasswordInput
                                             id="password"
-                                            type="password"
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
                                             required
@@ -252,9 +298,8 @@ export function AuthPage({ mode = 'login' }) {
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="confirmPassword">Confirm Password</Label>
-                                        <Input
+                                        <PasswordInput
                                             id="confirmPassword"
-                                            type="password"
                                             value={confirmPassword}
                                             onChange={(e) => setConfirmPassword(e.target.value)}
                                             required
@@ -276,10 +321,17 @@ export function AuthPage({ mode = 'login' }) {
                                     />
                                 </div>
                                 <div>
-                                    <Label htmlFor="loginPassword">Password</Label>
-                                    <Input
+                                    <div className="flex items-center justify-between">
+                                        <Label htmlFor="loginPassword">Password</Label>
+                                        <Link
+                                            href="/forgot-password"
+                                            className="text-xs text-red-600 hover:underline"
+                                        >
+                                            Forgot password?
+                                        </Link>
+                                    </div>
+                                    <PasswordInput
                                         id="loginPassword"
-                                        type="password"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         required

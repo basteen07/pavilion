@@ -116,6 +116,11 @@ const data = {
                     url: "/admin/customers",
                     icon: Building2,
                 },
+                {
+                    title: "Settings",
+                    url: "/admin/sales/settings",
+                    icon: Settings,
+                },
             ],
         },
         {

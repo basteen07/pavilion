@@ -15,8 +15,8 @@ export default function AdminDashboard() {
     }
   }, [])
 
-  const { data: stats, isLoading, error } = useQuery({
-    queryKey: ['admin-stats'],
+  const { data: dashboardData, isLoading, error } = useQuery({
+    queryKey: ['admin-dashboard'],
     queryFn: () => apiCall('/admin/dashboard'),
     refetchInterval: 30000 // Refresh every 30s
   })
@@ -37,10 +37,18 @@ export default function AdminDashboard() {
   if (error) {
     return (
       <div className="p-4 bg-red-50 text-red-600 rounded-lg border border-red-100">
-        Failed to load dashboard stats. Please try again later.
+        Failed to load dashboard data. Please try again later.
       </div>
     )
   }
 
-  return <DashboardOverview stats={stats} user={user} onSetupMFA={setupMFA} />
+  return (
+    <DashboardOverview
+      stats={dashboardData?.stats}
+      activities={dashboardData}
+      currentUserId={dashboardData?.currentUserId}
+      user={user}
+      onSetupMFA={setupMFA}
+    />
+  )
 }

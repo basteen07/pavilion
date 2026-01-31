@@ -355,6 +355,22 @@ async function handleRoute(request, { params }) {
       return import('@/lib/api/customer-types').then(m => m.deleteCustomerType(id));
     }
 
+    // --- NEW: Settings API ---
+    if (route === '/settings') {
+      if (method === 'GET') {
+        const url = new URL(request.url);
+        const keys = url.searchParams.get('keys')?.split(',') || [];
+        return import('@/lib/api/settings').then(m => m.getSettings(keys));
+      }
+      if (method === 'POST' || method === 'PUT') {
+        const user = await authenticateRequest(request);
+        if (!user || (user.role_name !== 'superadmin' && user.role_name !== 'admin')) {
+          return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+        }
+        return import('@/lib/api/settings').then(async m => m.updateSettings(await request.json()));
+      }
+    }
+
     // --- NEW: Quotations API ---
     if (route === '/quotations') {
       if (method === 'GET') {

@@ -435,6 +435,29 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             doc.text(splitComments, 15, currentY)
         }
 
+        // --- Bank Details & Footer ---
+        currentY += 15
+        try {
+            const settings = await apiCall('/settings?keys=company_bank_details');
+            if (settings.company_bank_details) {
+                if (currentY > 230) {
+                    doc.addPage()
+                    currentY = 20
+                }
+                doc.setFont('helvetica', 'bold')
+                doc.setFontSize(8)
+                doc.setTextColor(40)
+                doc.text('BANK DETAILS:', 15, currentY)
+                doc.setFont('helvetica', 'normal')
+                doc.setFontSize(7)
+                doc.setTextColor(80)
+                const bankLines = doc.splitTextToSize(settings.company_bank_details, 180)
+                doc.text(bankLines, 15, currentY + 5)
+            }
+        } catch (e) {
+            console.error('Bank details fetch error:', e)
+        }
+
         // Footer
         doc.setFontSize(7)
         doc.setTextColor(150)
@@ -479,7 +502,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                             discount: item.discount || 0,
                             is_detailed: item.is_detailed ?? false, // Preserve or default to false
                             short_description: item.short_description || '',
-                            image: item.image || ''
+                            image: getFirstImage(item.images)
                         })));
                         setQuotationDetails({
                             quotation_number: quote.quotation_number,
@@ -504,6 +527,37 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             fetchQuote();
         } else if (urlCustomerId && customers.length > 0 && !selectedCustomer) {
             setSelectedCustomer(urlCustomerId);
+        }
+
+        // Fetch sales settings if creating new
+        if (!quoteId) {
+            const fetchSalesSettings = async () => {
+                try {
+                    const settings = await apiCall('/settings?keys=sales_default_terms,quotation_prefix,quotation_validity_days');
+
+                    setQuotationDetails(prev => {
+                        const updates = {};
+                        if (settings.sales_default_terms && !prev.terms_and_conditions) {
+                            updates.terms_and_conditions = settings.sales_default_terms;
+                        }
+                        if (settings.quotation_prefix && prev.quotation_number.startsWith('QT-')) {
+                            // Only update prefix if it hasn't been significantly changed or is still the default
+                            const randomPart = prev.quotation_number.split('-').pop();
+                            updates.quotation_number = `${settings.quotation_prefix}-${new Date().getFullYear()}-${randomPart}`;
+                        }
+                        if (settings.quotation_validity_days) {
+                            const days = parseInt(settings.quotation_validity_days);
+                            if (!isNaN(days)) {
+                                updates.valid_until = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                            }
+                        }
+                        return { ...prev, ...updates };
+                    });
+                } catch (e) {
+                    console.error("Failed to fetch sales settings:", e);
+                }
+            };
+            fetchSalesSettings();
         }
     }, [quoteId, urlCustomerId, customers]); // Depend on 'customers' to ensure list is loaded
 
@@ -864,7 +918,8 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                     slug: item.slug,
                     category_name: item.category_name,
                     sub_category_name: item.sub_category_name,
-                    brand_name: item.brand_name
+                    brand_name: item.brand_name,
+                    is_detailed: item.is_detailed || false
                 })),
                 ...quotationDetails,
                 subtotal, gst: tax, total_amount: total

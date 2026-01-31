@@ -3,15 +3,26 @@ import { Button } from '@/components/ui/button'
 import { Download, ExternalLink } from 'lucide-react'
 import { format } from 'date-fns'
 
-// Default Terms & Conditions
-const DEFAULT_TERMS = `1. Prices are valid for 30 days from the quotation date.
-2. Payment terms: 50% advance, balance before delivery.
-3. Delivery: 7-14 working days from order confirmation.
-4. All prices are exclusive of GST unless otherwise stated.
-5. Goods once sold cannot be returned or exchanged.
-6. This quotation is subject to stock availability.`;
+import { useState, useEffect } from 'react'
 
 export function QuotationPreviewModal({ open, onOpenChange, quotation, onDownload }) {
+    const [bankDetails, setBankDetails] = useState('')
+
+    useEffect(() => {
+        if (open) {
+            const fetchBankDetails = async () => {
+                try {
+                    const { apiCall } = await import('@/lib/api-client')
+                    const settings = await apiCall('/settings?keys=company_bank_details')
+                    setBankDetails(settings.company_bank_details || '')
+                } catch (e) {
+                    console.error("Failed to fetch bank details:", e)
+                }
+            }
+            fetchBankDetails()
+        }
+    }, [open])
+
     if (!quotation) return null
 
     // Helper to safely get numbers
@@ -29,7 +40,7 @@ export function QuotationPreviewModal({ open, onOpenChange, quotation, onDownloa
         return acc;
     }, {});
 
-    const termsToShow = quotation.terms_and_conditions || DEFAULT_TERMS;
+    const termsToShow = quotation.terms_and_conditions || '';
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -230,9 +241,19 @@ export function QuotationPreviewModal({ open, onOpenChange, quotation, onDownloa
                     )}
 
                     {/* Terms & Conditions - Corporate */}
-                    <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                        <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Terms & Conditions</h3>
-                        <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">{termsToShow}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {termsToShow && (
+                            <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                                <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Terms & Conditions</h3>
+                                <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">{termsToShow}</p>
+                            </div>
+                        )}
+                        {bankDetails && (
+                            <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                                <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Bank Details</h3>
+                                <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed font-mono">{bankDetails}</p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Footer */}

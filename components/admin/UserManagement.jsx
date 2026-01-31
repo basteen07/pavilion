@@ -45,6 +45,12 @@ export default function UserManagement() {
     const [isAddUserOpen, setIsAddUserOpen] = useState(false);
     const [isAddRoleOpen, setIsAddRoleOpen] = useState(false);
     const [newRoleName, setNewRoleName] = useState('');
+
+    // Email Validation
+    const [isEmailValid, setIsEmailValid] = useState(true);
+    const [emailValidationMsg, setEmailValidationMsg] = useState('');
+    const [validatingEmail, setValidatingEmail] = useState(false);
+
     const [newUser, setNewUser] = useState({
         email: '',
         password: '',
@@ -119,10 +125,40 @@ export default function UserManagement() {
         }
     });
 
+
+
+    const validateEmailAddress = async (email) => {
+        if (!email) return;
+        setValidatingEmail(true);
+        setEmailValidationMsg('');
+
+        try {
+            const res = await fetch('/api/validate-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            const data = await res.json();
+
+            setIsEmailValid(data.valid);
+            if (!data.valid) {
+                setEmailValidationMsg(data.message || 'Invalid email domain');
+            }
+        } catch (error) {
+            console.error('Validation error:', error);
+        } finally {
+            setValidatingEmail(false);
+        }
+    };
+
     const handleCreateUser = (e) => {
         e.preventDefault();
         if (newUser.password !== newUser.confirmPassword) {
             toast.error('Passwords do not match');
+            return;
+        }
+        if (!isEmailValid) {
+            toast.error('Please enter a valid email address');
             return;
         }
         createUserMutation.mutate(newUser);
@@ -286,11 +322,18 @@ export default function UserManagement() {
                                 id="email"
                                 type="email"
                                 required
-                                className="h-11 rounded-xl bg-gray-50 border-gray-100 focus:bg-white focus:border-red-500 transition-all"
+                                className={`h-11 rounded-xl bg-gray-50 border-gray-100 focus:bg-white focus:border-red-500 transition-all ${!isEmailValid ? 'border-red-500 ring-offset-red-500' : ''}`}
                                 value={newUser.email}
-                                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                                onChange={(e) => {
+                                    setNewUser({ ...newUser, email: e.target.value });
+                                    setIsEmailValid(true);
+                                    setEmailValidationMsg('');
+                                }}
+                                onBlur={() => validateEmailAddress(newUser.email)}
                                 placeholder="admin@pavilionsports.com"
                             />
+                            {validatingEmail && <p className="text-[10px] text-blue-600">Checking domain...</p>}
+                            {!isEmailValid && <p className="text-[10px] text-red-600">{emailValidationMsg}</p>}
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
