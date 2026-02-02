@@ -11,6 +11,18 @@ import { toast } from 'sonner'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
 import { PasswordInput } from '@/components/ui/password-input'
 import { apiCall } from '@/lib/api-client'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
+const INDIAN_STATES = [
+    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+    "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand",
+    "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
+    "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
+    "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
+    "Uttar Pradesh", "Uttarakhand", "West Bengal",
+    "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu",
+    "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
+];
 
 export function AuthPage({ mode = 'login' }) {
     const router = useRouter()
@@ -157,7 +169,7 @@ export function AuthPage({ mode = 'login' }) {
                             <>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="firstName">First Name</Label>
+                                        <Label htmlFor="firstName">First Name <span className="text-red-500">*</span></Label>
                                         <Input
                                             id="firstName"
                                             value={firstName}
@@ -167,7 +179,7 @@ export function AuthPage({ mode = 'login' }) {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="lastName">Last Name</Label>
+                                        <Label htmlFor="lastName">Last Name <span className="text-red-500">*</span></Label>
                                         <Input
                                             id="lastName"
                                             value={lastName}
@@ -178,7 +190,7 @@ export function AuthPage({ mode = 'login' }) {
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="companyName">Business Name</Label>
+                                    <Label htmlFor="companyName">Business Name <span className="text-red-500">*</span></Label>
                                     <Input
                                         id="companyName"
                                         value={companyName}
@@ -189,27 +201,29 @@ export function AuthPage({ mode = 'login' }) {
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="gstin">GSTIN</Label>
+                                        <Label htmlFor="gstin">GSTIN <span className="text-red-500">*</span></Label>
                                         <Input
                                             id="gstin"
                                             value={gstin}
                                             onChange={(e) => setGstin(e.target.value)}
                                             placeholder="Enter GSTIN"
+                                            required
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="pan">PAN</Label>
+                                        <Label htmlFor="pan">PAN <span className="text-red-500">*</span></Label>
                                         <Input
                                             id="pan"
                                             value={pan}
                                             onChange={(e) => setPan(e.target.value)}
                                             placeholder="Enter PAN"
+                                            required
                                         />
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="email">Email</Label>
+                                        <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
                                         <Input
                                             id="email"
                                             type="email"
@@ -227,7 +241,7 @@ export function AuthPage({ mode = 'login' }) {
                                         {!isEmailValid && <p className="text-xs text-red-600 mt-1">{emailValidationMsg}</p>}
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="phone">Phone Number</Label>
+                                        <Label htmlFor="phone">Phone Number <span className="text-red-500">*</span></Label>
                                         <Input
                                             id="phone"
                                             type="tel"
@@ -239,7 +253,7 @@ export function AuthPage({ mode = 'login' }) {
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="address1">Business Address 1</Label>
+                                    <Label htmlFor="address1">Business Address 1 <span className="text-red-500">*</span></Label>
                                     <Input
                                         id="address1"
                                         value={address1}
@@ -249,7 +263,7 @@ export function AuthPage({ mode = 'login' }) {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="address2">Address 2</Label>
+                                    <Label htmlFor="address2">Address 2 (Optional)</Label>
                                     <Input
                                         id="address2"
                                         value={address2}
@@ -257,9 +271,9 @@ export function AuthPage({ mode = 'login' }) {
                                         placeholder="Apartment, suite, unit, building, floor, etc."
                                     />
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="city">City / Town</Label>
+                                        <Label htmlFor="city">City / Town <span className="text-red-500">*</span></Label>
                                         <Input
                                             id="city"
                                             value={city}
@@ -268,27 +282,33 @@ export function AuthPage({ mode = 'login' }) {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="state">State</Label>
-                                        <Input
-                                            id="state"
-                                            value={state}
-                                            onChange={(e) => setState(e.target.value)}
-                                            required
-                                        />
+                                        <Label htmlFor="state">State <span className="text-red-500">*</span></Label>
+                                        <Select value={state} onValueChange={setState} required>
+                                            <SelectTrigger id="state">
+                                                <SelectValue placeholder="Select State" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {INDIAN_STATES.map((s) => (
+                                                    <SelectItem key={s} value={s}>
+                                                        {s}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="pincode">Pincode</Label>
-                                        <Input
-                                            id="pincode"
-                                            value={pincode}
-                                            onChange={(e) => setPincode(e.target.value)}
-                                            required
-                                        />
-                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="pincode">Pincode <span className="text-red-500">*</span></Label>
+                                    <Input
+                                        id="pincode"
+                                        value={pincode}
+                                        onChange={(e) => setPincode(e.target.value)}
+                                        required
+                                    />
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="password">Password</Label>
+                                        <Label htmlFor="password">Password <span className="text-red-500">*</span></Label>
                                         <PasswordInput
                                             id="password"
                                             value={password}
@@ -297,7 +317,7 @@ export function AuthPage({ mode = 'login' }) {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="confirmPassword">Confirm Password</Label>
+                                        <Label htmlFor="confirmPassword">Confirm Password <span className="text-red-500">*</span></Label>
                                         <PasswordInput
                                             id="confirmPassword"
                                             value={confirmPassword}

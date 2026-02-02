@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/simple-db';
 import { hashPassword, verifyPassword, createToken, verifyToken, generateMFASecret, generateQRCode, verifyTOTP } from '@/lib/auth';
-import { sendEmail, sendQuotationEmail, sendOrderConfirmationEmail, sendB2BApprovalEmail } from '@/lib/email';
+import { sendEmail, sendQuotationEmail, sendOrderConfirmationEmail, sendB2BApprovalEmail, sendB2BRegistrationPendingEmail, sendB2BAdminRegistrationNotification } from '@/lib/email';
 
 // CORS helper
 function handleCORS(response) {
@@ -880,25 +880,42 @@ async function handleRoute(request, { params }) {
 
       const newUser = userResult.rows[0];
 
+      // Generate secure approval token
+      const approvalToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+
       // Create B2B customer record
       const b2bResult = await query(
         `INSERT INTO b2b_customers 
-         (user_id, company_name, gstin, pan_number, business_type, address, address_line2, city, state, pincode, first_name, last_name, status) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending') 
+         (user_id, company_name, gstin, pan_number, business_type, address, address_line2, city, state, pincode, first_name, last_name, status, approval_token) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending', $13) 
          RETURNING *`,
         [
           newUser.id, company_name, gstin || null, pan_number || null, business_type || null,
           address || null, address_line2 || null, city || null, state || null, pincode || null,
-          first_name || null, last_name || null
+          first_name || null, last_name || null, approvalToken
         ]
       );
 
+      const customerId = b2bResult.rows[0].id;
+
       await query(
         'INSERT INTO b2b_customer_events (customer_id, event_type, description) VALUES ($1, $2, $3)',
-        [b2bResult.rows[0].id, 'registration', 'New wholesale registration request received.']
+        [customerId, 'registration', 'New wholesale registration request received.']
       );
 
-      await sendB2BApprovalEmail(email, 'pending');
+      // Notifications
+      try {
+        await sendB2BRegistrationPendingEmail(email, company_name);
+
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+        const approvalLink = `${baseUrl}/admin/approve-customer?token=${approvalToken}`;
+
+        // Find admin email (can be set in env or fetched from DB)
+        const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.SMTP_USER;
+        await sendB2BAdminRegistrationNotification(adminEmail, b2bResult.rows[0], approvalLink);
+      } catch (emailError) {
+        console.error('Email notification error during registration:', emailError);
+      }
 
       return handleCORS(NextResponse.json({
         success: true,
@@ -2576,6 +2593,92 @@ async function handleRoute(request, { params }) {
         metadata: { source: '/admin/logout', email: user.email, role: user.role_name }
       });
       return handleCORS(NextResponse.json({ success: true }));
+    }
+
+    // --- Secure Token Based B2B Approval ---
+    if (route === '/admin/approve-by-token') {
+      const url = new URL(request.url);
+      const token = url.searchParams.get('token');
+
+      if (!token) {
+        return handleCORS(NextResponse.json({ error: 'Token is required' }, { status: 400 }));
+      }
+
+      // GET: Fetch customer details for the token
+      if (method === 'GET') {
+        const result = await query(
+          'SELECT first_name, last_name, company_name, email, phone, city, state, status FROM b2b_customers WHERE approval_token = $1',
+          [token]
+        );
+
+        if (result.rows.length === 0) {
+          return handleCORS(NextResponse.json({ error: 'Invalid or expired token' }, { status: 404 }));
+        }
+
+        return handleCORS(NextResponse.json(result.rows[0]));
+      }
+
+      // POST: Approve/Reject customer
+      if (method === 'POST') {
+        const body = await request.json();
+        const { status, discount_percentage } = body;
+
+        if (!status || !['approved', 'rejected'].includes(status)) {
+          return handleCORS(NextResponse.json({ error: 'Valid status required (approved/rejected)' }, { status: 400 }));
+        }
+
+        // 1. Get customer and user info
+        const customerResult = await query(
+          'SELECT id, user_id, email, company_name FROM b2b_customers WHERE approval_token = $1',
+          [token]
+        );
+
+        if (customerResult.rows.length === 0) {
+          return handleCORS(NextResponse.json({ error: 'Invalid or expired token' }, { status: 404 }));
+        }
+
+        const customer = customerResult.rows[0];
+
+        // 2. Update customer status (and clear token once used or keep for history? better clear to prevent replay)
+        await query(
+          `UPDATE b2b_customers 
+           SET status = $1, 
+               discount_percentage = $2, 
+               approval_token = NULL,
+               approved_at = CURRENT_TIMESTAMP,
+               updated_at = CURRENT_TIMESTAMP
+           WHERE id = $3`,
+          [status, discount_percentage || 0, customer.id]
+        );
+
+        // 3. Activate/Deactivate user
+        const isActive = status === 'approved';
+        await query('UPDATE users SET is_active = $1 WHERE id = $2', [isActive, customer.user_id]);
+
+        // 4. Log the event
+        await query(
+          'INSERT INTO b2b_customer_events (customer_id, event_type, description) VALUES ($1, $2, $3)',
+          [customer.id, 'status_update', `Customer ${status} via email link. Discount: ${discount_percentage || 0}%`]
+        );
+
+        await logActivity({
+          event_type: 'b2b_approval',
+          description: `B2B Customer ${customer.company_name} ${status} via secure email link.`,
+          metadata: { customer_id: customer.id, status, source: 'email_token' }
+        });
+
+        // 5. Notify User
+        try {
+          await sendB2BApprovalEmail(customer.email, status);
+        } catch (emailError) {
+          console.error('Email error during approval:', emailError);
+        }
+
+        return handleCORS(NextResponse.json({
+          success: true,
+          message: `Customer ${status === 'approved' ? 'approved and activated' : 'rejected'}.`
+        }));
+      }
     }
 
     // Route not found

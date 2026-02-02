@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
+import { EnquiryModal } from '@/components/product/EnquiryModal';
 
 export default function CollectionPage({ params }) {
     const { slug } = params;
@@ -17,6 +18,13 @@ export default function CollectionPage({ params }) {
     const [viewMode, setViewMode] = useState('grid');
     const [sortBy, setSortBy] = useState('featured');
     const [selectedBrand, setSelectedBrand] = useState('all');
+    const [enquiryOpen, setEnquiryOpen] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState(null);
+
+    const handleEnquire = (product) => {
+        setSelectedProduct(product)
+        setEnquiryOpen(true)
+    }
 
     // 1. Fetch Collection Details
     const { data: collections = [] } = useQuery({
@@ -237,19 +245,25 @@ export default function CollectionPage({ params }) {
 
                                 <div className={`grid gap-8 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1'}`}>
                                     {groupedProducts[brand].map(product => (
-                                        <ProductCard key={product.id} product={product} />
+                                        <ProductCard key={product.id} product={product} onEnquire={handleEnquire} />
                                     ))}
                                 </div>
                             </div>
                         ))}
                     </div>
                 )}
+
+                <EnquiryModal
+                    open={enquiryOpen}
+                    onOpenChange={setEnquiryOpen}
+                    product={selectedProduct}
+                />
             </div>
         </div>
     );
 }
 
-function ProductCard({ product }) {
+function ProductCard({ product, onEnquire }) {
     const router = useRouter()
     const detailUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/product/${product.slug}`
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(detailUrl)}`
@@ -309,7 +323,7 @@ function ProductCard({ product }) {
                         </Button>
                         <Button
                             className="rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs h-10 gap-2 shadow-lg shadow-red-200"
-                            onClick={() => window.open(`https://wa.me/911234567890?text=Hi, I am interested in ${product.name}`, '_blank')}
+                            onClick={() => product.buy_url ? window.open(product.buy_url, '_blank') : onEnquire(product)}
                         >
                             <MessageCircle className="w-3 h-3" /> Enquire
                         </Button>

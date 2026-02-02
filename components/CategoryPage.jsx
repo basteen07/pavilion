@@ -322,11 +322,16 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
           <div className="flex items-center gap-2 text-red-500 font-bold uppercase tracking-widest text-xs mb-6">
             <Link href="/" className="hover:text-white transition-colors">Home</Link>
             <ChevronRight className="w-4 h-4" />
-            <span className="text-white/80">{currentCategory.name}</span>
+            <Link href={`/${categorySlug}`} className="text-white/80 hover:text-white transition-colors">{currentCategory.name}</Link>
             {activeSubCategory && (
               <>
                 <ChevronRight className="w-4 h-4" />
-                <span className="text-white">{activeSubCategory.name}</span>
+                <Link
+                  href={`/${categorySlug}/${activeSubCategory.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+                  className="text-white hover:text-red-500 transition-colors"
+                >
+                  {activeSubCategory.name}
+                </Link>
               </>
             )}
             {tagFromSlug && (
@@ -357,7 +362,7 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
         <section className="py-0 bg-white border-b lg:relative lg:top-0 lg:z-auto w-full">
           <div className="w-full px-4 lg:px-6 py-2">
             <div className="flex gap-2 w-full overflow-x-auto pb-2 lg:pb-0 scrollbar-hide touch-pan-x snap-x lg:flex-wrap">
-            {/* Tags */}
+              {/* Tags */}
               {tags.map((tag) => {
                 const tagSlug = tag.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
                 return (

@@ -25,12 +25,44 @@ export function EnquiryModal({ open, onOpenChange, product }) {
         e.preventDefault()
         setIsSubmitting(true)
 
-        // Simulate API call
-        setTimeout(() => {
-            toast.success("Enquiry sent successfully! Our team will contact you soon.")
+        try {
+            const response = await fetch('/api/enquiry', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    ...formData,
+                    product: {
+                        name: product.name,
+                        sku: product.sku,
+                        selling_price: product.selling_price,
+                        mrp_price: product.mrp_price
+                    }
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                toast.success("Enquiry sent successfully! Our team will contact you soon.")
+                onOpenChange(false)
+                // Clear form but keep product context for next time if needed
+                setFormData(prev => ({
+                    ...prev,
+                    name: '',
+                    phone: '',
+                    email: '',
+                }))
+            } else {
+                toast.error(data.message || "Failed to send enquiry. Please try again.")
+            }
+        } catch (error) {
+            console.error('Enquiry submission error:', error)
+            toast.error("An error occurred. Please try again later.")
+        } finally {
             setIsSubmitting(false)
-            onOpenChange(false)
-        }, 1500)
+        }
     }
 
     return (
@@ -176,7 +208,7 @@ export function EnquiryModal({ open, onOpenChange, product }) {
                             </div>
                         )}
                     </div>
-                </div> 
+                </div>
             </DialogContent>
         </Dialog>
     )

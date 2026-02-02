@@ -80,9 +80,9 @@ export default function ProductDetailPage({ productSlug }) {
       <section className="bg-white py-12 lg:py-24">
         <div className="container">
           <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-12">
-            <Link href="/" className="hover:text-red-600 transition">Catalog</Link>
+            <Link href="/" className="hover:text-red-600 transition">Home</Link>
             <ChevronRight className="w-3 h-3" />
-            <Link href={`/category/${product.category_slug}`} className="hover:text-red-600 transition">{product.category_name}</Link>
+            <Link href={`/${product.category_slug}`} className="hover:text-red-600 transition">{product.category_name}</Link>
             <ChevronRight className="w-3 h-3" />
             <span className="text-gray-900">{product.name}</span>
           </div>
