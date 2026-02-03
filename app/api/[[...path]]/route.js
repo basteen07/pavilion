@@ -958,7 +958,7 @@ async function handleRoute(request, { params }) {
       );
 
       if (customerResult.rows.length === 0) {
-        return handleCORS(NextResponse.json({ error: 'B2B account not approved' }, { status: 403 }));
+        return handleCORS(NextResponse.json({ error: 'Wholesale account not approved' }, { status: 403 }));
       }
 
       const customer = customerResult.rows[0];
@@ -1751,7 +1751,7 @@ async function handleRoute(request, { params }) {
           admin_id: user.id,
           customer_id: customer_id,
           event_type: 'email_sent',
-          description: `B2B Approval email (${status}) sent to customer.`,
+          description: `Wholsale Approval email (${status}) sent to customer.`,
           metadata: { status }
         });
       }

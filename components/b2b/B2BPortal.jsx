@@ -343,7 +343,7 @@ export function B2BPortal() {
                         <CardDescription>Your account is {profile?.status || 'pending'}</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-sm text-gray-600">Please contact admin to approve your B2B account access.</p>
+                        <p className="text-sm text-gray-600">Please contact admin to approve your Wholesale account access.</p>
                     </CardContent>
                     <CardFooter>
                         <Button variant="outline" onClick={handleLogout}>Logout</Button>
