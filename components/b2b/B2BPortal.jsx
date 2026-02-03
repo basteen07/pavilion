@@ -365,10 +365,6 @@ export function B2BPortal() {
                         <Badge variant="secondary" className="font-bold hidden md:flex">{profile.company_name}</Badge>
                     </div>
                     <div className="flex items-center gap-4">
-                        <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50 hidden sm:flex font-bold">
-                            {/* Always Dealer + Percentage */}
-                            Markup: {customerType ? customerType.percentage : profile.discount_percentage}%
-                        </Badge>
                         <Button
                             variant="ghost"
                             size="sm"
@@ -449,10 +445,6 @@ export function B2BPortal() {
                                 <Card>
                                     <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-gray-500">Total Orders</CardTitle></CardHeader>
                                     <CardContent><div className="text-3xl font-black">{orders.length}</div></CardContent>
-                                </Card>
-                                <Card>
-                                    <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-gray-500">Markup Level</CardTitle></CardHeader>
-                                    <CardContent><div className="text-3xl font-black text-green-600">+{profile.discount_percentage}%</div></CardContent>
                                 </Card>
                                 <Card className="hover:border-red-200 cursor-pointer transition-colors" onClick={() => setCurrentView('create-order')}>
                                     <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-gray-500">Active Cart</CardTitle></CardHeader>

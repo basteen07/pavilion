@@ -151,7 +151,7 @@ export function WholesaleCustomerDetail({ id }) {
                         </SelectContent>
                     </Select>
                     <div className="flex items-center gap-2 bg-white border rounded-md px-3 h-10">
-                        <Label className="text-xs font-semibold whitespace-nowrap">Discount %</Label>
+                        <Label className="text-xs font-semibold whitespace-nowrap">Markup %</Label>
                         <Input
                             type="number"
                             className="w-16 h-8 border-none focus-visible:ring-0 text-right"
