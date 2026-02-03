@@ -38,6 +38,8 @@ const EVENT_TYPE_OPTIONS = [
     { value: 'quotation_created', label: 'Quotation Created' },
     { value: 'quotation_updated', label: 'Quotation Updated' },
     { value: 'quotation_status_update', label: 'Quotation Status Update' },
+    { value: 'quotation_sent', label: 'Quotation Sent' },
+    { value: 'quotation_viewed', label: 'Quotation Viewed' },
     { value: 'order_created', label: 'Order Created' },
     { value: 'order_updated', label: 'Order Updated' },
     { value: 'order_status_updated', label: 'Order Status Updated' },

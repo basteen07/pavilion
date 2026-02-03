@@ -23,6 +23,7 @@ const EVENT_CONFIG = {
     quotation_cancelled: { icon: Ban, color: 'text-red-500', bg: 'bg-red-50', border: 'border-red-200' },
     quotation_deleted: { icon: Ban, color: 'text-rose-500', bg: 'bg-rose-50', border: 'border-rose-200' },
     quotation_sent: { icon: Send, color: 'text-sky-500', bg: 'bg-sky-50', border: 'border-sky-200' },
+    quotation_viewed: { icon: FileText, color: 'text-blue-500', bg: 'bg-blue-50', border: 'border-blue-200' },
     email_sent: { icon: Send, color: 'text-sky-500', bg: 'bg-sky-50', border: 'border-sky-200' },
 
     // Order Events

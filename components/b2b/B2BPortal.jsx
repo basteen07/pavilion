@@ -932,7 +932,20 @@ export function B2BPortal() {
                                         <Table>
                                             <TableHeader className="bg-white">
                                                 <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b">
-                                                    <TableHead className="bg-white w-[50px] pl-6">Sel</TableHead>
+                                                    <TableHead className="bg-white w-[50px] pl-6">
+                                                        <div
+                                                            className={cn(
+                                                                "w-5 h-5 border-2 rounded flex items-center justify-center cursor-pointer transition-colors shadow-sm",
+                                                                groupProducts.length > 0 && groupProducts.every(p => selectedProducts.find(sp => sp.id === p.id)) ? "bg-black border-black" : "bg-white border-gray-300 hover:border-black"
+                                                            )}
+                                                            onClick={() => {
+                                                                const isAllSelected = groupProducts.length > 0 && groupProducts.every(p => selectedProducts.find(sp => sp.id === p.id));
+                                                                handleToggleGroup(groupProducts, isAllSelected);
+                                                            }}
+                                                        >
+                                                            {groupProducts.length > 0 && groupProducts.every(p => selectedProducts.find(sp => sp.id === p.id)) && <Check className="w-3.5 h-3.5 text-white stroke-[3px]" />}
+                                                        </div>
+                                                    </TableHead>
                                                     <TableHead className="bg-white w-[300px]">Product</TableHead>
                                                     <TableHead className="bg-white text-right">Category</TableHead>
                                                     <TableHead className="bg-white text-right">Dealer Price</TableHead>
@@ -958,7 +971,18 @@ export function B2BPortal() {
                                                             onClick={() => handleToggleProduct(product)}
                                                         >
                                                             <TableCell className="pl-6">
-                                                                <Checkbox checked={!!isSelected} onCheckedChange={() => handleToggleProduct(product)} onClick={(e) => e.stopPropagation()} />
+                                                                <div
+                                                                    className={cn(
+                                                                        "w-5 h-5 border-2 rounded flex items-center justify-center cursor-pointer transition-colors shadow-sm",
+                                                                        isSelected ? "bg-black border-black" : "bg-white border-gray-300 hover:border-black"
+                                                                    )}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleToggleProduct(product);
+                                                                    }}
+                                                                >
+                                                                    {isSelected && <Check className="w-3.5 h-3.5 text-white stroke-[3px]" />}
+                                                                </div>
                                                             </TableCell>
                                                             <TableCell>
                                                                 <div className="flex items-center gap-3">

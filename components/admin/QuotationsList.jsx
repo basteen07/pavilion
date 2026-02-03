@@ -1,7 +1,10 @@
+'use client'
+
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Card } from '@/components/ui/card'
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -18,8 +21,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Label } from "@/components/ui/label"
 import { QuotationPreviewModal } from '@/components/admin/QuotationPreviewModal'
 import { PaginationControls } from '@/components/admin/PaginationControls'
+import { useSearchParams } from 'next/navigation'
 
 export function QuotationsList({ onCreate, onEdit }) {
+    const searchParams = useSearchParams()
     const [page, setPage] = useState(1)
     const [search, setSearch] = useState('')
     const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -37,6 +42,14 @@ export function QuotationsList({ onCreate, onEdit }) {
     const [previewOpen, setPreviewOpen] = useState(false)
     const [selectedQuoteForPreview, setSelectedQuoteForPreview] = useState(null)
 
+    // Handle deep link to specific quotation
+    useEffect(() => {
+        const id = searchParams.get('id')
+        if (id) {
+            handleView(id)
+        }
+    }, [searchParams])
+
     // Debounce search
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -45,6 +58,7 @@ export function QuotationsList({ onCreate, onEdit }) {
         }, 500)
         return () => clearTimeout(timer)
     }, [search])
+
 
     // Reset page when filters change
     useEffect(() => {
@@ -526,28 +540,14 @@ export function QuotationsList({ onCreate, onEdit }) {
                                     </TableCell>
                                     <TableCell className="text-gray-500">{format(new Date(quote.created_at), 'dd MMM yyyy')}</TableCell>
                                     <TableCell>
-                                        <Select
-                                            value={quote.status}
-                                            onValueChange={(val) => handleStatusChange(quote.id, val)}
-                                            disabled={actionLoading === quote.id}
-                                        >
-                                            <SelectTrigger
-                                                className={`h-7 w-[110px] text-xs font-semibold border-none shadow-none focus:ring-0 px-2 rounded-full ${quote.status === 'Sent' ? "bg-green-100 text-green-700 hover:bg-green-200" :
-                                                    quote.status === 'Draft' ? "bg-gray-100 text-gray-700 hover:bg-gray-200" :
-                                                        quote.status === 'Completed' || quote.status === 'Complete' ? "bg-blue-100 text-blue-700 hover:bg-blue-200" :
-                                                            quote.status === 'Cancelled' ? "bg-red-100 text-red-700 hover:bg-red-200" :
-                                                                "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                                    }`}
-                                            >
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="Draft">Draft</SelectItem>
-                                                <SelectItem value="Sent">Sent</SelectItem>
-                                                <SelectItem value="Complete">Complete</SelectItem>
-                                                <SelectItem value="Cancelled">Cancelled</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${quote.status === 'Sent' ? "bg-green-100 text-green-700" :
+                                                quote.status === 'Draft' ? "bg-gray-100 text-gray-700" :
+                                                    ['Completed', 'Complete'].includes(quote.status) ? "bg-blue-100 text-blue-700" :
+                                                        quote.status === 'Cancelled' ? "bg-red-100 text-red-700" :
+                                                            "bg-gray-100 text-gray-700"
+                                            }`}>
+                                            {quote.status}
+                                        </span>
                                     </TableCell>
                                     <TableCell className="text-right pr-6">
                                         <div className="flex justify-end items-center gap-2">
@@ -564,28 +564,24 @@ export function QuotationsList({ onCreate, onEdit }) {
                                                     >
                                                         <Eye className="w-4 h-4" />
                                                     </Button>
-                                                    {quote.status === 'Draft' && (
-                                                        <Button
-                                                            size="icon"
-                                                            variant="ghost"
-                                                            className="h-8 w-8 text-amber-600 hover:bg-amber-50"
-                                                            onClick={() => onEdit(quote.id)}
-                                                            title="Edit Quotation"
-                                                        >
-                                                            <PenLine className="w-4 h-4" />
-                                                        </Button>
-                                                    )}
-                                                    {['Completed', 'Complete'].includes(quote.status) && (
-                                                        <Button
-                                                            size="icon"
-                                                            variant="ghost"
-                                                            className="h-8 w-8 text-blue-600 hover:bg-blue-50"
-                                                            onClick={() => handleMarkAsSent(quote)}
-                                                            title="Mark as Sent (Send Email)"
-                                                        >
-                                                            <Send className="w-4 h-4" />
-                                                        </Button>
-                                                    )}
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        className="h-8 w-8 text-amber-600 hover:bg-amber-50"
+                                                        onClick={() => onEdit(quote.id)}
+                                                        title="Edit Quotation"
+                                                    >
+                                                        <PenLine className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        className="h-8 w-8 text-green-600 hover:bg-green-50"
+                                                        onClick={() => handleMarkAsSent(quote)}
+                                                        title="Send Quotation via Email"
+                                                    >
+                                                        <Send className="w-4 h-4" />
+                                                    </Button>
 
                                                     <Button
                                                         size="icon"

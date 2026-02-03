@@ -387,7 +387,10 @@ async function handleRoute(request, { params }) {
 
     if (route.startsWith('/quotations/')) {
       const id = path[1];
-      if (method === 'GET') return import('@/lib/api/quotations').then(m => m.getQuotationById(id));
+      if (method === 'GET') {
+        const user = await authenticateRequest(request);
+        return import('@/lib/api/quotations').then(m => m.getQuotationById(id, user?.id));
+      }
       if (method === 'PUT') {
         const user = await authenticateRequest(request);
         if (!user) return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
@@ -408,7 +411,7 @@ async function handleRoute(request, { params }) {
 
       const quotationId = path[2]; // /admin/quotations/{id}/send-email
       const body = await request.json();
-      const { email: targetEmail } = body;
+      const { email: targetEmail, pdfData } = body;
 
       // Fetch quotation details
       const quoteRes = await query(`
@@ -433,14 +436,15 @@ async function handleRoute(request, { params }) {
       const { sendQuotationEmail } = await import('@/lib/email');
       const emailResult = await sendQuotationEmail({
         quotation_number: quotation.quotation_number,
-        total: quotation.total_amount
+        total: quotation.total_amount,
+        pdfData: pdfData // Pass the base64 PDF data
       }, recipientEmail);
 
       // Log activity
       await logActivity({
         admin_id: user.id,
         customer_id: quotation.customer_id,
-        quotation_id: parseInt(quotationId),
+        quotation_id: quotationId,
         event_type: 'quotation_sent',
         description: `Sent quotation ${quotation.quotation_number} via email to ${recipientEmail}`,
         metadata: {
@@ -1343,10 +1347,14 @@ async function handleRoute(request, { params }) {
       const offset = (page - 1) * limit;
 
       let queryText = `
-        SELECT o.*, c.company_name, u.email as user_email, u.phone as customer_phone
+        SELECT o.*, 
+               COALESCE(c.company_name, rc.company_name, rc.email) as company_name, 
+               COALESCE(u.email, rc.email) as user_email, 
+               COALESCE(u.phone, rc.phone) as customer_phone
         FROM orders o
         LEFT JOIN b2b_customers c ON o.customer_id = c.id
         LEFT JOIN users u ON c.user_id = u.id
+        LEFT JOIN customers rc ON o.customer_id = rc.id
         WHERE 1=1
       `;
 
@@ -1354,7 +1362,7 @@ async function handleRoute(request, { params }) {
       let paramIdx = 1;
 
       if (search) {
-        queryText += ` AND (o.order_number ILIKE $${paramIdx} OR c.company_name ILIKE $${paramIdx} OR u.email ILIKE $${paramIdx} OR u.phone ILIKE $${paramIdx})`;
+        queryText += ` AND (o.order_number ILIKE $${paramIdx} OR c.company_name ILIKE $${paramIdx} OR rc.company_name ILIKE $${paramIdx} OR u.email ILIKE $${paramIdx} OR rc.email ILIKE $${paramIdx} OR u.phone ILIKE $${paramIdx} OR rc.phone ILIKE $${paramIdx})`;
         queryParams.push(`%${search}%`);
         paramIdx++;
       }
@@ -1908,12 +1916,16 @@ async function handleRoute(request, { params }) {
       }
 
       const result = await query(
-        `SELECT q.*, c.company_name, u.email as customer_email
+        `SELECT q.*, 
+         COALESCE(b2b.company_name, rc.company_name, rc.email, u.email) as company_name,
+         COALESCE(u.email, rc.email) as customer_email
          FROM quotations q
-         LEFT JOIN b2b_customers c ON q.customer_id = c.id
-         LEFT JOIN users u ON c.user_id = u.id
+         LEFT JOIN b2b_customers b2b ON q.customer_id = b2b.id
+         LEFT JOIN users u ON b2b.user_id = u.id
+         LEFT JOIN customers rc ON q.customer_id = rc.id
          ORDER BY q.created_at DESC`
       );
+
 
       return handleCORS(NextResponse.json(result.rows));
     }

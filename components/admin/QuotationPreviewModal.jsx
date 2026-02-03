@@ -28,19 +28,18 @@ export function QuotationPreviewModal({ open, onOpenChange, quotation, onDownloa
     // Helper to safely get numbers
     const getNum = (val) => parseFloat(val) || 0
 
-    // Group items by Category > Sub-Category > Brand
-    const groupedItems = (quotation.items || []).reduce((acc, item) => {
-        const cat = item.category_name || 'General';
-        const subCat = item.sub_category_name || '';
-        const brand = item.brand_name || item.brand || '';
-        const groupKey = [cat, subCat, brand].filter(Boolean).join(' › ');
+    // Group items by Sub-Category → Brand (two-level hierarchy)
+    const groupedBySub = (quotation.items || []).reduce((acc, item) => {
+        const subCat = item.sub_category_name || 'General';
+        const brand = item.brand_name || item.brand || 'Other';
 
-        if (!acc[groupKey]) acc[groupKey] = [];
-        acc[groupKey].push(item);
+        if (!acc[subCat]) acc[subCat] = {};
+        if (!acc[subCat][brand]) acc[subCat][brand] = [];
+        acc[subCat][brand].push(item);
         return acc;
     }, {});
 
-    const termsToShow = quotation.terms_and_conditions || '';
+    const termsToShow = quotation.terms_conditions || quotation.terms_and_conditions || '';
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -114,7 +113,7 @@ export function QuotationPreviewModal({ open, onOpenChange, quotation, onDownloa
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-sm text-gray-600">Tax Rate:</span>
-                                    <span className="font-semibold text-gray-900">{quotation.tax_rate || 18}% GST</span>
+                                    <span className="font-semibold text-gray-900">{String(quotation.tax_rate || 18).replace('%', '')}% GST</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-sm text-gray-600">Status:</span>
@@ -124,121 +123,81 @@ export function QuotationPreviewModal({ open, onOpenChange, quotation, onDownloa
                         </div>
                     </div>
 
-                    {/* Items Table - Corporate Style */}
+                    {/* Items Table - Grouped by Sub-Category → Brand */}
                     <div className="border border-gray-200 rounded-lg overflow-hidden">
-                        {Object.entries(groupedItems).map(([groupName, items], groupIdx) => (
-                            <div key={groupIdx}>
-                                {/* Items Table */}
+                        {/* Table Header */}
+                        <table className="w-full">
+                            <thead className="bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th className="text-left px-6 py-4 font-semibold text-gray-700 text-sm uppercase tracking-wider w-[45%]">Product</th>
+                                    <th className="text-right px-4 py-4 font-semibold text-gray-700 text-sm uppercase tracking-wider w-[15%]">MRP</th>
+                                    <th className="text-right px-4 py-4 font-semibold text-gray-700 text-sm uppercase tracking-wider w-[15%]">Your Price</th>
+                                    <th className="text-center px-6 py-4 font-semibold text-gray-700 text-sm uppercase tracking-wider w-[10%]">GST</th>
+                                    <th className="text-center px-4 py-4 font-semibold text-gray-700 text-sm uppercase tracking-wider w-[10%]">Qty</th>
+                                </tr>
+                            </thead>
+                        </table>
 
-                                {/* Items Table */}
-                                <table className="w-full">
-                                    {groupIdx === 0 && (
-                                        <thead className="bg-gray-50 border-b border-gray-200">
-                                            <tr>
-                                                <th className="text-left px-6 py-4 font-semibold text-gray-700 text-sm uppercase tracking-wider w-[15%]">Brand</th>
-                                                <th className="text-left px-4 py-4 font-semibold text-gray-700 text-sm uppercase tracking-wider w-[35%]">Product Title</th>
-                                                <th className="text-right px-4 py-4 font-semibold text-gray-700 text-sm uppercase tracking-wider w-[15%]">MRP</th>
-                                                <th className="text-right px-4 py-4 font-semibold text-gray-700 text-sm uppercase tracking-wider w-[15%]">Your Price</th>
-                                                <th className="text-center px-6 py-4 font-semibold text-gray-700 text-sm uppercase tracking-wider w-[10%]">GST</th>
-                                            </tr>
-                                        </thead>
-                                    )}
-                                    <tbody>
-                                        {items.map((item, idx) => (
-                                            <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50/50">
-                                                <td className="px-6 py-4">
-                                                    <div className="font-bold text-gray-900 text-sm whitespace-nowrap">{item.brand_name || item.brand || '-'}</div>
-                                                </td>
-                                                <td className="px-4 py-4">
-                                                    <div className="flex gap-3">
-                                                        {item.is_detailed && item.image && (
-                                                            <div className="w-12 h-12 rounded border bg-gray-50 overflow-hidden shrink-0">
-                                                                <img src={item.image} className="w-full h-full object-cover" />
+                        {/* Grouped Content */}
+                        {Object.entries(groupedBySub).map(([subCat, brands], subIdx) => (
+                            <div key={subIdx}>
+                                {/* Sub-Category Header */}
+                                <div className="bg-blue-50 px-6 py-2 border-b border-blue-100">
+                                    <span className="font-bold text-blue-800 text-sm uppercase tracking-wide">{subCat}</span>
+                                </div>
+
+                                {/* Brand Groups */}
+                                {Object.entries(brands).map(([brand, items], brandIdx) => (
+                                    <div key={brandIdx}>
+                                        {/* Brand Header */}
+                                        <div className="bg-gray-50 px-6 py-1.5 border-b border-gray-100 pl-10">
+                                            <span className="font-semibold text-gray-700 text-xs uppercase tracking-wider">{brand}</span>
+                                        </div>
+
+                                        {/* Products */}
+                                        <table className="w-full">
+                                            <tbody>
+                                                {items.map((item, idx) => (
+                                                    <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50/50">
+                                                        <td className="px-6 py-3 w-[45%] pl-14">
+                                                            <div className="flex gap-3">
+                                                                {item.is_detailed && (item.image_url || item.image) && (
+                                                                    <div className="w-10 h-10 rounded border bg-gray-50 overflow-hidden shrink-0">
+                                                                        <img src={item.image_url || item.image} className="w-full h-full object-cover" />
+                                                                    </div>
+                                                                )}
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="font-medium text-gray-900 text-sm">{item.name || item.product_name}</div>
+                                                                    {item.is_detailed && item.short_description && (
+                                                                        <div className="text-xs text-gray-500 mt-1 line-clamp-2">{item.short_description}</div>
+                                                                    )}
+                                                                </div>
                                                             </div>
-                                                        )}
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="font-semibold text-gray-900">{item.name || item.product_name}</div>
-                                                            <div className="text-sm text-gray-600 mt-1">
-                                                                {item.category_name && <span>{item.category_name}</span>}
-                                                                {item.sub_category_name && <span> › {item.sub_category_name}</span>}
-                                                            </div>
-                                                            {item.is_detailed && item.short_description && (
-                                                                <div className="text-xs text-gray-500 mt-2 line-clamp-2">{item.short_description}</div>
-                                                            )}
-                                                            {item.slug && (
-                                                                <a
-                                                                    href={`/product/${item.slug}`}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="text-xs text-blue-600 hover:underline inline-flex items-center gap-1 mt-2"
-                                                                >
-                                                                    View Product <ExternalLink className="w-3 h-3" />
-                                                                </a>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="text-right px-4 py-4 font-semibold text-gray-900">
-                                                    ₹{getNum(item.mrp).toLocaleString()}
-                                                </td>
-                                                <td className="text-right px-4 py-4 font-semibold text-gray-900">
-                                                    ₹{getNum(item.custom_price || item.unit_price).toLocaleString()}
-                                                </td>
-                                                <td className="text-center px-6 py-4 text-sm text-gray-600">
-                                                    {item.gst_rate || item.gst_percentage || '18'}%
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                                        </td>
+                                                        <td className="text-right px-4 py-3 font-medium text-gray-600 w-[15%]">
+                                                            ₹{getNum(item.mrp).toLocaleString()}
+                                                        </td>
+                                                        <td className="text-right px-4 py-3 font-semibold text-gray-900 w-[15%]">
+                                                            ₹{getNum(item.custom_price || item.unit_price).toLocaleString()}
+                                                        </td>
+                                                        <td className="text-center px-6 py-3 text-sm text-gray-600 w-[10%]">
+                                                            {String(item.gst_rate || '18').replace('%', '')}%
+                                                        </td>
+                                                        <td className="text-center px-4 py-3 font-medium text-gray-900 w-[10%]">
+                                                            {item.quantity || 1}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ))}
                             </div>
                         ))}
                     </div>
 
-                    {/* Totals - Corporate Style */}
-                    {quotation.show_total !== false && (
-                        <div className="flex justify-end">
-                            <div className="w-80 bg-gray-50 p-6 rounded-lg border border-gray-200">
-                                <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Summary</h3>
-                                <div className="space-y-3">
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-600">Subtotal:</span>
-                                        <span className="font-semibold text-gray-900">₹{getNum(quotation.subtotal).toLocaleString()}</span>
-                                    </div>
-
-                                    {getNum(quotation.discount_value) > 0 && (
-                                        <div className="flex justify-between text-red-600 text-sm">
-                                            <span>Discount {quotation.discount_type === 'percentage' ? `(${quotation.discount_value}%)` : ''}:</span>
-                                            <span className="font-semibold">-₹{
-                                                quotation.discount_type === 'percentage'
-                                                    ? (getNum(quotation.subtotal) * getNum(quotation.discount_value) / 100).toLocaleString()
-                                                    : getNum(quotation.discount_value).toLocaleString()
-                                            }</span>
-                                        </div>
-                                    )}
-
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-600">GST ({quotation.tax_rate || 18}%):</span>
-                                        <span className="font-semibold text-gray-900">₹{getNum(quotation.gst || quotation.tax).toLocaleString()}</span>
-                                    </div>
-
-                                    {getNum(quotation.shipping_cost) > 0 && (
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-gray-600">Shipping:</span>
-                                            <span className="font-semibold text-gray-900">₹{getNum(quotation.shipping_cost).toLocaleString()}</span>
-                                        </div>
-                                    )}
-
-                                    <div className="border-t border-gray-300 pt-3 mt-3">
-                                        <div className="flex justify-between items-center">
-                                            <span className="font-bold text-gray-900 text-lg">Total Amount</span>
-                                            <span className="font-bold text-xl text-red-600">₹{getNum(quotation.total_amount || quotation.total).toLocaleString()}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    {/* NOTE: Grand Total / Pricing Summary is intentionally hidden per enterprise requirements */}
+                    {/* Pricing calculations exist internally but are not shown in Preview or PDF */}
 
                     {/* Terms & Conditions - Corporate */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

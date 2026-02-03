@@ -14,12 +14,13 @@ import {
     ArrowLeft, Loader2, Save, Building2, User, Mail, Phone,
     MapPin, FileText, ShoppingCart, Clock, MessageSquare,
     CheckCircle2, XCircle, AlertCircle, Trash2, Send, Pencil,
-    RotateCcw, Ban, Edit3, Eye
+    RotateCcw, Ban, Edit3, Eye, UserCheck, UserX
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Switch } from '@/components/ui/switch'
 import Link from 'next/link'
 import { PaginationControls } from '@/components/admin/PaginationControls'
 
@@ -54,6 +55,7 @@ export function WholesaleCustomerDetail({ id }) {
 
     const [discount, setDiscount] = useState(0)
     const [status, setStatus] = useState('')
+    const [isActive, setIsActive] = useState(true)
 
     useEffect(() => {
         if (customer) {
@@ -61,6 +63,7 @@ export function WholesaleCustomerDetail({ id }) {
             setComments(customer.admin_comments || '')
             setDiscount(customer.discount_percentage || 0)
             setStatus(customer.status || 'pending')
+            setIsActive(customer.is_active ?? true)
         }
     }, [customer])
 
@@ -124,6 +127,14 @@ export function WholesaleCustomerDetail({ id }) {
                                 className={customer.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
                                 {customer.status}
                             </Badge>
+                            <Badge variant={customer.is_active ? 'outline' : 'destructive'}
+                                className={customer.is_active ? 'border-green-300 text-green-600 bg-green-50/50' : 'bg-red-50 text-red-600 border-red-200'}>
+                                {customer.is_active ? (
+                                    <span className="flex items-center gap-1"><UserCheck className="w-3 h-3" /> Active</span>
+                                ) : (
+                                    <span className="flex items-center gap-1"><UserX className="w-3 h-3" /> Inactive</span>
+                                )}
+                            </Badge>
                             <span className="text-sm text-muted-foreground">Joined {format(new Date(customer.created_at), 'MMM d, yyyy')}</span>
                         </div>
                     </div>
@@ -148,8 +159,16 @@ export function WholesaleCustomerDetail({ id }) {
                             onChange={(e) => setDiscount(Number(e.target.value))}
                         />
                     </div>
-                    <Button className="bg-red-600 hover:bg-red-700" onClick={() => approveMutation.mutate({ status, discount })}>
-                        Update Status
+                    <div className="flex items-center gap-2 bg-white border rounded-md px-3 h-10">
+                        <Label className="text-[10px] font-bold uppercase text-muted-foreground">Active</Label>
+                        <Switch
+                            checked={isActive}
+                            onCheckedChange={setIsActive}
+                            className="data-[state=checked]:bg-green-600"
+                        />
+                    </div>
+                    <Button className="bg-red-600 hover:bg-red-700" onClick={() => approveMutation.mutate({ status, discount, is_active: isActive })}>
+                        Update
                     </Button>
                 </div>
             </div>

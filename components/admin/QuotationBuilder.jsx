@@ -97,7 +97,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
     const [selectedProducts, setSelectedProducts] = useState([])
     const [expandedGroups, setExpandedGroups] = useState({})
 
-    // View Toggle
+    const [modalDetailedView, setModalDetailedView] = useState(false)
     const [showDetailed, setShowDetailed] = useState(false)
 
     // Filters
@@ -157,32 +157,9 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
     const products = productsData?.pages.flatMap(page => page.products) || []
 
     const groupedProducts = useMemo(() => {
-        const catId = getFilterValue('category');
-        const subCatId = getFilterValue('sub-category');
-
-        let groups = {};
-
-        if (catId && !subCatId) {
-            // Group by sub-category
-            products.forEach(p => {
-                const groupName = p.sub_category_name || 'Others';
-                if (!groups[groupName]) groups[groupName] = [];
-                groups[groupName].push(p);
-            });
-        } else if (subCatId) {
-            // Group by brand
-            products.forEach(p => {
-                const groupName = p.brand_name || 'Others';
-                if (!groups[groupName]) groups[groupName] = [];
-                groups[groupName].push(p);
-            });
-        } else {
-            // Default: All Products
-            groups['All Products'] = products;
-        }
-
-        return groups;
-    }, [products, activeFilters]);
+        // Flat list as requested by user ("don't want Cricket › Gloves this group by row")
+        return { 'Products': products };
+    }, [products]);
 
     // Default Terms & Conditions
     const DEFAULT_TERMS = `1. Prices are valid for 30 days from the quotation date.
@@ -193,7 +170,8 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
 6. This quotation is subject to stock availability.`;
 
     // --- PDF Generation Logic ---
-    const handleDownloadPDF = async () => {
+    // --- PDF Generation Logic ---
+    const generatePDFDoc = async () => {
         const doc = new jsPDF()
         const customer = customers.find(c => c.id === selectedCustomer)
 
@@ -276,126 +254,116 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
 
         currentY += (primaryContact?.name ? (primaryContact.designation || primaryContact.phone ? 32 : 26) : 22)
 
-        // Group items by Category > Sub-Category > Brand
-        const groups = quotationItems.reduce((acc, item) => {
-            const cat = item.category_name || 'General';
-            const subCat = item.sub_category_name || '';
-            const brand = item.brand_name || item.brand || '';
-            const groupKey = [cat, subCat, brand].filter(Boolean).join(' › ');
-            if (!acc[groupKey]) acc[groupKey] = [];
-            acc[groupKey].push(item);
+        // Group items by Sub-Category first, then by Brand within Sub-Category
+        // This matches the Preview Modal grouping
+        const groupedBySubCategory = quotationItems.reduce((acc, item) => {
+            const subCat = item.sub_category_name || 'General';
+            const brand = item.brand_name || item.brand || 'Others';
+            if (!acc[subCat]) acc[subCat] = {};
+            if (!acc[subCat][brand]) acc[subCat][brand] = [];
+            acc[subCat][brand].push(item);
             return acc;
         }, {});
 
-        // Table Header - Reordered: Brand, Product, MRP, Your Price, GST
+        // Table Header - Updated: Product, MRP, Your Price, GST, Qty
         doc.setFillColor(55, 65, 81)
         doc.rect(15, currentY, 180, 7, 'F')
         doc.setTextColor(255)
         doc.setFontSize(8)
         doc.setFont('helvetica', 'bold')
-        doc.text('Brand', 20, currentY + 5)
-        doc.text('Product', 50, currentY + 5)
-        doc.text('MRP', 115, currentY + 5)
-        doc.text('Your Price', 138, currentY + 5)
-        doc.text('GST', 168, currentY + 5)
+        doc.text('Product', 20, currentY + 5)
+        doc.text('MRP', 105, currentY + 5)
+        doc.text('Your Price', 130, currentY + 5)
+        doc.text('GST', 160, currentY + 5)
+        doc.text('Qty', 180, currentY + 5)
         currentY += 10
 
-        Object.entries(groups).forEach(([groupName, items]) => {
+        // Iterate Sub-Categories
+        Object.entries(groupedBySubCategory).forEach(([subCategoryName, brandGroups]) => {
             if (currentY > 250) {
                 doc.addPage()
                 currentY = 20
             }
 
-            items.forEach((item) => {
+            // Sub-Category Header (dark gray)
+            doc.setFillColor(229, 231, 235) // Gray-200
+            doc.rect(15, currentY - 1, 180, 6, 'F')
+            doc.setFont('helvetica', 'bold')
+            doc.setFontSize(8)
+            doc.setTextColor(55, 65, 81)
+            doc.text(subCategoryName.toUpperCase(), 20, currentY + 3)
+            currentY += 8
+
+            // Iterate Brands within Sub-Category
+            Object.entries(brandGroups).forEach(([brandName, items]) => {
                 if (currentY > 250) {
                     doc.addPage()
                     currentY = 20
                 }
 
-                const isDetailed = !!item.is_detailed;
-
-                // Detailed View: Show image if enabled for this product
-                if (isDetailed && item.image) {
-                    try {
-                        doc.addImage(item.image, 'JPEG', 20, currentY, 12, 12)
-                    } catch (e) {
-                        console.error('Image add error:', e)
-                    }
-                }
-
-                doc.setFont('helvetica', 'normal')
-                doc.setTextColor(40)
+                // Brand Header (light blue)
+                doc.setFillColor(239, 246, 255) // Blue-50
+                doc.rect(15, currentY - 1, 180, 5, 'F')
+                doc.setFont('helvetica', 'bold')
                 doc.setFontSize(7)
+                doc.setTextColor(29, 78, 216) // Blue-700
+                doc.text(brandName.toUpperCase(), 20, currentY + 2.5)
+                currentY += 6
 
-                // Brand - Ensuring it displays
-                const brandDisplayText = item.brand_name || item.brand || '-';
-                doc.text(brandDisplayText, 20, currentY + 3)
+                // Products under this brand
+                items.forEach((item) => {
+                    if (currentY > 250) {
+                        doc.addPage()
+                        currentY = 20
+                    }
 
-                // Product name (truncated if needed)
-                doc.setFontSize(8)
-                const productName = item.name.length > 35 ? item.name.substring(0, 32) + '...' : item.name;
-                doc.text(productName, 50, currentY + 3)
+                    const isDetailed = !!item.is_detailed;
 
-                // Detailed View: Show description if enabled for this product
-                if (isDetailed && item.short_description) {
-                    doc.setFontSize(6)
-                    doc.setTextColor(100)
-                    const desc = item.short_description.length > 50 ? item.short_description.substring(0, 47) + '...' : item.short_description
-                    doc.text(desc, 50, currentY + 7)
+                    // Detailed View: Show image if enabled for this product
+                    const imageSource = item.image_url || item.image;
+                    if (isDetailed && imageSource) {
+                        try {
+                            doc.addImage(imageSource, 'JPEG', 20, currentY, 12, 12)
+                        } catch (e) {
+                            console.error('Image add error:', e)
+                        }
+                    }
+
+                    doc.setFont('helvetica', 'normal')
                     doc.setTextColor(40)
-                }
+                    doc.setFontSize(7)
 
-                doc.setFontSize(8)
-                doc.text(`₹${parseFloat(item.mrp).toLocaleString()}`, 115, currentY + 3)
-                doc.text(`₹${parseFloat(item.custom_price).toLocaleString()}`, 138, currentY + 3)
-                doc.text(`${item.gst_rate || '18'}%`, 170, currentY + 3)
+                    // Product name (truncated if needed) - with offset for image if detailed
+                    doc.setFontSize(8)
+                    const productX = isDetailed && imageSource ? 35 : 20;
+                    const productName = item.name.length > 40 ? item.name.substring(0, 37) + '...' : item.name;
+                    doc.text(productName, productX, currentY + 3)
 
-                currentY += isDetailed ? 15 : 8
+                    // Detailed View: Show description if enabled for this product
+                    if (isDetailed && item.short_description) {
+                        doc.setFontSize(6)
+                        doc.setTextColor(100)
+                        const desc = item.short_description.length > 55 ? item.short_description.substring(0, 52) + '...' : item.short_description
+                        doc.text(desc, productX, currentY + 7)
+                        doc.setTextColor(40)
+                    }
+
+                    doc.setFontSize(8)
+                    doc.text(`₹${parseFloat(item.mrp).toLocaleString()}`, 105, currentY + 3)
+                    doc.text(`₹${parseFloat(item.custom_price).toLocaleString()}`, 130, currentY + 3)
+                    doc.text(`${item.gst_rate || '18'}%`.replace('%', ''), 162, currentY + 3)
+                    doc.text(String(item.quantity || 1), 182, currentY + 3)
+
+                    currentY += isDetailed ? 15 : 8
+                })
+                currentY += 2
             })
             currentY += 3
         })
 
-        // Totals - Only if enabled
-        if (quotationDetails.show_total) {
-            if (currentY > 240) {
-                doc.addPage()
-                currentY = 20
-            }
-
-            currentY += 5
-            doc.setDrawColor(200)
-            doc.line(120, currentY, 195, currentY)
-            currentY += 8
-
-            // Total MRP (Reference)
-            const totalMRP = quotationItems.reduce((sum, item) => sum + (parseFloat(item.mrp || 0) * parseInt(item.quantity || 1)), 0)
-            doc.setFont('helvetica', 'normal')
-            doc.setTextColor(100)
-            doc.setFontSize(8)
-            doc.text('Total MRP (Reference):', 130, currentY)
-            doc.setTextColor(150)
-            doc.text(`₹${totalMRP.toLocaleString()}`, 175, currentY)
-
-            currentY += 6
-            doc.setFontSize(9)
-            doc.setTextColor(100)
-            doc.text('Subtotal:', 130, currentY)
-            doc.setTextColor(40)
-            doc.text(`₹${subtotal.toLocaleString()}`, 175, currentY)
-
-            currentY += 6
-            doc.setTextColor(100)
-            doc.text('Total Taxes:', 130, currentY)
-            doc.setTextColor(40)
-            doc.text(`₹${tax.toLocaleString()}`, 175, currentY)
-
-            currentY += 8
-            doc.setFontSize(11)
-            doc.setFont('helvetica', 'bold')
-            doc.text('Grand Total:', 130, currentY)
-            doc.setTextColor(220, 38, 38)
-            doc.text(`₹${total.toLocaleString()}`, 175, currentY)
-        }
+        // NOTE: Grand Total / Pricing Summary is intentionally hidden per enterprise requirements
+        // Pricing calculations exist internally but are not shown in PDF
+        // Only individual product prices are displayed
 
         // Terms and Conditions - Always show (default or custom)
         const termsToShow = quotationDetails.terms_and_conditions || DEFAULT_TERMS;
@@ -463,7 +431,12 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
         doc.setTextColor(150)
         doc.text('This is a computer-generated quotation. No signature required.', 105, 287, { align: 'center' })
 
-        doc.save(`Quotation_${quotationDetails.quotation_number}.pdf`)
+        return doc;
+    }
+
+    const handleDownloadPDF = async () => {
+        const doc = await generatePDFDoc();
+        doc.save(`Quotation_${quotationDetails.quotation_number}.pdf`);
     }
 
     // Observer
@@ -502,7 +475,12 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                             discount: item.discount || 0,
                             is_detailed: item.is_detailed ?? false, // Preserve or default to false
                             short_description: item.short_description || '',
-                            image: getFirstImage(item.images)
+                            // Use stored image_url first, fallback to product images
+                            image: item.image_url || getFirstImage(item.images),
+                            // Ensure grouping data is restored for preview/PDF
+                            category_name: item.category_name || '',
+                            sub_category_name: item.sub_category_name || '',
+                            brand_name: item.brand_name || ''
                         })));
                         setQuotationDetails({
                             quotation_number: quote.quotation_number,
@@ -694,7 +672,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             quantity: 1,
             short_description: product.short_description || '',
             gst_rate: product.gst_rate || '18%',
-            is_detailed: false,
+            is_detailed: modalDetailedView,
             customer_type_base: customerTypeBase
         }
         setQuotationItems(prev => [...prev, newItem])
@@ -861,34 +839,123 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
 
     // --- Save ---
     async function handleMarkAsSent() {
-        const email = customerDetails?.email || quotationDetails.customer_snapshot?.email;
-        if (!email) return toast.error('No customer email found');
+        const customer = customers.find(c => c.id === selectedCustomer);
+        // Get primary contact email or fallback to company email
+        const primaryContact = customer?.contacts?.find(c => c.is_primary);
+        const emails = [];
+        if (customer?.email) emails.push(customer.email);
+        if (primaryContact?.email && primaryContact.email !== customer?.email) emails.push(primaryContact.email);
 
-        if (!confirm(`Are you sure you want to send this quotation to ${email}?`)) return;
+        if (emails.length === 0) return toast.error('No customer email found');
+
+        if (!confirm(`Are you sure you want to send this quotation to ${emails.join(', ')}?`)) return;
 
         setIsSaving(true);
         try {
-            const res = await apiCall(`/admin/quotations/${quoteId}/send-email`, {
-                method: 'POST',
-                body: JSON.stringify({ email })
-            });
+            // Generate PDF base64
+            const doc = await generatePDFDoc();
+            const pdfData = doc.output('datauristring').split(',')[1]; // Remove data:application/pdf;base64, prefix
 
-            if (res.success) {
-                toast.success('Quotation sent successfully!');
-                setQuotationDetails(prev => ({ ...prev, status: 'Sent' }));
-                // Determine success data for the success view
-                const successPayload = {
-                    ...quotationDetails,
-                    status: 'Sent',
-                    quotation_number: quotationDetails.quotation_number || (res.data && res.data.quotation_number),
-                    customer_snapshot: { ...customerDetails, email }
-                };
-                setSuccessData(successPayload);
-            } else {
-                toast.error(res.error || 'Failed to send quotation');
+            // Send to all email addresses
+            for (const email of emails) {
+                const res = await apiCall(`/admin/quotations/${quoteId}/send-email`, {
+                    method: 'POST',
+                    body: JSON.stringify({ email, pdfData })
+                });
+
+                if (!res.success) {
+                    toast.error(res.error || `Failed to send quotation to ${email}`);
+                }
             }
+
+            toast.success('Quotation sent successfully!');
+            setQuotationDetails(prev => ({ ...prev, status: 'Sent' }));
+            // Determine success data for the success view
+            const successPayload = {
+                ...quotationDetails,
+                status: 'Sent',
+                quotation_number: quotationDetails.quotation_number,
+                customer_snapshot: customer
+            };
+            setSuccessData(successPayload);
         } catch (error) {
             toast.error(error.message || 'Failed to send quotation');
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
+    // Save and Send function - first saves the quotation then sends email
+    async function handleSaveAndSend() {
+        if (!selectedCustomer) { return toast.error('Please select a customer') }
+        if (quotationItems.length === 0) { return toast.error('Please add at least one product') }
+
+        const customer = customers.find(c => c.id === selectedCustomer);
+        // Get primary contact email or fallback to company email
+        const primaryContact = customer?.contacts?.find(c => c.is_primary);
+        const emails = [];
+        if (customer?.email) emails.push(customer.email);
+        if (primaryContact?.email && primaryContact.email !== customer?.email) emails.push(primaryContact.email);
+
+        if (emails.length === 0) return toast.error('No customer email found to send quotation');
+
+        if (!confirm(`Are you sure you want to save and send this quotation to ${emails.join(', ')}?`)) return;
+
+        setIsSaving(true);
+        try {
+            const payload = {
+                customer_id: selectedCustomer,
+                customer_snapshot: customer,
+                status: 'Sent',
+                items: quotationItems.map(item => ({
+                    product_id: item.product_id,
+                    product_name: item.name,
+                    quantity: parseInt(item.quantity),
+                    unit_price: parseFloat(item.custom_price),
+                    mrp: parseFloat(item.mrp),
+                    dealer_price: parseFloat(item.dealer_price || 0),
+                    discount: parseFloat(item.discount),
+                    slug: item.slug,
+                    category_name: item.category_name,
+                    sub_category_name: item.sub_category_name,
+                    brand_name: item.brand_name,
+                    short_description: item.short_description || '',
+                    image_url: item.image || '',
+                    is_detailed: item.is_detailed || false
+                })),
+                ...quotationDetails,
+                subtotal, gst: tax, total_amount: total
+            };
+
+            let res;
+            let savedQuoteId = quoteId;
+
+            if (quoteId) {
+                // Update existing quotation
+                res = await apiCall(`/admin/quotations/${quoteId}`, { method: 'PUT', body: JSON.stringify(payload) });
+            } else {
+                // Create new quotation
+                res = await apiCall('/admin/quotations', { method: 'POST', body: JSON.stringify(payload) });
+                savedQuoteId = res.id;
+            }
+
+            // Now send email to all addresses
+            // Generate PDF base64
+            const doc = await generatePDFDoc();
+            const pdfData = doc.output('datauristring').split(',')[1];
+
+            for (const email of emails) {
+                await apiCall(`/admin/quotations/${savedQuoteId}/send-email`, {
+                    method: 'POST',
+                    body: JSON.stringify({ email, pdfData })
+                });
+            }
+
+            toast.success('Quotation saved and sent successfully!');
+            setSuccessData({ ...res, quotation_number: res.quotation_number || quotationDetails.quotation_number, status: 'Sent', customer_snapshot: customer });
+
+        } catch (error) {
+            toast.error(error.message || 'Failed to save and send quotation');
         } finally {
             setIsSaving(false);
         }
@@ -919,6 +986,8 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                     category_name: item.category_name,
                     sub_category_name: item.sub_category_name,
                     brand_name: item.brand_name,
+                    short_description: item.short_description || '',
+                    image_url: item.image || '',
                     is_detailed: item.is_detailed || false
                 })),
                 ...quotationDetails,
@@ -937,7 +1006,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             }
 
             // Redirect or callback
-            statusToSave === 'Sent' ? setSuccessData(res) : onSuccess && onSuccess();
+            onSuccess && onSuccess();
 
         } catch (error) { toast.error(error.message) } finally { setIsSaving(false) }
     }
@@ -995,7 +1064,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
         );
     }
 
-    const isReadOnly = ['Completed', 'Sent', 'Cancelled'].includes(quotationDetails.status);
+    const isReadOnly = ['Cancelled'].includes(quotationDetails.status);
 
     return (
         <div className="bg-transparent min-h-screen p-4 md:p-8 font-sans text-gray-900">
@@ -1028,6 +1097,14 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                 Save Draft
                             </Button>
                             <Button
+                                className="bg-green-600 hover:bg-green-700 text-white shadow-sm gap-2"
+                                onClick={handleSaveAndSend}
+                                disabled={isSaving}
+                            >
+                                <Send className="w-4 h-4" />
+                                Save & Send
+                            </Button>
+                            <Button
                                 className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm gap-2"
                                 onClick={() => handleSave('Completed')}
                                 disabled={isSaving}
@@ -1038,17 +1115,17 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                         </>
                     )}
 
-                    {/* Completed Actions */}
-                    {quotationDetails.status === 'Completed' && (
+                    {/* Completed / Sent Actions */}
+                    {['Completed', 'Sent'].includes(quotationDetails.status) && (
                         <>
                             <Button
                                 variant="outline"
-                                onClick={() => handleSave('Draft')}
+                                onClick={() => handleSave(quotationDetails.status)}
                                 disabled={isSaving}
-                                className="border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100"
+                                className="border-gray-200 bg-white shadow-sm hover:bg-gray-50 text-gray-600"
                             >
-                                <PenLine className="w-4 h-4 mr-2" />
-                                Edit (Revert to Draft)
+                                <Save className="w-4 h-4 mr-2" />
+                                Save Changes
                             </Button>
                             <Button
                                 className="bg-green-600 hover:bg-green-700 text-white shadow-sm gap-2"
@@ -1056,13 +1133,13 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                 disabled={isSaving}
                             >
                                 <Send className="w-4 h-4" />
-                                Mark as Sent
+                                {quotationDetails.status === 'Sent' ? 'Resend Email' : 'Mark as Sent'}
                             </Button>
                         </>
                     )}
 
-                    {/* Cancel Action (Available for Draft and Completed) */}
-                    {['Draft', 'Completed'].includes(quotationDetails.status) && (
+                    {/* Cancel Action */}
+                    {['Draft', 'Completed', 'Sent'].includes(quotationDetails.status) && (
                         <Button
                             variant="ghost"
                             onClick={() => handleSave('Cancelled')}
@@ -1210,8 +1287,9 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
                                                     {/* Toggle Switch (No text label as requested) */}
+                                                    {/* Toggle Switch (No text label as requested) */}
                                                     <Switch
-                                                        checked={item.is_detailed}
+                                                        checked={!!item.is_detailed}
                                                         onCheckedChange={() => toggleItemDetail(idx)}
                                                         className="scale-75 data-[state=checked]:bg-blue-600"
                                                     />
@@ -1325,7 +1403,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                 <div className="flex items-center justify-between">
                                     <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Show Total in PDF</Label>
                                     <Switch
-                                        checked={quotationDetails.show_total}
+                                        checked={!!quotationDetails.show_total}
                                         onCheckedChange={(val) => setQuotationDetails({ ...quotationDetails, show_total: val })}
                                     />
                                 </div>
@@ -1412,468 +1490,417 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                     </Card>
 
                     <div className="space-y-6">
-                        <Card className="border-none shadow-sm rounded-2xl overflow-hidden">
-                            <CardHeader className="bg-white border-b border-gray-100 pb-3">
-                                <CardTitle className="text-sm font-bold">Quotation Metadata</CardTitle>
-                            </CardHeader>
-                            <CardContent className="bg-white pt-4 space-y-4">
-                                <div className="grid grid-cols-1 gap-4">
-                                    <div className="space-y-1">
-                                        <Label className="text-[10px] font-bold text-gray-400 uppercase">Quotation Number</Label>
+                        {/* PRODUCT MODAL */}
+                        <Dialog open={showProductModal} onOpenChange={setShowProductModal}>
+                            <DialogContent className="max-w-5xl h-[85vh] p-0 gap-0 overflow-hidden flex flex-col bg-white">
+                                <div className="px-6 py-4 flex items-center justify-between border-b border-gray-200 bg-white z-10">
+                                    <DialogTitle className="text-lg font-bold">Select products</DialogTitle>
+                                    <button onClick={() => setShowProductModal(false)} className="text-gray-500 hover:text-gray-700">
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                </div>
+                                <div className="px-6 py-3 border-b border-gray-200 bg-white space-y-3">
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 shadow-sm" />
                                         <Input
-                                            value={quotationDetails.quotation_number}
-                                            readOnly
-                                            className="h-9 bg-gray-50 border-gray-200 text-sm font-medium"
+                                            placeholder="Search products by name or SKU"
+                                            className="pl-9 border-blue-500 ring-2 ring-blue-50/50"
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
                                         />
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <Popover open={filterPopoverOpen} onOpenChange={setFilterPopoverOpen}>
+                                            <PopoverTrigger asChild>
+                                                <Button variant="outline" size="sm" className="h-7 text-xs bg-white border-dashed border-gray-300 text-gray-600">
+                                                    Add filter +
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-[200px] p-0" align="start">
+                                                <Command>
+                                                    <CommandInput placeholder="Filter by..." />
+                                                    <CommandList>
+                                                        <CommandGroup>
+                                                            <CommandItem onSelect={() => addFilter('category')}>Category</CommandItem>
+                                                            <CommandItem onSelect={() => addFilter('sub-category')}>Sub-Category</CommandItem>
+                                                            <CommandItem onSelect={() => addFilter('brand')}>Brand</CommandItem>
+                                                            <CommandItem onSelect={() => addFilter('price')}>Pricing</CommandItem>
+                                                        </CommandGroup>
+                                                    </CommandList>
+                                                </Command>
+                                            </PopoverContent>
+                                        </Popover>
+
+                                        <div className="flex items-center gap-2 ml-auto">
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase">Detailed View</span>
+                                            <Switch
+                                                checked={!!modalDetailedView}
+                                                onCheckedChange={setModalDetailedView}
+                                                className="scale-75"
+                                            />
+                                        </div>
+
+                                        {activeFilters.map((f) => (
+                                            <div key={f.type} className="flex items-center bg-blue-50 border border-blue-100 rounded-full px-2 py-0.5 gap-1 shadow-sm">
+                                                <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">
+                                                    {f.type === 'category' ? 'Category' : f.type === 'sub-category' ? 'Sub-Cat' : f.type}:
+                                                </span>
+                                                {f.type === 'category' && (
+                                                    <Select value={f.value} onValueChange={(val) => updateFilterValue('category', val)}>
+                                                        <SelectTrigger className="h-5 py-0 px-1 border-none bg-transparent shadow-none text-xs font-medium focus:ring-0">
+                                                            <SelectValue placeholder="Select" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                                                    </Select>
+                                                )}
+                                                {f.type === 'sub-category' && (
+                                                    <Select value={f.value} onValueChange={(val) => updateFilterValue('sub-category', val)}>
+                                                        <SelectTrigger className="h-5 py-0 px-1 border-none bg-transparent shadow-none text-xs font-medium focus:ring-0">
+                                                            <SelectValue placeholder="Select" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {(getFilterValue('category')
+                                                                ? subCategories.filter(sc => sc.category_id === getFilterValue('category'))
+                                                                : subCategories
+                                                            ).map(sc => <SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>)}
+                                                        </SelectContent>
+                                                    </Select>
+                                                )}
+                                                {f.type === 'brand' && (
+                                                    <Select value={f.value} onValueChange={(val) => updateFilterValue('brand', val)}>
+                                                        <SelectTrigger className="h-5 py-0 px-1 border-none bg-transparent shadow-none text-xs font-medium focus:ring-0">
+                                                            <SelectValue placeholder="Select" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>{brands.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}</SelectContent>
+                                                    </Select>
+                                                )}
+                                                {f.type === 'price' && (
+                                                    <div className="flex items-center gap-1 text-[10px] font-medium">
+                                                        <Input
+                                                            type="number"
+                                                            className="h-4 w-12 p-0 text-center bg-transparent border-none focus-visible:ring-0"
+                                                            placeholder="Min"
+                                                            value={f.value?.min || ''}
+                                                            onChange={(e) => updateFilterValue('price', { ...f.value, min: e.target.value })}
+                                                        />
+                                                        <span>-</span>
+                                                        <Input
+                                                            type="number"
+                                                            className="h-4 w-12 p-0 text-center bg-transparent border-none focus-visible:ring-0"
+                                                            placeholder="Max"
+                                                            value={f.value?.max || ''}
+                                                            onChange={(e) => updateFilterValue('price', { ...f.value, max: e.target.value })}
+                                                        />
+                                                    </div>
+                                                )}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-3 w-3 p-0 hover:bg-blue-100 rounded-full"
+                                                    onClick={() => removeFilter(f.type)}
+                                                >
+                                                    <X className="w-2 h-2 text-blue-400" />
+                                                </Button>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
 
-                                {/* PRODUCT MODAL */}
-                                <Dialog open={showProductModal} onOpenChange={setShowProductModal}>
-                                    <DialogContent className="max-w-5xl h-[85vh] p-0 gap-0 overflow-hidden flex flex-col bg-white">
-                                        <div className="px-6 py-4 flex items-center justify-between border-b border-gray-200 bg-white z-10">
-                                            <DialogTitle className="text-lg font-bold">Select products</DialogTitle>
-                                            <button onClick={() => setShowProductModal(false)} className="text-gray-500 hover:text-gray-700">
-                                                <X className="w-5 h-5" />
-                                            </button>
-                                        </div>
-                                        <div className="px-6 py-3 border-b border-gray-200 bg-white space-y-3">
-                                            <div className="relative">
-                                                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 shadow-sm" />
-                                                <Input
-                                                    placeholder="Search products by name or SKU"
-                                                    className="pl-9 border-blue-500 ring-2 ring-blue-50/50"
-                                                    value={searchTerm}
-                                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                                />
-                                            </div>
-                                            <div className="flex flex-wrap items-center gap-2">
-                                                <Popover open={filterPopoverOpen} onOpenChange={setFilterPopoverOpen}>
-                                                    <PopoverTrigger asChild>
-                                                        <Button variant="outline" size="sm" className="h-7 text-xs bg-white border-dashed border-gray-300 text-gray-600">
-                                                            Add filter +
-                                                        </Button>
-                                                    </PopoverTrigger>
-                                                    <PopoverContent className="w-[200px] p-0" align="start">
-                                                        <Command>
-                                                            <CommandInput placeholder="Filter by..." />
-                                                            <CommandList>
-                                                                <CommandGroup>
-                                                                    <CommandItem onSelect={() => addFilter('category')}>Category</CommandItem>
-                                                                    <CommandItem onSelect={() => addFilter('sub-category')}>Sub-Category</CommandItem>
-                                                                    <CommandItem onSelect={() => addFilter('brand')}>Brand</CommandItem>
-                                                                    <CommandItem onSelect={() => addFilter('price')}>Pricing</CommandItem>
-                                                                </CommandGroup>
-                                                            </CommandList>
-                                                        </Command>
-                                                    </PopoverContent>
-                                                </Popover>
-
-                                                {activeFilters.map((f) => (
-                                                    <div key={f.type} className="flex items-center bg-blue-50 border border-blue-100 rounded-full px-2 py-0.5 gap-1 shadow-sm">
-                                                        <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">
-                                                            {f.type === 'category' ? 'Category' : f.type === 'sub-category' ? 'Sub-Cat' : f.type}:
-                                                        </span>
-                                                        {f.type === 'category' && (
-                                                            <Select value={f.value} onValueChange={(val) => updateFilterValue('category', val)}>
-                                                                <SelectTrigger className="h-5 py-0 px-1 border-none bg-transparent shadow-none text-xs font-medium focus:ring-0">
-                                                                    <SelectValue placeholder="Select" />
-                                                                </SelectTrigger>
-                                                                <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                                                            </Select>
-                                                        )}
-                                                        {f.type === 'sub-category' && (
-                                                            <Select value={f.value} onValueChange={(val) => updateFilterValue('sub-category', val)}>
-                                                                <SelectTrigger className="h-5 py-0 px-1 border-none bg-transparent shadow-none text-xs font-medium focus:ring-0">
-                                                                    <SelectValue placeholder="Select" />
-                                                                </SelectTrigger>
-                                                                <SelectContent>
-                                                                    {(getFilterValue('category')
-                                                                        ? subCategories.filter(sc => sc.category_id === getFilterValue('category'))
-                                                                        : subCategories
-                                                                    ).map(sc => <SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>)}
-                                                                </SelectContent>
-                                                            </Select>
-                                                        )}
-                                                        {f.type === 'brand' && (
-                                                            <Select value={f.value} onValueChange={(val) => updateFilterValue('brand', val)}>
-                                                                <SelectTrigger className="h-5 py-0 px-1 border-none bg-transparent shadow-none text-xs font-medium focus:ring-0">
-                                                                    <SelectValue placeholder="Select" />
-                                                                </SelectTrigger>
-                                                                <SelectContent>{brands.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}</SelectContent>
-                                                            </Select>
-                                                        )}
-                                                        {f.type === 'price' && (
-                                                            <div className="flex items-center gap-1 text-[10px] font-medium">
-                                                                <Input
-                                                                    type="number"
-                                                                    className="h-4 w-12 p-0 text-center bg-transparent border-none focus-visible:ring-0"
-                                                                    placeholder="Min"
-                                                                    value={f.value?.min || ''}
-                                                                    onChange={(e) => updateFilterValue('price', { ...f.value, min: e.target.value })}
-                                                                />
-                                                                <span>-</span>
-                                                                <Input
-                                                                    type="number"
-                                                                    className="h-4 w-12 p-0 text-center bg-transparent border-none focus-visible:ring-0"
-                                                                    placeholder="Max"
-                                                                    value={f.value?.max || ''}
-                                                                    onChange={(e) => updateFilterValue('price', { ...f.value, max: e.target.value })}
-                                                                />
-                                                            </div>
-                                                        )}
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-3 w-3 p-0 hover:bg-blue-100 rounded-full"
-                                                            onClick={() => removeFilter(f.type)}
+                                <div className="flex-1 overflow-auto bg-gray-50 relative" id="scroll-container">
+                                    <div className="min-w-[800px] pb-20">
+                                        <Table>
+                                            <TableHeader className="bg-white">
+                                                <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b">
+                                                    <TableHead className="bg-white w-[50px] pl-6"></TableHead>
+                                                    <TableHead className="bg-white w-[300px]">
+                                                        <div className="flex items-center gap-1">Product <span className="text-[10px] font-normal text-gray-400">(Name, SKU)</span></div>
+                                                    </TableHead>
+                                                    <TableHead className="bg-white text-right">Category</TableHead>
+                                                    <TableHead className="bg-white text-right">MRP</TableHead>
+                                                    {isSuperAdmin && (
+                                                        <TableHead className="bg-white text-right text-blue-600">Dealer</TableHead>
+                                                    )}
+                                                    <TableHead className="bg-white text-right border-l-2 border-blue-100 bg-blue-50/50">
+                                                        <div className="flex flex-col items-end">
+                                                            <span className="text-blue-700">Rec. Price</span>
+                                                            <span className="text-[9px] font-normal text-blue-500">Based on Type</span>
+                                                        </div>
+                                                    </TableHead>
+                                                    <TableHead className="bg-white text-right">Your Price</TableHead>
+                                                    <TableHead className="bg-white w-[50px]"></TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {products.map((product) => {
+                                                    const isSelected = selectedProducts.find(p => p.id === product.id)
+                                                    return (
+                                                        <TableRow
+                                                            key={product.id}
+                                                            className={cn(
+                                                                "hover:bg-gray-50 cursor-pointer",
+                                                                isSelected && "bg-blue-50/50"
+                                                            )}
+                                                            onClick={() => handleToggleProduct(product)}
                                                         >
-                                                            <X className="w-2 h-2 text-blue-400" />
-                                                        </Button>
+                                                            <TableCell className="pl-6">
+                                                                <div
+                                                                    className={cn(
+                                                                        "w-5 h-5 border-2 rounded flex items-center justify-center cursor-pointer transition-colors shadow-sm",
+                                                                        isSelected ? "bg-red-600 border-red-600" : "bg-white border-gray-300 hover:border-red-500"
+                                                                    )}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleToggleProduct(product);
+                                                                    }}
+                                                                >
+                                                                    {isSelected && <Check className="w-3.5 h-3.5 text-white stroke-[3px]" />}
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell className={cn(modalDetailedView ? "py-4" : "py-1")}>
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className={cn(
+                                                                        "border bg-gray-100 overflow-hidden shrink-0 transition-all",
+                                                                        modalDetailedView ? "w-20 h-20 rounded-md" : "w-8 h-8 rounded"
+                                                                    )}>
+                                                                        <img
+                                                                            src={getFirstImage(product.images)}
+                                                                            className="w-full h-full object-cover"
+                                                                            onError={(e) => e.target.style.display = 'none'}
+                                                                        />
+                                                                    </div>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <div className={cn("font-medium text-gray-900 truncate", modalDetailedView ? "text-base" : "text-[13px]")}>{product.name}</div>
+                                                                        {modalDetailedView ? (
+                                                                            <>
+                                                                                <div className="text-xs text-gray-500 font-mono mt-0.5">{product.sku}</div>
+                                                                                <div className="text-xs text-gray-600 mt-2 line-clamp-2 max-w-lg">{product.short_description}</div>
+                                                                                {Array.isArray(product.images) && product.images.length > 1 && (
+                                                                                    <div className="flex gap-1 mt-2">
+                                                                                        {product.images.slice(1, 5).map((img, i) => (
+                                                                                            <img key={i} src={img} className="w-8 h-8 rounded border object-cover" />
+                                                                                        ))}
+                                                                                    </div>
+                                                                                )}
+                                                                            </>
+                                                                        ) : (
+                                                                            <div className="text-[10px] text-gray-400 font-mono inline-block ml-1">({product.sku})</div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell className={cn("text-right", modalDetailedView ? "py-4" : "py-1")}>
+                                                                <div className="text-[11px] text-gray-600 font-bold">{product.category_name}</div>
+                                                                {product.sub_category_name && (
+                                                                    <div className="text-[10px] text-gray-400">{product.sub_category_name}</div>
+                                                                )}
+                                                            </TableCell>
+                                                            <TableCell className={cn("text-right", modalDetailedView ? "py-4" : "py-1")}>
+                                                                <div className="text-xs font-bold text-gray-900">₹{parseFloat(product.mrp_price).toLocaleString()}</div>
+                                                            </TableCell>
+                                                            {isSuperAdmin && (
+                                                                <TableCell className={cn("text-right", modalDetailedView ? "py-4" : "py-1")}>
+                                                                    <div className="text-xs font-bold text-gray-600">{parseFloat(product.dealer_price || 0).toLocaleString()}</div>
+                                                                </TableCell>
+                                                            )}
+                                                            <TableCell className={cn("text-right border-l-2 border-blue-100 bg-blue-50/20", modalDetailedView ? "py-4" : "py-1")}>
+                                                                <div className="font-bold text-blue-700">
+                                                                    {(() => {
+                                                                        const customer = customers.find(c => c.id === selectedCustomer);
+                                                                        const custType = customerTypes.find(t => String(t.id) === String(customer?.customer_type_id));
+                                                                        const customerTypeBase = customer?.base_price_type || custType?.base_price_type || 'mrp';
+                                                                        const percentage = parseFloat(customer?.percentage || custType?.percentage || 0);
+
+                                                                        let customPrice = parseFloat(product.shop_price || product.mrp_price);
+                                                                        if (customerTypeBase === 'dealer') {
+                                                                            const basePrice = parseFloat(product.dealer_price || product.shop_price || product.mrp_price);
+                                                                            customPrice = basePrice * (1 + percentage / 100);
+                                                                        } else {
+                                                                            const basePrice = parseFloat(product.mrp_price);
+                                                                            customPrice = basePrice * (1 - percentage / 100);
+                                                                        }
+                                                                        if (!customer?.base_price_type && !custType && product.dealer_price) {
+                                                                            customPrice = parseFloat(product.dealer_price);
+                                                                        }
+                                                                        return customPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                                                    })()}
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell className={cn(modalDetailedView ? "py-4" : "py-1")}>
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="ghost"
+                                                                    className="h-8 w-8 p-0"
+                                                                    onClick={(e) => { e.stopPropagation(); addSingleProduct(product); }}
+                                                                >
+                                                                    <Plus className="w-4 h-4" />
+                                                                </Button>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    )
+                                                })}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                    <div ref={observerTarget} className="h-16 w-full flex items-center justify-center">
+                                        {isFetchingNextPage && (
+                                            <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="p-4 border-t border-gray-200 bg-white flex justify-between items-center z-20 relative shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                                    <div className="text-sm text-gray-500 ml-2 font-medium bg-gray-100 px-3 py-1 rounded-full">
+                                        {selectedProducts.length} products selected
+                                    </div>
+                                    <div className="flex gap-3">
+                                        <Button variant="outline" className="px-6" onClick={() => setShowProductModal(false)}>
+                                            Cancel
+                                        </Button>
+                                        <Button
+                                            className="px-6 bg-[#1a1a1a] hover:bg-[#333] text-white"
+                                            disabled={selectedProducts.length === 0}
+                                            onClick={addSelectedProducts}
+                                        >
+                                            Add Selected
+                                        </Button>
+                                    </div>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+
+                        {/* New Customer Dialog & Manage Types */}
+                        <Dialog open={isCustomerModalOpen} onOpenChange={setIsCustomerModalOpen}>
+                            <DialogContent className="sm:max-w-[600px] bg-white">
+                                {!manageTypesOpen ? (
+                                    <>
+                                        <DialogHeader><DialogTitle>Add New Customer</DialogTitle><DialogDescription>Create a new customer profile.</DialogDescription></DialogHeader>
+                                        <div className="grid grid-cols-2 gap-4 py-4">
+                                            <Input value={newCustomer.company_name} onChange={e => setNewCustomer({ ...newCustomer, company_name: e.target.value })} placeholder="Company Name *" className="col-span-2" />
+                                            <Input value={newCustomer.email} onChange={e => setNewCustomer({ ...newCustomer, email: e.target.value })} placeholder="Email *" />
+                                            <Input value={newCustomer.phone} onChange={e => setNewCustomer({ ...newCustomer, phone: e.target.value })} placeholder="Phone" />
+                                            <div className="col-span-1 flex gap-2 items-end">
+                                                <div className="flex-1">
+                                                    <Label className="text-xs mb-1 block">Customer Type</Label>
+                                                    <Select value={newCustomer.customer_type_id} onValueChange={(val) => setNewCustomer({ ...newCustomer, customer_type_id: val })}>
+                                                        <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                                                        <SelectContent>
+                                                            {customerTypes.map(t => (
+                                                                <SelectItem key={t.id} value={t.id}>
+                                                                    {t.name} ({t.base_price_type === 'dealer' ? '+' : '-'}{t.percentage}%)
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                <Button variant="outline" size="icon" onClick={() => setManageTypesOpen(true)} title="Manage Types"><Settings className="w-4 h-4" /></Button>
+                                            </div>
+                                            <Input value={newCustomer.gst_number} onChange={e => setNewCustomer({ ...newCustomer, gst_number: e.target.value })} placeholder="GST Number" />
+                                            <div className="space-y-2 col-span-2">
+                                                <Label className="text-xs font-semibold uppercase text-gray-500">Address</Label>
+                                                <Textarea value={newCustomer.address} onChange={e => setNewCustomer({ ...newCustomer, address: e.target.value })} placeholder="Full Address..." className="bg-gray-50 border-gray-200" />
+                                            </div>
+                                            <div className="col-span-2 grid grid-cols-2 gap-4 pt-2 border-t border-gray-100">
+                                                <div className="col-span-2 text-xs font-bold text-gray-400 uppercase">Primary Contact Person</div>
+                                                <Input value={newCustomer.primary_contact_name} onChange={e => setNewCustomer({ ...newCustomer, primary_contact_name: e.target.value })} placeholder="Contact Name" />
+                                                <Input value={newCustomer.primary_contact_phone} onChange={e => setNewCustomer({ ...newCustomer, primary_contact_phone: e.target.value })} placeholder="Contact Phone" />
+                                            </div>
+                                            <Button onClick={async () => {
+                                                if (!newCustomer.company_name) return toast.error("Name required");
+                                                try {
+                                                    const contacts = [{
+                                                        name: newCustomer.primary_contact_name || newCustomer.company_name,
+                                                        phone: newCustomer.primary_contact_phone || newCustomer.phone,
+                                                        email: newCustomer.email,
+                                                        is_primary: true
+                                                    }];
+                                                    const res = await apiCall('/customers', {
+                                                        method: 'POST',
+                                                        body: JSON.stringify({
+                                                            ...newCustomer,
+                                                            name: newCustomer.company_name,
+                                                            contacts: contacts
+                                                        })
+                                                    });
+                                                    toast.success("Customer created!");
+                                                    queryClient.invalidateQueries(['customers']);
+                                                    setSelectedCustomer(res.id);
+                                                    setIsCustomerModalOpen(false);
+                                                } catch (e) { toast.error(e.message) }
+                                            }} className="col-span-2 bg-black text-white hover:bg-gray-800">Create Customer</Button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <DialogHeader><DialogTitle>Manage Customer Types</DialogTitle><DialogDescription>Add or remove customer types.</DialogDescription></DialogHeader>
+                                        <div className="space-y-4 py-4">
+                                            <div className="flex gap-2">
+                                                <Input placeholder="Type Name (e.g. VIP)" value={newTypeName} onChange={e => setNewTypeName(e.target.value)} />
+                                                <Input placeholder="Disc %" type="number" className="w-20" value={newTypeDiscount} onChange={e => setNewTypeDiscount(e.target.value)} />
+                                                <Button onClick={createCustomerType}><Plus className="w-4 h-4" /></Button>
+                                            </div>
+                                            <div className="border rounded-md divide-y">
+                                                {customerTypes.map(t => (
+                                                    <div key={t.id} className="flex justify-between items-center p-2 text-sm">
+                                                        <span>{t.name} <span className="text-gray-500">({t.discount_percentage}%)</span></span>
+                                                        {t.name !== 'Regular' && <Button size="sm" variant="ghost" onClick={() => deleteCustomerType(t.id)}><Trash2 className="w-3 h-3 text-red-500" /></Button>}
                                                     </div>
                                                 ))}
                                             </div>
+                                            <Button variant="outline" onClick={() => setManageTypesOpen(false)}>Back</Button>
                                         </div>
+                                    </>
+                                )}
+                            </DialogContent>
+                        </Dialog>
 
-                                        <div className="flex-1 overflow-auto bg-gray-50 relative" id="scroll-container">
-                                            <div className="min-w-[800px] pb-20">
-                                                {Object.entries(groupedProducts).map(([groupName, groupProducts]) => {
-                                                    const isExpanded = expandedGroups[groupName];
-                                                    const displayedProducts = isExpanded || groupName === 'All Products' ? groupProducts : groupProducts.slice(0, 10);
-                                                    const hasMore = groupProducts.length > 10;
+                        {/* Discard Dialog */}
+                        <AlertDialog open={discardDialogOpen} onOpenChange={setDiscardDialogOpen}>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Discard changes?</AlertDialogTitle>
+                                    <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => { onClose && onClose() }} className="bg-red-600">Discard</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
 
-                                                    return (
-                                                        <div key={groupName} className="mb-2">
-                                                            {Object.keys(groupedProducts).length > 1 && (
-                                                                <div className="sticky top-0 z-10 bg-gray-100/95 backdrop-blur px-6 py-2 border-y border-gray-200 shadow-sm flex justify-between items-center group cursor-pointer" onClick={() => setExpandedGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }))}>
-                                                                    <h3 className="font-bold text-gray-700 text-xs uppercase tracking-wider flex items-center gap-2">
-                                                                        {groupName === 'Others' ? 'Uncategorized' : groupName}
-                                                                        <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-white">{groupProducts.length}</Badge>
-                                                                    </h3>
-                                                                    <ChevronRight className={cn("w-4 h-4 text-gray-400 transition-transform", isExpanded && "rotate-90")} />
-                                                                </div>
-                                                            )}
+                        {/* Customer Clear Warning Dialog */}
+                        <AlertDialog open={clearCustomerDialogOpen} onOpenChange={setClearCustomerDialogOpen}>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle className="flex items-center gap-2">
+                                        <AlertTriangle className="w-5 h-5 text-orange-500" />
+                                        Clear Customer Selection?
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Clearing the customer will remove all products from this quotation. This action cannot be undone. Do you want to continue?
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                        onClick={() => {
+                                            setSelectedCustomer('');
+                                            setQuotationItems([]);
+                                            setClearCustomerDialogOpen(false);
+                                            toast.info('Customer and products cleared');
+                                        }}
+                                        className="bg-red-600 hover:bg-red-700"
+                                    >
+                                        Clear All
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
 
-                                                            <Table>
-                                                                <TableHeader className="bg-white">
-                                                                    <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b">
-                                                                        <TableHead className="bg-white w-[50px] pl-6">Sel</TableHead>
-                                                                        <TableHead className="bg-white w-[300px]">
-                                                                            <div className="flex items-center gap-1">Product <span className="text-[10px] font-normal text-gray-400">(Name, SKU)</span></div>
-                                                                        </TableHead>
-                                                                        <TableHead className="bg-white text-right">Category</TableHead>
-                                                                        <TableHead className="bg-white text-right">MRP</TableHead>
-                                                                        {isSuperAdmin && (
-                                                                            <TableHead className="bg-white text-right text-blue-600">Dealer</TableHead>
-                                                                        )}
-                                                                        <TableHead className="bg-white text-right border-l-2 border-blue-100 bg-blue-50/50">
-                                                                            <div className="flex flex-col items-end">
-                                                                                <span className="text-blue-700">Rec. Price</span>
-                                                                                <span className="text-[9px] font-normal text-blue-500">Based on Type</span>
-                                                                            </div>
-                                                                        </TableHead>
-                                                                        <TableHead className="bg-white text-right">
-                                                                            {(() => {
-                                                                                const customer = customers.find(c => c.id === selectedCustomer);
-                                                                                const custType = customerTypes.find(t => String(t.id) === String(customer?.customer_type_id));
-                                                                                const baseType = custType?.base_price_type || 'mrp';
-                                                                                return baseType === 'dealer' ? 'Your Price' : 'Your Price';
-                                                                            })()}
-                                                                        </TableHead>
-                                                                        <TableHead className="bg-white w-[50px]"></TableHead>
-                                                                    </TableRow>
-                                                                </TableHeader>
-                                                                <TableBody>
-                                                                    {displayedProducts.map((product) => {
-                                                                        const isSelected = selectedProducts.find(p => p.id === product.id)
-                                                                        return (
-                                                                            <TableRow
-                                                                                key={product.id}
-                                                                                className={cn(
-                                                                                    "hover:bg-gray-50 cursor-pointer",
-                                                                                    isSelected && "bg-blue-50/50"
-                                                                                )}
-                                                                                onClick={() => handleToggleProduct(product)}
-                                                                            >
-                                                                                <TableCell className="pl-6">
-                                                                                    <Checkbox checked={!!isSelected} onCheckedChange={() => handleToggleProduct(product)} onClick={(e) => e.stopPropagation()} />
-                                                                                </TableCell>
-                                                                                <TableCell>
-                                                                                    <div className="flex items-center gap-3">
-                                                                                        <div className="w-10 h-10 rounded border bg-gray-100 overflow-hidden shrink-0">
-                                                                                            <img
-                                                                                                src={getFirstImage(product.images)}
-                                                                                                className="w-full h-full object-cover"
-                                                                                                onError={(e) => e.target.style.display = 'none'}
-                                                                                            />
-                                                                                        </div>
-                                                                                        <div className="flex-1 min-w-0">
-                                                                                            <div className="font-medium text-sm text-gray-900 truncate">{product.name}</div>
-                                                                                            <div className="text-xs text-gray-500 font-mono">{product.sku}</div>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </TableCell>
-                                                                                <TableCell className="text-right">
-                                                                                    <div className="text-sm text-gray-600">{product.category_name}</div>
-                                                                                    {product.sub_category_name && (
-                                                                                        <div className="text-xs text-gray-400">{product.sub_category_name}</div>
-                                                                                    )}
-                                                                                </TableCell>
-                                                                                <TableCell className="text-right">
-                                                                                    <div className="text-xs text-gray-600">{parseFloat(product.mrp_price).toLocaleString()}</div>
-                                                                                </TableCell>
-                                                                                {isSuperAdmin && (
-                                                                                    <TableCell className="text-right">
-                                                                                        <div className="text-xs font-bold text-gray-600">{parseFloat(product.dealer_price || 0).toLocaleString()}</div>
-                                                                                    </TableCell>
-                                                                                )}
-                                                                                <TableCell className="text-right border-l-2 border-blue-100 bg-blue-50/20">
-                                                                                    <div className="font-bold text-blue-700">
-                                                                                        {(() => {
-                                                                                            const customer = customers.find(c => c.id === selectedCustomer);
-                                                                                            const custType = customerTypes.find(t => String(t.id) === String(customer?.customer_type_id));
-                                                                                            let customPrice = parseFloat(product.shop_price || product.mrp_price);
-
-                                                                                            if (custType) {
-                                                                                                const baseType = custType.base_price_type || 'mrp';
-                                                                                                const percentage = parseFloat(customer.discount_percentage || customer.percentage || custType.percentage || custType.discount_percentage || 0);
-                                                                                                if (baseType === 'dealer') {
-                                                                                                    const basePrice = parseFloat(product.dealer_price || product.shop_price || product.mrp_price);
-                                                                                                    customPrice = basePrice * (1 + percentage / 100);
-                                                                                                } else {
-                                                                                                    const basePrice = parseFloat(product.mrp_price);
-                                                                                                    customPrice = basePrice * (1 - percentage / 100);
-                                                                                                }
-                                                                                            }
-                                                                                            return `${customPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                                                                                        })()}
-                                                                                    </div>
-                                                                                </TableCell>
-                                                                                <TableCell className="text-right">
-                                                                                    <div className="font-bold text-gray-900">
-                                                                                        {(() => {
-                                                                                            const customer = customers.find(c => c.id === selectedCustomer);
-                                                                                            const custType = customerTypes.find(t => String(t.id) === String(customer?.customer_type_id));
-
-                                                                                            // Get base_price_type and percentage from customer or custType
-                                                                                            const customerTypeBase = customer?.base_price_type || custType?.base_price_type || 'mrp';
-                                                                                            const percentage = parseFloat(customer?.percentage || custType?.percentage || 0);
-
-                                                                                            let customPrice = parseFloat(product.shop_price || product.mrp_price);
-
-                                                                                            // Apply pricing logic based on customer type
-                                                                                            if (customerTypeBase === 'dealer') {
-                                                                                                // Dealer: base is dealer_price, ADD markup percentage
-                                                                                                const basePrice = parseFloat(product.dealer_price || product.shop_price || product.mrp_price);
-                                                                                                customPrice = basePrice * (1 + percentage / 100);
-                                                                                            } else {
-                                                                                                // MRP: base is MRP, SUBTRACT discount percentage
-                                                                                                const basePrice = parseFloat(product.mrp_price);
-                                                                                                customPrice = basePrice * (1 - percentage / 100);
-                                                                                            }
-
-                                                                                            // If no customer type, fallback to dealer price if available
-                                                                                            if (!customer?.base_price_type && !custType && product.dealer_price) {
-                                                                                                customPrice = parseFloat(product.dealer_price);
-                                                                                            }
-
-                                                                                            return customPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                                                                                        })()}
-                                                                                    </div>
-                                                                                </TableCell>
-                                                                                <TableCell>
-                                                                                    <Button
-                                                                                        size="sm"
-                                                                                        variant="ghost"
-                                                                                        className="h-8 w-8 p-0"
-                                                                                        onClick={(e) => { e.stopPropagation(); addSingleProduct(product); }}
-                                                                                    >
-                                                                                        <Plus className="w-4 h-4" />
-                                                                                    </Button>
-                                                                                </TableCell>
-                                                                            </TableRow>
-                                                                        )
-                                                                    })}
-                                                                </TableBody>
-                                                            </Table>
-                                                            {hasMore && !isExpanded && (
-                                                                <div className="p-4 bg-white text-center border-t">
-                                                                    <Button
-                                                                        variant="secondary"
-                                                                        size="sm"
-                                                                        className="w-full max-w-[200px] text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700"
-                                                                        onClick={() => setExpandedGroups({ ...expandedGroups, [groupName]: true })}
-                                                                    >
-                                                                        View More Products (+{groupProducts.length - 10})
-                                                                    </Button>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                            <div ref={observerTarget} className="h-16 w-full flex items-center justify-center">
-                                                {isFetchingNextPage && (
-                                                    <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div className="p-4 border-t border-gray-200 bg-white flex justify-between items-center z-20 relative shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-                                            <div className="text-sm text-gray-500 ml-2 font-medium bg-gray-100 px-3 py-1 rounded-full">
-                                                {selectedProducts.length} products selected
-                                            </div>
-                                            <div className="flex gap-3">
-                                                <Button variant="outline" className="px-6" onClick={() => setShowProductModal(false)}>
-                                                    Cancel
-                                                </Button>
-                                                <Button
-                                                    className="px-6 bg-[#1a1a1a] hover:bg-[#333] text-white"
-                                                    disabled={selectedProducts.length === 0}
-                                                    onClick={addSelectedProducts}
-                                                >
-                                                    Add Selected
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </DialogContent>
-                                </Dialog>
-
-                                {/* New Customer Dialog & Manage Types */}
-                                <Dialog open={isCustomerModalOpen} onOpenChange={setIsCustomerModalOpen}>
-                                    <DialogContent className="sm:max-w-[600px] bg-white">
-                                        {!manageTypesOpen ? (
-                                            <>
-                                                <DialogHeader><DialogTitle>Add New Customer</DialogTitle><DialogDescription>Create a new customer profile.</DialogDescription></DialogHeader>
-                                                <div className="grid grid-cols-2 gap-4 py-4">
-                                                    <Input value={newCustomer.company_name} onChange={e => setNewCustomer({ ...newCustomer, company_name: e.target.value })} placeholder="Company Name *" className="col-span-2" />
-                                                    <Input value={newCustomer.email} onChange={e => setNewCustomer({ ...newCustomer, email: e.target.value })} placeholder="Email *" />
-                                                    <Input value={newCustomer.phone} onChange={e => setNewCustomer({ ...newCustomer, phone: e.target.value })} placeholder="Phone" />
-                                                    <div className="col-span-1 flex gap-2 items-end">
-                                                        <div className="flex-1">
-                                                            <Label className="text-xs mb-1 block">Customer Type</Label>
-                                                            <Select value={newCustomer.customer_type_id} onValueChange={(val) => setNewCustomer({ ...newCustomer, customer_type_id: val })}>
-                                                                <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
-                                                                <SelectContent>
-                                                                    {customerTypes.map(t => (
-                                                                        <SelectItem key={t.id} value={t.id}>
-                                                                            {t.name} ({t.base_price_type === 'dealer' ? '+' : '-'}{t.percentage}%)
-                                                                        </SelectItem>
-                                                                    ))}
-                                                                </SelectContent>
-                                                            </Select>
-                                                        </div>
-                                                        <Button variant="outline" size="icon" onClick={() => setManageTypesOpen(true)} title="Manage Types"><Settings className="w-4 h-4" /></Button>
-                                                    </div>
-                                                    <Input value={newCustomer.gst_number} onChange={e => setNewCustomer({ ...newCustomer, gst_number: e.target.value })} placeholder="GST Number" />
-                                                    <div className="space-y-2 col-span-2">
-                                                        <Label className="text-xs font-semibold uppercase text-gray-500">Address</Label>
-                                                        <Textarea value={newCustomer.address} onChange={e => setNewCustomer({ ...newCustomer, address: e.target.value })} placeholder="Full Address..." className="bg-gray-50 border-gray-200" />
-                                                    </div>
-                                                    <div className="col-span-2 grid grid-cols-2 gap-4 pt-2 border-t border-gray-100">
-                                                        <div className="col-span-2 text-xs font-bold text-gray-400 uppercase">Primary Contact Person</div>
-                                                        <Input value={newCustomer.primary_contact_name} onChange={e => setNewCustomer({ ...newCustomer, primary_contact_name: e.target.value })} placeholder="Contact Name" />
-                                                        <Input value={newCustomer.primary_contact_phone} onChange={e => setNewCustomer({ ...newCustomer, primary_contact_phone: e.target.value })} placeholder="Contact Phone" />
-                                                    </div>
-                                                    <Button onClick={async () => {
-                                                        if (!newCustomer.company_name) return toast.error("Name required");
-                                                        try {
-                                                            const contacts = [{
-                                                                name: newCustomer.primary_contact_name || newCustomer.company_name,
-                                                                phone: newCustomer.primary_contact_phone || newCustomer.phone,
-                                                                email: newCustomer.email,
-                                                                is_primary: true
-                                                            }];
-                                                            const res = await apiCall('/customers', {
-                                                                method: 'POST',
-                                                                body: JSON.stringify({
-                                                                    ...newCustomer,
-                                                                    name: newCustomer.company_name,
-                                                                    contacts: contacts
-                                                                })
-                                                            });
-                                                            toast.success("Customer created!");
-                                                            queryClient.invalidateQueries(['customers']);
-                                                            setSelectedCustomer(res.id);
-                                                            setIsCustomerModalOpen(false);
-                                                        } catch (e) { toast.error(e.message) }
-                                                    }} className="col-span-2 bg-black text-white hover:bg-gray-800">Create Customer</Button>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <DialogHeader><DialogTitle>Manage Customer Types</DialogTitle><DialogDescription>Add or remove customer types.</DialogDescription></DialogHeader>
-                                                <div className="space-y-4 py-4">
-                                                    <div className="flex gap-2">
-                                                        <Input placeholder="Type Name (e.g. VIP)" value={newTypeName} onChange={e => setNewTypeName(e.target.value)} />
-                                                        <Input placeholder="Disc %" type="number" className="w-20" value={newTypeDiscount} onChange={e => setNewTypeDiscount(e.target.value)} />
-                                                        <Button onClick={createCustomerType}><Plus className="w-4 h-4" /></Button>
-                                                    </div>
-                                                    <div className="border rounded-md divide-y">
-                                                        {customerTypes.map(t => (
-                                                            <div key={t.id} className="flex justify-between items-center p-2 text-sm">
-                                                                <span>{t.name} <span className="text-gray-500">({t.discount_percentage}%)</span></span>
-                                                                {t.name !== 'Regular' && <Button size="sm" variant="ghost" onClick={() => deleteCustomerType(t.id)}><Trash2 className="w-3 h-3 text-red-500" /></Button>}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                    <Button variant="outline" onClick={() => setManageTypesOpen(false)}>Back</Button>
-                                                </div>
-                                            </>
-                                        )}
-                                    </DialogContent>
-                                </Dialog>
-
-                                {/* Discard Dialog */}
-                                <AlertDialog open={discardDialogOpen} onOpenChange={setDiscardDialogOpen}>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>Discard changes?</AlertDialogTitle>
-                                            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => { onClose && onClose() }} className="bg-red-600">Discard</AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-
-                                {/* Customer Clear Warning Dialog */}
-                                <AlertDialog open={clearCustomerDialogOpen} onOpenChange={setClearCustomerDialogOpen}>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle className="flex items-center gap-2">
-                                                <AlertTriangle className="w-5 h-5 text-orange-500" />
-                                                Clear Customer Selection?
-                                            </AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                Clearing the customer will remove all products from this quotation. This action cannot be undone. Do you want to continue?
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction
-                                                onClick={() => {
-                                                    setSelectedCustomer('');
-                                                    setQuotationItems([]);
-                                                    setClearCustomerDialogOpen(false);
-                                                    toast.info('Customer and products cleared');
-                                                }}
-                                                className="bg-red-600 hover:bg-red-700"
-                                            >
-                                                Clear All
-                                            </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-
-                                {/* Preview Modal Integration */}
-                                <QuotationPreviewModal
-                                    open={isPreviewOpen}
-                                    onOpenChange={setIsPreviewOpen}
-                                    quotation={previewData}
-                                />
-                            </CardContent>
-                        </Card>
+                        {/* Preview Modal Integration */}
+                        <QuotationPreviewModal
+                            open={isPreviewOpen}
+                            onOpenChange={setIsPreviewOpen}
+                            quotation={previewData}
+                        />
                     </div>
 
                     {/* --- INTERACTION HISTORY & ADMIN NOTE --- */}
@@ -1936,6 +1963,6 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                     </Card>
                 </div>
             </div>
-        </div >
+        </div>
     );
 }

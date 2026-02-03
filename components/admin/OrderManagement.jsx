@@ -1,7 +1,10 @@
+'use client'
+
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Eye, Search, X, Check, Loader2, Trash2 } from 'lucide-react'
@@ -13,8 +16,10 @@ import { PaginationControls } from '@/components/admin/PaginationControls'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiCall } from '@/lib/api-client'
 import { useAuth } from '@/components/providers/AuthProvider'
+import { useSearchParams } from 'next/navigation'
 
 export function OrderManagement() {
+    const searchParams = useSearchParams()
     const { user } = useAuth()
     const isSuperAdmin = user?.role === 'superadmin'
     const [page, setPage] = useState(1)
@@ -22,6 +27,15 @@ export function OrderManagement() {
     const [search, setSearch] = useState('')
     const [debouncedSearch, setDebouncedSearch] = useState('')
     const [selectedOrderId, setSelectedOrderId] = useState(null)
+
+    // Handle deep link to specific order
+    useEffect(() => {
+        const id = searchParams.get('id')
+        if (id) {
+            setSelectedOrderId(id)
+        }
+    }, [searchParams])
+
     const [editedItems, setEditedItems] = useState([])
     const [editedDiscount, setEditedDiscount] = useState(0)
     const [editedNotes, setEditedNotes] = useState('')

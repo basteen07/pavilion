@@ -5,10 +5,10 @@
 4 silly config load:file:C:\Users\dfuser\Desktop\pavilion-main\.npmrc
 5 silly config load:file:C:\Users\dfuser\.npmrc
 6 silly config load:file:C:\Users\dfuser\AppData\Roaming\npm\etc\npmrc
-7 verbose title npm run dev
-8 verbose argv "run" "dev"
-9 verbose logfile logs-max:10 dir:C:\Users\dfuser\Desktop\pavilion-main\%AppData%\npm-cache\_logs\2026-02-02T10_39_49_412Z-
-10 verbose logfile C:\Users\dfuser\Desktop\pavilion-main\%AppData%\npm-cache\_logs\2026-02-02T10_39_49_412Z-debug-0.log
+7 verbose title npm exec next lint
+8 verbose argv "exec" "--" "next" "lint"
+9 verbose logfile logs-max:10 dir:C:\Users\dfuser\Desktop\pavilion-main\%AppData%\npm-cache\_logs\2026-02-03T10_24_11_797Z-
+10 verbose logfile C:\Users\dfuser\Desktop\pavilion-main\%AppData%\npm-cache\_logs\2026-02-03T10_24_11_797Z-debug-0.log
 11 silly logfile start cleaning logs, removing 1 files
 12 silly logfile done cleaning log files
 13 verbose cwd C:\Users\dfuser\Desktop\pavilion-main

@@ -110,9 +110,7 @@ export default function WholesaleCustomers() {
                         <h1 className="text-3xl font-bold tracking-tight text-gray-900">Wholesale Customers</h1>
                         <p className="text-muted-foreground mt-1">Manage wholesale account requests and active accounts.</p>
                     </div>
-                    <Button className="bg-red-600 hover:bg-red-700" onClick={() => setIsApproveOpen(true)}>
-                        New Wholesale Customer
-                    </Button>
+                   
                 </div>
                 <div className="rounded-md border bg-white">
                     <Table>

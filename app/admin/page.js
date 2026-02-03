@@ -1,4 +1,4 @@
-import { AdminDashboard } from '@/components/admin/AdminDashboard'
+import { DashboardOverview } from '@/components/admin/DashboardOverview'
 
 export const metadata = {
     title: 'Admin Dashboard - Pavilion',
@@ -6,5 +6,5 @@ export const metadata = {
 }
 
 export default function AdminPage() {
-    return <AdminDashboard />
+    return <DashboardOverview />
 }
