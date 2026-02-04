@@ -12,7 +12,11 @@ function QuotationsContent() {
     const [editingId, setEditingId] = useState(null)
 
     useEffect(() => {
-        if (searchParams.get('new') === 'true') {
+        const id = searchParams.get('id')
+        if (id) {
+            setEditingId(id)
+            setShowQuotationBuilder(true)
+        } else if (searchParams.get('new') === 'true') {
             setShowQuotationBuilder(true)
         }
     }, [searchParams])

@@ -27,6 +27,10 @@ import { Switch } from '@/components/ui/switch'
 import { QuotationPreviewModal } from '@/components/admin/QuotationPreviewModal'
 import ActivityTimeline from './ActivityTimeline'
 
+// --- Constants for stability ---
+const EMPTY_ARRAY = Object.freeze([]);
+const EMPTY_OBJ = Object.freeze({});
+
 // --- Utility: Get Image ---
 const getFirstImage = (images) => {
     if (!images) return '/placeholder.png';
@@ -109,14 +113,14 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
     const observerTarget = useRef(null);
 
     // --- Data Fetching ---
-    const { data: customersData = {} } = useQuery({ queryKey: ['customers'], queryFn: () => apiCall('/customers') })
-    const customers = customersData?.customers || []
-    const { data: customerTypes = [] } = useQuery({ queryKey: ['customer-types'], queryFn: () => apiCall('/customer-types') })
-    const { data: categories = [] } = useQuery({ queryKey: ['categories'], queryFn: () => apiCall('/categories') })
-    const { data: subCategories = [] } = useQuery({ queryKey: ['sub-categories'], queryFn: () => apiCall('/sub-categories') })
+    const { data: customersData = EMPTY_OBJ } = useQuery({ queryKey: ['customers'], queryFn: () => apiCall('/customers') })
+    const customers = customersData?.customers || EMPTY_ARRAY
+    const { data: customerTypes = EMPTY_ARRAY } = useQuery({ queryKey: ['customer-types'], queryFn: () => apiCall('/customer-types') })
+    const { data: categories = EMPTY_ARRAY } = useQuery({ queryKey: ['categories'], queryFn: () => apiCall('/categories') })
+    const { data: subCategories = EMPTY_ARRAY } = useQuery({ queryKey: ['sub-categories'], queryFn: () => apiCall('/sub-categories') })
     const catId = getFilterValue('category');
     const subCatId = getFilterValue('sub-category');
-    const { data: brands = [] } = useQuery({
+    const { data: brands = EMPTY_ARRAY } = useQuery({
         queryKey: ['brands', catId, subCatId],
         queryFn: () => {
             const params = new URLSearchParams();
@@ -197,8 +201,8 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
         doc.setFontSize(8)
         doc.setTextColor(80)
         doc.setFont('helvetica', 'normal')
-        doc.text('Pavilion Sports | Corporate Office: 123 Street, City', 15, 28)
-        doc.text('Email: sales@pavilionsports.com | Web: www.pavilionsports.com', 15, 32)
+        doc.text('Pavilion Sports | The Pavilion 30, Wallajah Road Near Chepauk Stadium Chennai - 600002 Tamil Nadu, India', 15, 28)
+        doc.text('Email: info@pavilionsports.com | Web: www.pavilionsports.com', 15, 32)
 
         // Meta Info Row
         let currentY = 38
@@ -265,17 +269,17 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             return acc;
         }, {});
 
-        // Table Header - Updated: Product, MRP, Your Price, GST, Qty
+        // Table Header - Updated: Product, MRP, Your Price, GST, Qty, UoM
         doc.setFillColor(55, 65, 81)
         doc.rect(15, currentY, 180, 7, 'F')
         doc.setTextColor(255)
         doc.setFontSize(8)
         doc.setFont('helvetica', 'bold')
         doc.text('Product', 20, currentY + 5)
-        doc.text('MRP', 105, currentY + 5)
-        doc.text('Your Price', 130, currentY + 5)
-        doc.text('GST', 160, currentY + 5)
-        doc.text('Qty', 180, currentY + 5)
+        doc.text('Your Price', 125, currentY + 5)
+        doc.text('GST', 158, currentY + 5)
+        doc.text('Qty', 173, currentY + 5)
+        doc.text('UoM', 185, currentY + 5)
         currentY += 10
 
         // Iterate Sub-Categories
@@ -339,6 +343,14 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                     const productName = item.name.length > 40 ? item.name.substring(0, 37) + '...' : item.name;
                     doc.text(productName, productX, currentY + 3)
 
+                    // Add "View" link next to product name
+                    if (item.slug) {
+                        const nameWidth = doc.getTextWidth(productName);
+                        doc.setTextColor(37, 99, 235); // Blue
+                        doc.textWithLink('[View]', productX + nameWidth + 2, currentY + 3, { url: `https://www.pavilionsports.com/product/${item.slug}` });
+                        doc.setTextColor(40); // Reset to default
+                    }
+
                     // Detailed View: Show description if enabled for this product
                     if (isDetailed && item.short_description) {
                         doc.setFontSize(6)
@@ -349,10 +361,10 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                     }
 
                     doc.setFontSize(8)
-                    doc.text(`₹${parseFloat(item.mrp).toLocaleString()}`, 105, currentY + 3)
-                    doc.text(`₹${parseFloat(item.custom_price).toLocaleString()}`, 130, currentY + 3)
-                    doc.text(`${item.gst_rate || '18'}%`.replace('%', ''), 162, currentY + 3)
-                    doc.text(String(item.quantity || 1), 182, currentY + 3)
+                    doc.text(`Rs. ${parseFloat(item.custom_price).toLocaleString()}`, 125, currentY + 3)
+                    doc.text(`${item.gst_rate || '18'}%`.replace('%', ''), 160, currentY + 3)
+                    doc.text(String(item.quantity || 1), 173, currentY + 3)
+                    doc.text(item.uom || 'Single', 185, currentY + 3)
 
                     currentY += isDetailed ? 15 : 8
                 })
@@ -450,94 +462,111 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
 
 
     // --- Logic: Handle URL Customer ID or Quotation ID (Edit Mode) ---
+    // --- Logic: Handle Quotation ID (Edit Mode) ---
     const quoteId = id || searchParams.get('id');
+    const hasLoadedRef = useRef(false);
 
     useEffect(() => {
-        // Edit Mode: Fetch Quotation
-        if (quoteId) {
-            const fetchQuote = async () => {
-                try {
-                    const quote = await apiCall(`/quotations/${quoteId}`);
-                    if (quote) {
-                        // Fetch specific customer details to ensure we have pricing logic
-                        const customer = await apiCall(`/customers/${quote.customer_id}`);
+        if (!quoteId || hasLoadedRef.current) return;
 
-                        setSelectedCustomer(quote.customer_id);
-                        fetchTimeline(quote.customer_id);
-                        setQuotationItems(quote.items.map(item => ({
+        const fetchQuote = async () => {
+            try {
+                const quote = await apiCall(`/quotations/${quoteId}`);
+                if (quote) {
+                    // Fetch specific customer details to ensure we have pricing logic
+                    const customer = await apiCall(`/customers/${quote.customer_id}`);
+
+                    setSelectedCustomer(quote.customer_id);
+                    fetchTimeline(quote.customer_id);
+                    setQuotationItems(quote.items.map(item => {
+                        // Robust boolean check - wrap in parens for correct operator precedence
+                        const isDetailed = (item.is_detailed === true ||
+                            item.is_detailed === 1 ||
+                            item.is_detailed === '1' ||
+                            item.is_detailed === 'true') ? true : false;
+
+                        // Debug log
+                        console.log(`[QuotationLoad] Item: ${item.product_name} | DB is_detailed: ${item.is_detailed} | Converted: ${isDetailed}`);
+
+                        return {
                             ...item,
-                            name: item.product_name, // Mapping back for UI
+                            name: item.product_name || item.name,
                             mrp: parseFloat(item.mrp) || parseFloat(item.current_mrp) || 0,
                             dealer_price: parseFloat(item.dealer_price) || parseFloat(item.current_dealer_price) || 0,
                             custom_price: item.unit_price,
-                            gst_rate: '18%', // Default if missing
-                            customer_type_base: customer?.base_price_type || 'mrp', // Critical for edit logic
+                            gst_rate: '18%',
+                            customer_type_base: customer?.base_price_type || 'mrp',
                             discount: item.discount || 0,
-                            is_detailed: item.is_detailed ?? false, // Preserve or default to false
-                            short_description: item.short_description || '',
-                            // Use stored image_url first, fallback to product images
+                            is_detailed: isDetailed,
+                            short_description: item.short_description || item.product_short_description || '',
                             image: item.image_url || getFirstImage(item.images),
-                            // Ensure grouping data is restored for preview/PDF
                             category_name: item.category_name || '',
                             sub_category_name: item.sub_category_name || '',
-                            brand_name: item.brand_name || ''
-                        })));
-                        setQuotationDetails({
-                            quotation_number: quote.quotation_number,
-                            issue_date: new Date(quote.created_at).toISOString().split('T')[0],
-                            valid_until: quote.valid_until ? new Date(quote.valid_until).toISOString().split('T')[0] : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                            shipping_cost: quote.shipping_cost || 0,
-                            discount_type: quote.discount_type || 'percentage',
-                            discount_value: quote.discount_value || 0,
-                            tax_rate: quote.tax_rate || 18,
-                            additional_notes: quote.notes || '',
-                            terms_and_conditions: quote.terms_conditions || '',
-                            show_total: quote.show_total !== undefined ? quote.show_total : true,
-                            tags: '',
-                            status: quote.status || 'Draft'
-                        });
-                    }
-                } catch (e) {
-                    console.error("Edit load error:", e);
-                    toast.error("Failed to load quotation for editing");
+                            brand_name: item.brand_name || '',
+                            uom: item.uom || 'Single'
+                        };
+                    }));
+                    setQuotationDetails({
+                        quotation_number: quote.quotation_number,
+                        issue_date: new Date(quote.created_at).toISOString().split('T')[0],
+                        valid_until: quote.valid_until ? new Date(quote.valid_until).toISOString().split('T')[0] : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        shipping_cost: quote.shipping_cost || 0,
+                        discount_type: quote.discount_type || 'percentage',
+                        discount_value: quote.discount_value || 0,
+                        tax_rate: quote.tax_rate || 18,
+                        additional_notes: quote.notes || '',
+                        terms_and_conditions: quote.terms_conditions || '',
+                        show_total: quote.show_total !== undefined ? quote.show_total : true,
+                        tags: '',
+                        status: quote.status || 'Draft',
+                        payment_terms: quote.payment_terms || 'Net 30 Days',
+                        comments: quote.comments || ''
+                    });
+                    hasLoadedRef.current = true;
                 }
-            };
-            fetchQuote();
-        } else if (urlCustomerId && customers.length > 0 && !selectedCustomer) {
+            } catch (e) {
+                console.error("Edit load error:", e);
+                toast.error("Failed to load quotation for editing");
+            }
+        };
+        fetchQuote();
+    }, [quoteId]);
+
+    // --- Logic: Handle New Quotation Initialization ---
+    useEffect(() => {
+        if (quoteId) return; // Only for new ones
+
+        if (urlCustomerId && customers.length > 0 && !selectedCustomer) {
             setSelectedCustomer(urlCustomerId);
         }
 
         // Fetch sales settings if creating new
-        if (!quoteId) {
-            const fetchSalesSettings = async () => {
-                try {
-                    const settings = await apiCall('/settings?keys=sales_default_terms,quotation_prefix,quotation_validity_days');
-
-                    setQuotationDetails(prev => {
-                        const updates = {};
-                        if (settings.sales_default_terms && !prev.terms_and_conditions) {
-                            updates.terms_and_conditions = settings.sales_default_terms;
+        const fetchSalesSettings = async () => {
+            try {
+                const settings = await apiCall('/settings?keys=sales_default_terms,quotation_prefix,quotation_validity_days');
+                setQuotationDetails(prev => {
+                    const updates = {};
+                    if (settings.sales_default_terms && !prev.terms_and_conditions) {
+                        updates.terms_and_conditions = settings.sales_default_terms;
+                    }
+                    if (settings.quotation_prefix && prev.quotation_number.startsWith('QT-')) {
+                        const randomPart = prev.quotation_number.split('-').pop();
+                        updates.quotation_number = `${settings.quotation_prefix}-${new Date().getFullYear()}-${randomPart}`;
+                    }
+                    if (settings.quotation_validity_days) {
+                        const days = parseInt(settings.quotation_validity_days);
+                        if (!isNaN(days)) {
+                            updates.valid_until = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
                         }
-                        if (settings.quotation_prefix && prev.quotation_number.startsWith('QT-')) {
-                            // Only update prefix if it hasn't been significantly changed or is still the default
-                            const randomPart = prev.quotation_number.split('-').pop();
-                            updates.quotation_number = `${settings.quotation_prefix}-${new Date().getFullYear()}-${randomPart}`;
-                        }
-                        if (settings.quotation_validity_days) {
-                            const days = parseInt(settings.quotation_validity_days);
-                            if (!isNaN(days)) {
-                                updates.valid_until = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-                            }
-                        }
-                        return { ...prev, ...updates };
-                    });
-                } catch (e) {
-                    console.error("Failed to fetch sales settings:", e);
-                }
-            };
-            fetchSalesSettings();
-        }
-    }, [quoteId, urlCustomerId, customers]); // Depend on 'customers' to ensure list is loaded
+                    }
+                    return { ...prev, ...updates };
+                });
+            } catch (e) {
+                console.error("Failed to fetch sales settings:", e);
+            }
+        };
+        fetchSalesSettings();
+    }, [quoteId, urlCustomerId, customers]);
 
     // --- Logic: Fetch Timeline on selection ---
     // --- Logic: Fetch Timeline & Recalculate Prices on selection ---
@@ -672,46 +701,51 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             quantity: 1,
             short_description: product.short_description || '',
             gst_rate: product.gst_rate || '18%',
-            is_detailed: modalDetailedView,
+            is_detailed: !!modalDetailedView, // Force boolean from modal state
+            uom: product.unit || product.unit_type || 'Single',
             customer_type_base: customerTypeBase
         }
+        console.log(`[addSingleProduct] Added: ${product.name} | is_detailed: ${newItem.is_detailed} | modalDetailedView: ${modalDetailedView}`);
         setQuotationItems(prev => [...prev, newItem])
     }
 
     function updateItem(index, field, value) {
-        const newItems = [...quotationItems]
-        const item = newItems[index];
-        item[field] = value;
+        setQuotationItems(prev => prev.map((item, i) => {
+            if (i !== index) return item;
 
-        // Recalculate price if discount/markup changes
-        if (field === 'discount') {
-            const perc = parseFloat(value) || 0;
-            if (item.customer_type_base === 'dealer') {
-                const base = parseFloat(item.dealer_price) || 0;
-                item.custom_price = (base * (1 + perc / 100)).toFixed(2);
-            } else {
-                const base = parseFloat(item.mrp) || 0;
-                item.custom_price = (base * (1 - perc / 100)).toFixed(2);
+            const newItem = { ...item, [field]: value };
+
+            // Recalculate price if discount/markup changes
+            if (field === 'discount') {
+                const perc = parseFloat(value) || 0;
+                if (newItem.customer_type_base === 'dealer') {
+                    const base = parseFloat(newItem.dealer_price) || 0;
+                    newItem.custom_price = (base * (1 + perc / 100)).toFixed(2);
+                } else {
+                    const base = parseFloat(newItem.mrp) || 0;
+                    newItem.custom_price = (base * (1 - perc / 100)).toFixed(2);
+                }
             }
-        }
-        // Recalculate discount/markup if custom_price changes
-        if (field === 'custom_price') {
-            const price = parseFloat(value) || 0;
-            if (item.customer_type_base === 'dealer') {
-                const base = parseFloat(item.dealer_price) || 0;
-                if (base > 0) item.discount = (((price / base) - 1) * 100).toFixed(2);
-            } else {
-                const base = parseFloat(item.mrp) || 0;
-                if (base > 0) item.discount = ((base - price) / base * 100).toFixed(2);
+            // Recalculate discount/markup if custom_price changes
+            if (field === 'custom_price') {
+                const price = parseFloat(value) || 0;
+                if (newItem.customer_type_base === 'dealer') {
+                    const base = parseFloat(newItem.dealer_price) || 0;
+                    if (base > 0) newItem.discount = (((price / base) - 1) * 100).toFixed(2);
+                } else {
+                    const base = parseFloat(newItem.mrp) || 0;
+                    if (base > 0) newItem.discount = ((base - price) / base * 100).toFixed(2);
+                }
             }
-        }
-        setQuotationItems(newItems)
+            return newItem;
+        }));
     }
 
-    function toggleItemDetail(index) {
-        const newItems = [...quotationItems];
-        newItems[index].is_detailed = !newItems[index].is_detailed;
-        setQuotationItems(newItems);
+    function toggleItemDetail(index, val) {
+        console.log(`Toggling Item ${index} Detailed View to:`, val);
+        setQuotationItems(prev => prev.map((item, i) =>
+            i === index ? { ...item, is_detailed: val } : item
+        ));
     }
 
     function removeItem(index) {
@@ -921,7 +955,8 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                     brand_name: item.brand_name,
                     short_description: item.short_description || '',
                     image_url: item.image || '',
-                    is_detailed: item.is_detailed || false
+                    uom: item.uom || 'Single',
+                    is_detailed: (item.is_detailed === true || item.is_detailed === 'true' || item.is_detailed === 1 || item.is_detailed === '1') // Safe check
                 })),
                 ...quotationDetails,
                 subtotal, gst: tax, total_amount: total
@@ -936,7 +971,11 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             } else {
                 // Create new quotation
                 res = await apiCall('/admin/quotations', { method: 'POST', body: JSON.stringify(payload) });
-                savedQuoteId = res.id;
+                savedQuoteId = res.quotation?.id;
+            }
+
+            if (!savedQuoteId) {
+                throw new Error('Failed to get quotation ID from response');
             }
 
             // Now send email to all addresses
@@ -952,9 +991,17 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             }
 
             toast.success('Quotation saved and sent successfully!');
-            setSuccessData({ ...res, quotation_number: res.quotation_number || quotationDetails.quotation_number, status: 'Sent', customer_snapshot: customer });
+
+            // Set success data with the actual quotation details from response
+            const finalQuotation = res.quotation || {};
+            setSuccessData({
+                ...finalQuotation,
+                status: 'Sent',
+                customer_snapshot: customer
+            });
 
         } catch (error) {
+            console.error('[handleSaveAndSend] Error:', error);
             toast.error(error.message || 'Failed to save and send quotation');
         } finally {
             setIsSaving(false);
@@ -970,6 +1017,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
         setIsSaving(true)
         try {
             const customer = customers.find(c => c.id === selectedCustomer)
+            console.log('[handleSave] Current State Items:', quotationItems.map(i => ({ name: i.name, is_detailed: i.is_detailed, type: typeof i.is_detailed })));
             const payload = {
                 customer_id: selectedCustomer,
                 customer_snapshot: customer,
@@ -988,11 +1036,15 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                     brand_name: item.brand_name,
                     short_description: item.short_description || '',
                     image_url: item.image || '',
-                    is_detailed: item.is_detailed || false
+                    uom: item.uom || 'Single',
+                    is_detailed: (item.is_detailed === true || item.is_detailed === 'true' || item.is_detailed === 1 || item.is_detailed === '1') // Safe check
                 })),
                 ...quotationDetails,
                 subtotal, gst: tax, total_amount: total
             }
+
+            console.log('=== SAVING QUOTATION ===');
+            console.log('Payload items with is_detailed:', payload.items.map(i => ({ name: i.product_name, is_detailed: i.is_detailed })));
 
             let res;
             if (quoteId) {
@@ -1005,8 +1057,18 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                 toast.success(statusToSave === 'Draft' ? 'Draft saved!' : 'Quotation created!')
             }
 
+            // Prepare success data for view
+            const finalQuotation = res.quotation || {};
+            setSuccessData({
+                ...finalQuotation,
+                status: statusToSave,
+                customer_snapshot: customer
+            });
+
             // Redirect or callback
-            onSuccess && onSuccess();
+            // Success view will take over if successData is set, 
+            // but we might still want to trigger onSuccess if it's external
+            // onSuccess && onSuccess();
 
         } catch (error) { toast.error(error.message) } finally { setIsSaving(false) }
     }
@@ -1281,109 +1343,158 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                 </div>
                             ) : (
                                 <div className="divide-y divide-gray-100">
-                                    {quotationItems.map((item, idx) => (
-                                        <div key={idx} className="flex flex-col gap-2 p-4 hover:bg-gray-50 group border-b border-gray-100 last:border-0 relative">
-                                            {/* Row 1: Brand (if present) + Top Actions */}
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    {/* Toggle Switch (No text label as requested) */}
-                                                    {/* Toggle Switch (No text label as requested) */}
-                                                    <Switch
-                                                        checked={!!item.is_detailed}
-                                                        onCheckedChange={() => toggleItemDetail(idx)}
-                                                        className="scale-75 data-[state=checked]:bg-blue-600"
-                                                    />
-                                                    {(item.brand || item.brand_name) && (
-                                                        <span className="text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded font-bold uppercase tracking-wider">
-                                                            {item.brand_name || item.brand}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <Button size="icon" variant="ghost" className="h-7 w-7 text-red-400 hover:text-red-600 hover:bg-red-50 -mt-1 -mr-1" onClick={() => removeItem(idx)} disabled={isReadOnly}>
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
-                                            </div>
+                                    <div className="divide-y divide-gray-100">
+                                        {(() => {
+                                            // Group items by Sub-Category -> Brand
+                                            const grouped = quotationItems.reduce((acc, item, originalIndex) => {
+                                                const subCat = item.sub_category_name || 'General';
+                                                const brand = item.brand_name || item.brand || 'Others';
+                                                if (!acc[subCat]) acc[subCat] = {};
+                                                if (!acc[subCat][brand]) acc[subCat][brand] = [];
+                                                acc[subCat][brand].push({ ...item, originalIndex });
+                                                return acc;
+                                            }, {});
 
-                                            {/* Row 2: Product Title + Description (if detailed) */}
-                                            <div className="flex gap-4">
-                                                {item.is_detailed && item.image && (
-                                                    <div className="w-16 h-16 rounded bg-white shrink-0 overflow-hidden border shadow-sm">
-                                                        <img src={item.image} className="w-full h-full object-cover" />
+                                            return Object.entries(grouped).map(([subCategoryName, brandGroups]) => (
+                                                <div key={subCategoryName} className="bg-white">
+                                                    {/* Sub-Category Header */}
+                                                    <div className="px-4 py-2 bg-gray-100 border-b border-gray-200">
+                                                        <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider">{subCategoryName}</h3>
                                                     </div>
-                                                )}
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-baseline gap-2">
-                                                        <p className="text-sm font-bold text-gray-900 leading-tight">{item.name}</p>
-                                                        <span className="text-[9px] text-gray-400 font-mono tracking-tighter">#{item.sku}</span>
-                                                    </div>
-                                                    {item.is_detailed && item.short_description && (
-                                                        <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">{item.short_description}</p>
-                                                    )}
-                                                </div>
-                                            </div>
 
-                                            {/* Row 3: Pricing & Quantity Management */}
-                                            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-1 bg-gray-50/50 p-2 rounded-lg border border-gray-100/50">
-                                                {/* Dealer Price (Conditional) */}
-                                                {item.customer_type_base === 'dealer' && (
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">Dealer Price</span>
-                                                        <span className="text-xs font-semibold text-gray-600">₹{parseFloat(item.dealer_price || 0).toLocaleString()}</span>
-                                                    </div>
-                                                )}
+                                                    {Object.entries(brandGroups).map(([brandName, items]) => (
+                                                        <div key={brandName} className="bg-white">
+                                                            {/* Brand Header */}
+                                                            <div className="px-4 py-1.5 bg-blue-50 border-b border-blue-100">
+                                                                <h4 className="text-[10px] font-bold text-blue-700 uppercase tracking-wider">{brandName}</h4>
+                                                            </div>
 
-                                                {/* MRP */}
-                                                <div className="flex flex-col">
-                                                    <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">MRP</span>
-                                                    <span className={`text-xs font-medium ${item.customer_type_base === 'dealer' ? 'text-gray-400 line-through' : 'text-gray-500'}`}>
-                                                        ₹{parseFloat(item.mrp || 0).toLocaleString()}
-                                                    </span>
-                                                </div>
+                                                            {/* Items List */}
+                                                            {items.map((item) => {
+                                                                const idx = item.originalIndex;
+                                                                return (
+                                                                    <div key={idx} className="flex flex-col gap-2 p-4 hover:bg-gray-50 group border-b border-gray-100 last:border-0 relative">
+                                                                        {/* Row 1: Brand (if present) + Top Actions */}
+                                                                        <div className="flex items-center justify-between">
+                                                                            <div className="flex items-center gap-3">
+                                                                                <Switch
+                                                                                    checked={!!item.is_detailed}
+                                                                                    onCheckedChange={(val) => toggleItemDetail(idx, val)}
+                                                                                    className="scale-75 data-[state=checked]:bg-blue-600"
+                                                                                />
+                                                                                <span className="text-[10px] font-medium text-gray-500">Detailed View</span>
+                                                                            </div>
+                                                                            <Button size="icon" variant="ghost" className="h-7 w-7 text-red-400 hover:text-red-600 hover:bg-red-50 -mt-1 -mr-1" onClick={() => removeItem(idx)} disabled={isReadOnly}>
+                                                                                <Trash2 className="w-4 h-4" />
+                                                                            </Button>
+                                                                        </div>
 
-                                                {/* Discount / Markup */}
-                                                <div className="flex items-center gap-2 bg-white px-2 py-0.5 rounded border border-gray-200 shadow-sm">
-                                                    <span className={`text-[9px] font-bold uppercase ${item.customer_type_base === 'dealer' ? 'text-green-600' : 'text-blue-600'}`}>
-                                                        {item.customer_type_base === 'dealer' ? 'Markup%' : 'Disc%'}
-                                                    </span>
-                                                    <Input
-                                                        className="h-6 w-10 p-0 text-center text-xs bg-transparent border-none focus-visible:ring-0 font-bold"
-                                                        value={item.discount}
-                                                        onChange={(e) => updateItem(idx, 'discount', e.target.value)}
-                                                        disabled={isReadOnly}
-                                                    />
-                                                </div>
+                                                                        {/* Row 2: Product Title + Description (if detailed) */}
+                                                                        <div className="flex gap-4">
+                                                                            {item.is_detailed && item.image && (
+                                                                                <div className="w-16 h-16 rounded bg-white shrink-0 overflow-hidden border shadow-sm">
+                                                                                    <img src={item.image} className="w-full h-full object-cover" />
+                                                                                </div>
+                                                                            )}
+                                                                            <div className="flex-1 min-w-0">
+                                                                                <div className="flex items-baseline gap-2">
+                                                                                    <p className="text-sm font-bold text-gray-900 leading-tight">{item.name}</p>
+                                                                                    <span className="text-[9px] text-gray-400 font-mono tracking-tighter">#{item.sku}</span>
+                                                                                </div>
+                                                                                {item.is_detailed && item.short_description && (
+                                                                                    <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">{item.short_description}</p>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
 
-                                                {/* Quantity */}
-                                                <div className="flex items-center gap-2 bg-white px-2 py-0.5 rounded border border-gray-200 shadow-sm">
-                                                    <span className="text-[9px] text-gray-400 font-bold uppercase pr-1 border-r border-gray-100">Qty</span>
-                                                    <Input
-                                                        className="h-6 w-10 p-0 text-center text-xs bg-transparent border-none focus-visible:ring-0 font-bold"
-                                                        value={item.quantity}
-                                                        onChange={(e) => updateItem(idx, 'quantity', e.target.value)}
-                                                        disabled={isReadOnly}
-                                                    />
-                                                </div>
+                                                                        {/* Row 3: Pricing & Quantity Management (Single Line) */}
+                                                                        <div className="flex flex-nowrap items-center justify-between gap-3 mt-2 bg-gray-50/50 p-2 rounded-lg border border-gray-100/50 overflow-x-auto">
 
-                                                {/* GST */}
-                                                <div className="flex flex-col">
-                                                    <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">GST</span>
-                                                    <span className="text-xs font-medium text-gray-500">{item.gst_rate || '18%'}</span>
-                                                </div>
+                                                                            {/* 1. Dealer Price */}
+                                                                            {item.customer_type_base === 'dealer' && (
+                                                                                <div className="flex flex-col shrink-0 min-w-[60px]">
+                                                                                    <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tight truncate">Dealer Price</span>
+                                                                                    <span className="text-xs font-semibold text-gray-600">Rs. {parseFloat(item.dealer_price || 0).toLocaleString()}</span>
+                                                                                </div>
+                                                                            )}
 
-                                                {/* Your Price (Custom Price) */}
-                                                <div className="flex flex-col ml-auto text-right">
-                                                    <span className="text-[9px] text-blue-600 font-bold uppercase tracking-tight">Your Price</span>
-                                                    <span className="text-xs font-bold text-gray-900">₹{parseFloat(item.custom_price || 0).toLocaleString()}</span>
-                                                </div>
+                                                                            {/* 2. MRP */}
+                                                                            <div className="flex flex-col shrink-0 min-w-[50px]">
+                                                                                <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">MRP</span>
+                                                                                <span className={`text-xs font-medium ${item.customer_type_base === 'dealer' ? 'text-gray-400 line-through' : 'text-gray-500'}`}>
+                                                                                    Rs. {parseFloat(item.mrp || 0).toLocaleString()}
+                                                                                </span>
+                                                                            </div>
 
-                                                {/* Line Total */}
-                                                <div className="flex flex-col text-right min-w-[80px]">
-                                                    <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">Total</span>
-                                                    <span className="text-sm font-black text-blue-600">₹{(parseFloat(item.custom_price || 0) * parseInt(item.quantity || 1)).toLocaleString()}</span>
+                                                                            {/* 3. Markup/Discount */}
+                                                                            <div className="flex flex-col shrink-0">
+                                                                                <span className={`text-[9px] font-bold uppercase tracking-tight mb-0.5 ${item.customer_type_base === 'dealer' ? 'text-green-600' : 'text-blue-600'}`}>
+                                                                                    {item.customer_type_base === 'dealer' ? 'Markup%' : 'Disc%'}
+                                                                                </span>
+                                                                                <div className="bg-white rounded border border-gray-200 shadow-sm h-6 flex items-center px-1">
+                                                                                    <Input
+                                                                                        className="h-full w-12 p-0 text-center text-xs bg-transparent border-none focus-visible:ring-0 font-bold"
+                                                                                        value={item.discount}
+                                                                                        onChange={(e) => updateItem(idx, 'discount', e.target.value)}
+                                                                                        disabled={isReadOnly}
+                                                                                    />
+                                                                                </div>
+                                                                            </div>
+
+                                                                            {/* 4. Qty */}
+                                                                            <div className="flex flex-col shrink-0">
+                                                                                <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tight mb-0.5">Qty</span>
+                                                                                <div className="bg-white rounded border border-gray-200 shadow-sm h-6 flex items-center px-1">
+                                                                                    <Input
+                                                                                        className="h-full w-12 p-0 text-center text-xs bg-transparent border-none focus-visible:ring-0 font-bold"
+                                                                                        value={item.quantity}
+                                                                                        onChange={(e) => updateItem(idx, 'quantity', e.target.value)}
+                                                                                        disabled={isReadOnly}
+                                                                                    />
+                                                                                </div>
+                                                                            </div>
+
+                                                                            {/* 5. UoM */}
+                                                                            <div className="flex flex-col shrink-0">
+                                                                                <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tight mb-0.5">UoM</span>
+                                                                                <div className="bg-white rounded border border-gray-200 shadow-sm h-6 flex items-center px-1">
+                                                                                    <Input
+                                                                                        className="h-full w-16 p-0 text-center text-xs border border-gray-300 focus-visible:ring-1"
+                                                                                        value={item.uom || ''}
+                                                                                        onChange={(e) => updateItem(idx, 'uom', e.target.value)}
+                                                                                        placeholder="Unit"
+                                                                                        disabled={isReadOnly}
+                                                                                    />
+                                                                                </div>
+                                                                            </div>
+
+                                                                            {/* 6. GST */}
+                                                                            <div className="flex flex-col shrink-0 min-w-[40px]">
+                                                                                <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">GST</span>
+                                                                                <span className="text-xs font-medium text-gray-500">{item.gst_rate || '18%'}</span>
+                                                                            </div>
+
+                                                                            {/* 7. Your Price */}
+                                                                            <div className="flex flex-col shrink-0 text-right min-w-[70px]">
+                                                                                <span className="text-[9px] text-blue-600 font-bold uppercase tracking-tight">Your Price</span>
+                                                                                <span className="text-xs font-bold text-gray-900">Rs. {parseFloat(item.custom_price || 0).toLocaleString()}</span>
+                                                                            </div>
+
+                                                                            {/* 8. Total */}
+                                                                            <div className="flex flex-col shrink-0 text-right min-w-[80px]">
+                                                                                <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">Total</span>
+                                                                                <span className="text-sm font-black text-blue-600">Rs. {(parseFloat(item.custom_price || 0) * parseInt(item.quantity || 1)).toLocaleString()}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                )
+                                                            })}
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                            </div>
-                                        </div>
-                                    ))}
+                                            ))
+                                        })()}
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -1620,13 +1731,15 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                                     {isSuperAdmin && (
                                                         <TableHead className="bg-white text-right text-blue-600">Dealer</TableHead>
                                                     )}
+                                                    <TableHead className="bg-white text-right">
+                                                        Rec. Price
+                                                    </TableHead>
                                                     <TableHead className="bg-white text-right border-l-2 border-blue-100 bg-blue-50/50">
                                                         <div className="flex flex-col items-end">
-                                                            <span className="text-blue-700">Rec. Price</span>
+                                                            <span className="text-blue-700">Your Price</span>
                                                             <span className="text-[9px] font-normal text-blue-500">Based on Type</span>
                                                         </div>
                                                     </TableHead>
-                                                    <TableHead className="bg-white text-right">Your Price</TableHead>
                                                     <TableHead className="bg-white w-[50px]"></TableHead>
                                                 </TableRow>
                                             </TableHeader>
@@ -1702,6 +1815,9 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                                                     <div className="text-xs font-bold text-gray-600">{parseFloat(product.dealer_price || 0).toLocaleString()}</div>
                                                                 </TableCell>
                                                             )}
+                                                            <TableCell className={cn("text-right", modalDetailedView ? "py-4" : "py-1")}>
+                                                                <div className="text-xs font-bold text-gray-700">₹{parseFloat(product.shop_price || 0).toLocaleString()}</div>
+                                                            </TableCell>
                                                             <TableCell className={cn("text-right border-l-2 border-blue-100 bg-blue-50/20", modalDetailedView ? "py-4" : "py-1")}>
                                                                 <div className="font-bold text-blue-700">
                                                                     {(() => {
@@ -1904,7 +2020,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                     </div>
 
                     {/* --- INTERACTION HISTORY & ADMIN NOTE --- */}
-                    <Card className="flex-1 flex flex-col border-none shadow-sm rounded-2xl overflow-hidden bg-white min-h-[400px]">
+                    <Card className="flex-1 flex flex-col border-none shadow-sm rounded-2xl overflow-hidden bg-white h-[500px]">
                         <CardHeader className="bg-white border-b border-gray-100 pb-3 flex flex-row items-center justify-between">
                             <CardTitle className="text-sm font-bold flex items-center gap-2">
                                 <Clock className="w-4 h-4 text-blue-500" /> Interaction History

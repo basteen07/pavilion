@@ -7,6 +7,8 @@ import {
     ShoppingCart, Package, UserCheck, UserX, Send
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { useRouter } from 'next/navigation'
+import { cn } from "@/lib/utils"
 
 const EVENT_CONFIG = {
     // System Events
@@ -46,6 +48,32 @@ const EVENT_CONFIG = {
 }
 
 export default function ActivityTimeline({ events = [], isLoading = false, className = "" }) {
+    const router = useRouter()
+
+    const handleEventClick = (event) => {
+        // Quotation Click
+        if (event.quotation_id) {
+            router.push(`/admin/quotations?id=${event.quotation_id}`)
+            return
+        }
+
+        // Order Click
+        if (event.order_id) {
+            router.push(`/admin/orders?id=${event.order_id}`)
+            return
+        }
+
+        // Customer Click (Check if wholesale or regular)
+        if (event.customer_id) {
+            // If the event type is B2B related, go to wholesale
+            if (event.event_type.startsWith('b2b_')) {
+                router.push(`/admin/wholesale/${event.customer_id}`)
+            } else {
+                router.push(`/admin/customers/${event.customer_id}`)
+            }
+            return
+        }
+    }
     if (isLoading) {
         return (
             <div className={`space-y-4 ${className}`}>
@@ -85,7 +113,13 @@ export default function ActivityTimeline({ events = [], isLoading = false, class
                             <Icon className="w-4 h-4" />
                         </div>
 
-                        <div className="flex flex-col bg-white rounded-lg p-3 border border-transparent hover:border-slate-100 hover:shadow-sm transition-all">
+                        <div
+                            onClick={() => handleEventClick(event)}
+                            className={cn(
+                                "flex flex-col bg-white rounded-lg p-3 border border-transparent transition-all",
+                                (event.quotation_id || event.order_id || event.customer_id) && "hover:border-blue-100 hover:shadow-md cursor-pointer",
+                                !(event.quotation_id || event.order_id || event.customer_id) && "hover:border-slate-100"
+                            )}>
                             <div className="flex items-center justify-between gap-4 mb-1">
                                 <span className="text-[11px] font-bold text-slate-900 uppercase tracking-tight">
                                     {event.event_type.replace(/_/g, ' ')}

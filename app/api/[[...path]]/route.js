@@ -1833,7 +1833,14 @@ async function handleRoute(request, { params }) {
       const finalSubtotal = bodySubtotal !== undefined ? bodySubtotal : calcSubtotal;
       const finalTax = gst || 0;
       const finalTotal = bodyTotal !== undefined ? bodyTotal : (finalSubtotal + finalTax);
-      const quotationNumber = bodyQuotationNumber || `QUO-${Date.now()}`;
+
+      let quotationNumber = bodyQuotationNumber || `QUO-${Date.now()}`;
+
+      // Check for duplicate quotation number and regenerate if needed
+      const existingCheck = await query('SELECT id FROM quotations WHERE quotation_number = $1', [quotationNumber]);
+      if (existingCheck.rows.length > 0) {
+        quotationNumber = `QUO-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      }
 
       const quotResult = await query(
         `INSERT INTO quotations 
@@ -1887,8 +1894,8 @@ async function handleRoute(request, { params }) {
         const lineTotal = unitPrice * qty;
 
         await query(
-          `INSERT INTO quotation_items (quotation_id, product_id, product_name, quantity, unit_price, total_price, mrp, discount, dealer_price, slug, line_total)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+          `INSERT INTO quotation_items (quotation_id, product_id, product_name, quantity, unit_price, total_price, mrp, discount, dealer_price, slug, line_total, is_detailed)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
           [
             quotId,
             item.product_id,
@@ -1900,7 +1907,8 @@ async function handleRoute(request, { params }) {
             item.discount || 0,
             item.dealer_price || 0,
             item.slug || null,
-            lineTotal
+            lineTotal,
+            (item.is_detailed === true || item.is_detailed === 'true' || item.is_detailed === 1 || item.is_detailed === '1') // Fix detailed view
           ]
         );
       }
@@ -2070,8 +2078,8 @@ async function handleRoute(request, { params }) {
           const lineTotal = unitPrice * qty;
 
           await query(
-            `INSERT INTO quotation_items (quotation_id, product_id, product_name, quantity, unit_price, total_price, mrp, discount, dealer_price, slug, line_total)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+            `INSERT INTO quotation_items (quotation_id, product_id, product_name, quantity, unit_price, total_price, mrp, discount, dealer_price, slug, line_total, is_detailed)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
             [
               quotationId,
               item.product_id,
@@ -2083,7 +2091,8 @@ async function handleRoute(request, { params }) {
               item.discount || 0,
               item.dealer_price || 0,
               item.slug || null,
-              lineTotal
+              lineTotal,
+              (item.is_detailed === true || item.is_detailed === 'true' || item.is_detailed === 1 || item.is_detailed === '1') // Fix detailed view
             ]
           );
         }

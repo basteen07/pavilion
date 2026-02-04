@@ -175,9 +175,19 @@ export function QuotationsList({ onCreate, onEdit }) {
 
         setActionLoading(quote.id)
         try {
+            // Fetch full quotation details to get items for PDF
+            const fullQuote = await apiCall(`/quotations/${quote.id}`)
+            if (fullQuote.error) throw new Error(fullQuote.error)
+
+            const doc = await generateQuotationPDF(fullQuote);
+            const pdfData = doc.output('datauristring').split(',')[1];
+
             const res = await apiCall(`/admin/quotations/${quote.id}/send-email`, {
                 method: 'POST',
-                body: JSON.stringify({ email: quote.customer_snapshot?.email || quote.customer_email })
+                body: JSON.stringify({
+                    email: quote.customer_snapshot?.email || quote.customer_email,
+                    pdfData: pdfData
+                })
             })
             if (res.success) {
                 toast.success('Quotation sent successfully')
@@ -198,141 +208,7 @@ export function QuotationsList({ onCreate, onEdit }) {
             const quote = await apiCall(`/quotations/${quoteId}`)
             if (quote.error) throw new Error(quote.error)
 
-            const doc = new jsPDF()
-
-            // Header
-            try {
-                const logoUrl = '/pavilion-sports.png'
-                doc.addImage(logoUrl, 'PNG', 14, 12, 45, 12)
-            } catch (e) {
-                console.error('Logo add error:', e)
-            }
-
-            // Watermark (background logo)
-            try {
-                const logoUrl = '/pavilion-sports.png'
-                doc.saveGraphicsState();
-                doc.setGState(new doc.GState({ opacity: 0.04 }));
-                doc.addImage(logoUrl, 'PNG', 30, 80, 150, 45, undefined, 'FAST');
-                doc.restoreGraphicsState();
-            } catch (e) {
-                console.error('Watermark add error:', e)
-            }
-
-            doc.setFontSize(22);
-            doc.setFont("helvetica", "bold");
-            doc.setTextColor(220, 38, 38); // Brand Red
-            doc.text("QUOTATION", 150, 20);
-
-            doc.setFontSize(10);
-            doc.setTextColor(40);
-            doc.setFont("helvetica", "normal");
-            // doc.text("Pavilion Sports", 14, 20); // Removed as logo is now there
-
-            // Customer Info
-            const cust = quote.customer_snapshot || {};
-            const contact = getPrimaryContact(quote); // Use the helper
-
-            doc.text(`To: ${cust.company_name || quote.customer_name || 'Customer'}`, 14, 40);
-
-            // Enhanced Contact Details in PDF
-            let yPos = 45;
-            if (contact.name && contact.name !== 'N/A') {
-                const designationStr = contact.designation ? ` (${contact.designation})` : '';
-                doc.text(`Attn: ${contact.name}${designationStr}`, 14, yPos);
-                yPos += 5;
-            }
-
-            if (contact.email) {
-                doc.text(`Email: ${contact.email}`, 14, yPos);
-                yPos += 5;
-            }
-
-            if (contact.phone && contact.phone !== 'N/A') {
-                doc.text(`Phone: ${contact.phone}`, 14, yPos);
-                yPos += 5;
-            }
-
-            // Meta
-            doc.text(`Reference: ${quote.quotation_number}`, 150, 40);
-            doc.text(`Date: ${new Date(quote.created_at).toLocaleDateString()}`, 150, 45);
-
-            // Table needs to start lower if contact info is long
-            let y = Math.max(65, yPos + 10);
-            doc.setDrawColor(220, 38, 38); // Brand Red for lines
-            doc.line(14, y, 196, y);
-            y += 10;
-            doc.setFont("helvetica", "bold");
-            doc.setTextColor(220, 38, 38); // Brand Red
-            doc.text("Item", 14, y);
-            doc.text("Qty", 120, y);
-            doc.text("Price", 140, y);
-            doc.text("Total", 170, y);
-            y += 5;
-            doc.line(14, y, 196, y);
-            doc.setFont("helvetica", "normal");
-            doc.setTextColor(40);
-            y += 10;
-
-            quote.items.forEach(item => {
-                const name = item.product_name || item.name || '';
-                const qty = item.quantity;
-                const price = parseFloat(item.unit_price);
-                const total = parseFloat(item.line_total || (qty * price));
-
-                doc.text(name.substring(0, 40), 14, y);
-                doc.text(qty.toString(), 120, y);
-                doc.text(price.toFixed(2), 140, y);
-                doc.text(total.toFixed(2), 170, y);
-                y += 6; // Reduced spacing
-            });
-
-            y += 4;
-            doc.line(14, y, 196, y);
-            y += 8;
-
-            // Summary
-            const subtotal = parseFloat(quote.subtotal || 0);
-            const discount = parseFloat(quote.discount_value || 0);
-            const gst = parseFloat(quote.gst || quote.tax || 0);
-            const total = parseFloat(quote.total_amount || 0);
-
-            doc.setFont("helvetica", "bold");
-            doc.text("Subtotal:", 140, y);
-            doc.text(subtotal.toFixed(2), 170, y);
-            y += 6;
-
-            if (discount > 0) {
-                doc.setTextColor(220, 38, 38);
-                doc.text(`Discount (${quote.discount_type === 'percentage' ? quote.discount_value + '%' : 'Flat'}):`, 140, y);
-                doc.text(`-${quote.discount_algorithm_value || ((subtotal * discount) / 100).toFixed(2)}`, 170, y);
-                doc.setTextColor(40);
-                y += 6;
-            }
-
-            doc.text(`GST (${quote.tax_rate || 18}%):`, 140, y);
-            doc.text(gst.toFixed(2), 170, y);
-            y += 8;
-
-            doc.setFontSize(12);
-            doc.text("Total Amount:", 140, y);
-            doc.text(`Rs. ${total.toFixed(2)}`, 170, y);
-
-            // Footer / Banking
-            y += 20;
-            doc.setFontSize(10);
-            doc.setFont("helvetica", "bold");
-            doc.text("Bank Details:", 14, y);
-            y += 5;
-            doc.setFont("helvetica", "normal");
-            doc.text("Account Name: Pavilion Sports", 14, y);
-            y += 5;
-            doc.text("Account Number: 1234567890", 14, y);
-            y += 5;
-            doc.text("IFSC Code: HDFC0001234", 14, y);
-            y += 5;
-            doc.text("Bank: HDFC Bank", 14, y);
-
+            const doc = await generateQuotationPDF(quote);
             doc.save(`Quotation-${quote.quotation_number}.pdf`)
         } catch (e) {
             console.error(e)
@@ -340,6 +216,206 @@ export function QuotationsList({ onCreate, onEdit }) {
         } finally {
             setActionLoading(null)
         }
+    }
+
+    // Unified PDF generator matching QuotationBuilder refined format
+    const generateQuotationPDF = async (quote) => {
+        const doc = new jsPDF()
+
+        // Add Logo - Top Left
+        try {
+            const logoUrl = '/pavilion-sports.png'
+            doc.addImage(logoUrl, 'PNG', 15, 12, 40, 10)
+        } catch (e) {
+            console.error('Logo add error:', e)
+        }
+
+        // Header - Corporate Style
+        doc.setFontSize(16)
+        doc.setTextColor(40)
+        doc.setFont('helvetica', 'bold')
+        doc.text('Quotation', 145, 18)
+        doc.setFontSize(9)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(100)
+        doc.text(`#${quote.quotation_number || quote.reference_number}`, 145, 24)
+
+        // Company Details
+        doc.setFontSize(8)
+        doc.setTextColor(80)
+        doc.setFont('helvetica', 'normal')
+        doc.text('Pavilion Sports | The Pavilion 30, Wallajah Road Near Chepauk Stadium Chennai - 600002 Tamil Nadu, India', 15, 28)
+        doc.text('Email: info@pavilionsports.com | Web: www.pavilionsports.com', 15, 32)
+
+        // Meta Info Row
+        let currentY = 38
+        doc.setFontSize(8)
+        doc.setTextColor(100)
+        doc.text(`Date: ${quote.issue_date || (quote.created_at ? format(new Date(quote.created_at), 'yyyy-MM-dd') : 'N/A')}`, 15, currentY)
+        doc.text(`Valid Until: ${quote.valid_until || 'N/A'}`, 70, currentY)
+        doc.text(`Payment: ${quote.payment_terms || 'Net 30 Days'}`, 130, currentY)
+
+        // Customer Details - Compact
+        const customer = quote.customer_snapshot || {}
+        currentY += 10
+        doc.setFillColor(248, 248, 248)
+        doc.rect(15, currentY - 4, 180, 22, 'F')
+        doc.setFontSize(8)
+        doc.setTextColor(100)
+        doc.text('BILL TO:', 20, currentY)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(40)
+        doc.text(customer.company_name || customer.name || quote.customer_name || 'Walking Customer', 20, currentY + 5)
+
+        // Primary Contact
+        const contact = getPrimaryContact(quote);
+        if (contact.name && contact.name !== 'N/A') {
+            doc.setFont('helvetica', 'normal')
+            doc.setFontSize(7)
+            doc.setTextColor(100)
+            doc.text(`Attn: ${contact.name}`, 20, currentY + 10)
+
+            let contactDetails = [];
+            if (contact.designation) contactDetails.push(contact.designation);
+            if (contact.phone && contact.phone !== 'N/A') contactDetails.push(`Ph: ${contact.phone}`);
+
+            if (contactDetails.length > 0) {
+                doc.text(contactDetails.join(' | '), 20, currentY + 14)
+            }
+        }
+
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(100)
+        const addressText = customer.address || customer.billing_address || '';
+        const address = addressText ? doc.splitTextToSize(addressText, 80)[0] : '';
+        const addressYOffset = (contact.name && contact.name !== 'N/A') ? (contact.designation || contact.phone ? 18 : 14) : 10;
+        doc.text(address, 20, currentY + addressYOffset)
+
+        doc.setFont('helvetica', 'bold')
+        doc.text('Phone:', 120, currentY + 5)
+        doc.setFont('helvetica', 'normal')
+        doc.text(customer.phone || contact.phone || '-', 132, currentY + 5)
+
+        doc.setFont('helvetica', 'bold')
+        doc.text('Email:', 120, currentY + 10)
+        doc.setFont('helvetica', 'normal')
+        doc.text(customer.email || contact.email || '-', 132, currentY + 10)
+
+        currentY += (contact.name && contact.name !== 'N/A' ? (contact.designation || contact.phone ? 32 : 26) : 22)
+
+        // Group items by Sub-Category and Brand
+        const groupedBySubCategory = (quote.items || []).reduce((acc, item) => {
+            const subCat = item.sub_category_name || 'General';
+            const brand = item.brand_name || item.brand || 'Others';
+            if (!acc[subCat]) acc[subCat] = {};
+            if (!acc[subCat][brand]) acc[subCat][brand] = [];
+            acc[subCat][brand].push(item);
+            return acc;
+        }, {});
+
+        // Table Header
+        doc.setFillColor(55, 65, 81)
+        doc.rect(15, currentY, 180, 7, 'F')
+        doc.setTextColor(255)
+        doc.setFontSize(8)
+        doc.setFont('helvetica', 'bold')
+        doc.text('Product', 20, currentY + 5)
+        doc.text('Your Price', 125, currentY + 5)
+        doc.text('GST', 158, currentY + 5)
+        doc.text('Qty', 173, currentY + 5)
+        doc.text('UoM', 185, currentY + 5)
+        currentY += 10
+
+        // Iterate Groups
+        Object.entries(groupedBySubCategory).forEach(([subCategoryName, brandGroups]) => {
+            if (currentY > 250) { doc.addPage(); currentY = 20; }
+            doc.setFillColor(229, 231, 235); doc.rect(15, currentY - 1, 180, 6, 'F');
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(55, 65, 81);
+            doc.text(subCategoryName.toUpperCase(), 20, currentY + 3);
+            currentY += 8;
+
+            Object.entries(brandGroups).forEach(([brandName, items]) => {
+                if (currentY > 250) { doc.addPage(); currentY = 20; }
+                doc.setFillColor(239, 246, 255); doc.rect(15, currentY - 1, 180, 5, 'F');
+                doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(29, 78, 216);
+                doc.text(brandName.toUpperCase(), 20, currentY + 2.5);
+                currentY += 6;
+
+                items.forEach((item) => {
+                    if (currentY > 250) { doc.addPage(); currentY = 20; }
+                    const isDetailed = !!item.is_detailed;
+                    const imageSource = item.image_url || item.image;
+                    if (isDetailed && imageSource) {
+                        try { doc.addImage(imageSource, 'JPEG', 20, currentY, 12, 12); } catch (e) { }
+                    }
+                    doc.setFont('helvetica', 'normal'); doc.setTextColor(40); doc.setFontSize(8);
+                    const productX = isDetailed && imageSource ? 35 : 20;
+                    const name = item.product_name || item.name || '';
+                    const productName = name.length > 40 ? name.substring(0, 37) + '...' : name;
+                    doc.text(productName, productX, currentY + 3);
+                    if (item.slug) {
+                        const nameWidth = doc.getTextWidth(productName);
+                        doc.setTextColor(37, 99, 235);
+                        doc.textWithLink('[View]', productX + nameWidth + 2, currentY + 3, { url: `https://www.pavilionsports.com/product/${item.slug}` });
+                        doc.setTextColor(40);
+                    }
+                    if (isDetailed && item.short_description) {
+                        doc.setFontSize(6); doc.setTextColor(100);
+                        doc.text(item.short_description.substring(0, 55), productX, currentY + 7);
+                        doc.setTextColor(40); doc.setFontSize(8);
+                    }
+                    doc.text(`Rs. ${parseFloat(item.unit_price || item.custom_price || 0).toLocaleString()}`, 125, currentY + 3);
+                    doc.text(`${item.gst_rate || item.tax_rate || '18'}%`.replace('%', ''), 160, currentY + 3);
+                    doc.text(String(item.quantity || 1), 173, currentY + 3);
+                    doc.text(item.uom || 'Single', 185, currentY + 3);
+                    currentY += isDetailed ? 15 : 8;
+                });
+            });
+        });
+
+        // T&C
+        const DEFAULT_TERMS = `1. Prices are valid for 30 days from the quotation date.\n2. Payment terms: 50% advance, balance before delivery.\n3. Delivery: 7-14 working days from order confirmation.\n4. All prices are exclusive of GST unless otherwise stated.\n5. Goods once sold cannot be returned or exchanged.\n6. This quotation is subject to stock availability.`;
+        const termsToShow = quote.terms_and_conditions || quote.terms_conditions || DEFAULT_TERMS;
+        currentY += 15;
+        if (currentY > 250) { doc.addPage(); currentY = 20; }
+        doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(100);
+        doc.text('TERMS & CONDITIONS:', 15, currentY);
+        currentY += 5;
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(120);
+        const splitTerms = doc.splitTextToSize(termsToShow, 180);
+        doc.text(splitTerms, 15, currentY);
+        currentY += splitTerms.length * 3;
+
+        // Comments
+        if (quote.notes || quote.comments) {
+            currentY += 8;
+            if (currentY > 260) { doc.addPage(); currentY = 20; }
+            doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(100);
+            doc.text('COMMENTS / SPECIAL INSTRUCTIONS:', 15, currentY);
+            currentY += 5;
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(120);
+            const splitComments = doc.splitTextToSize(quote.notes || quote.comments, 180);
+            doc.text(splitComments, 15, currentY);
+        }
+
+        // Bank Details
+        currentY += 15;
+        try {
+            const settings = await apiCall('/settings?keys=company_bank_details');
+            if (settings.company_bank_details) {
+                if (currentY > 230) { doc.addPage(); currentY = 20; }
+                doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(40);
+                doc.text('BANK DETAILS:', 15, currentY);
+                doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(80);
+                const bankLines = doc.splitTextToSize(settings.company_bank_details, 180);
+                doc.text(bankLines, 15, currentY + 5);
+            }
+        } catch (e) { }
+
+        doc.setFontSize(7); doc.setTextColor(150);
+        doc.text('This is a computer-generated quotation. No signature required.', 105, 287, { align: 'center' });
+
+        return doc;
     }
 
     async function confirmDelete() {
@@ -541,10 +617,10 @@ export function QuotationsList({ onCreate, onEdit }) {
                                     <TableCell className="text-gray-500">{format(new Date(quote.created_at), 'dd MMM yyyy')}</TableCell>
                                     <TableCell>
                                         <span className={`px-2 py-1 rounded-full text-xs font-semibold ${quote.status === 'Sent' ? "bg-green-100 text-green-700" :
-                                                quote.status === 'Draft' ? "bg-gray-100 text-gray-700" :
-                                                    ['Completed', 'Complete'].includes(quote.status) ? "bg-blue-100 text-blue-700" :
-                                                        quote.status === 'Cancelled' ? "bg-red-100 text-red-700" :
-                                                            "bg-gray-100 text-gray-700"
+                                            quote.status === 'Draft' ? "bg-gray-100 text-gray-700" :
+                                                ['Completed', 'Complete'].includes(quote.status) ? "bg-blue-100 text-blue-700" :
+                                                    quote.status === 'Cancelled' ? "bg-red-100 text-red-700" :
+                                                        "bg-gray-100 text-gray-700"
                                             }`}>
                                             {quote.status}
                                         </span>

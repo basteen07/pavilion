@@ -43,183 +43,193 @@ export function QuotationPreviewModal({ open, onOpenChange, quotation, onDownloa
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-full p-0">
-                {/* Corporate Header */}
-                <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white px-8 py-5">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-6">
-                            <img src="/pavilion-sports.png" alt="Pavilion Sports" className="h-9 object-contain" />
-                            <div>
-                                <h1 className="text-xl font-bold tracking-tight text-white leading-none">QUOTATION</h1>
-                                <p className="text-xs text-gray-300 mt-1">#{quotation.quotation_number || quotation.reference_number}</p>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-full p-0 bg-white text-slate-900">
+                {/* PDF-Like Header */}
+                <div className="bg-white px-8 py-6 border-b border-gray-100">
+                    <div className="flex justify-between items-start">
+                        {/* Left: Logo & Address */}
+                        <div className="flex flex-col gap-2">
+                            <img src="/pavilion-sports.png" alt="Pavilion Sports" className="h-10 object-contain w-fit" />
+                            <div className="text-[10px] text-gray-500 mt-2 space-y-0.5 leading-tight">
+                                <p className="font-medium text-gray-700">Pavilion Sports</p>
+                                <p>The Pavilion 30, Wallajah Road Near Chepauk Stadium</p>
+                                <p>Chennai - 600002 Tamil Nadu, India</p>
+                                <p>Email: info@pavilionsports.com | Web: www.pavilionsports.com</p>
                             </div>
                         </div>
+
+                        {/* Right: Quotation Title & Meta */}
                         <div className="text-right">
-                            <div className="flex flex-col">
-                                <span className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Issue Date</span>
-                                <span className="text-sm font-semibold">{quotation.issue_date || (quotation.created_at ? format(new Date(quotation.created_at), 'dd MMM yyyy') : 'N/A')}</span>
-                            </div>
-                            <div className="flex flex-col mt-2">
-                                <span className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Valid Until</span>
-                                <span className="text-sm font-semibold">{quotation.valid_until || '30 Days'}</span>
+                            <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Quotation</h1>
+                            <p className="text-sm text-gray-500 font-medium mt-1">#{quotation.quotation_number || quotation.reference_number}</p>
+
+                            <div className="mt-4 flex flex-col gap-1 text-xs">
+                                <div className="flex justify-end gap-2 text-gray-600">
+                                    <span>Date:</span>
+                                    <span className="font-semibold text-gray-900">{quotation.issue_date || (quotation.created_at ? format(new Date(quotation.created_at), 'yyyy-MM-dd') : 'N/A')}</span>
+                                </div>
+                                <div className="flex justify-end gap-2 text-gray-600">
+                                    <span>Valid Until:</span>
+                                    <span className="font-semibold text-gray-900">{quotation.valid_until || '30 Days'}</span>
+                                </div>
+                                <div className="flex justify-end gap-2 text-gray-600">
+                                    <span>Payment:</span>
+                                    <span className="font-semibold text-gray-900">{quotation.payment_terms || 'Net 30 Days'}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="p-8 space-y-8">
-                    {/* Customer Information - Corporate Style */}
-                    <div className="grid grid-cols-2 gap-8">
-                        <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                            <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Bill To</h3>
-                            <div className="space-y-2">
-                                <p className="font-bold text-gray-900 text-lg">
+                <div className="px-8 py-6 space-y-6">
+                    {/* Bill To Section */}
+                    <div className="bg-gray-50/50 p-4 rounded-lg border border-gray-100">
+                        <div className="flex gap-10">
+                            <div className="w-20 pt-1">
+                                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">BILL TO:</span>
+                            </div>
+                            <div className="flex-1">
+                                <p className="font-bold text-gray-900 text-sm">
                                     {quotation.customer_snapshot?.company_name || quotation.customer_snapshot?.name || quotation.company_name || quotation.customer_name || 'Walking Customer'}
                                 </p>
-                                <p className="text-sm text-gray-600">
-                                    {quotation.customer_snapshot?.address || quotation.address || 'Address not available'}
-                                </p>
-                                <div className="flex flex-col gap-1 mt-3">
-                                    {quotation.customer_snapshot?.email && (
-                                        <p className="text-sm text-gray-600">Email: {quotation.customer_snapshot.email}</p>
-                                    )}
-                                    {quotation.customer_snapshot?.phone && (
-                                        <p className="text-sm text-gray-600">Phone: {quotation.customer_snapshot.phone}</p>
-                                    )}
-                                    {(() => {
-                                        const primaryContact = quotation.customer_snapshot?.contacts?.find(c => c.is_primary);
-                                        if (!primaryContact) return null;
+                                {(() => {
+                                    const primaryContact = quotation.customer_snapshot?.contacts?.find(c => c.is_primary);
+                                    if (primaryContact) {
                                         return (
-                                            <>
-                                                <p className="text-sm font-bold text-gray-900 mt-2">Attn: {primaryContact.name}</p>
-                                                {primaryContact.designation && <p className="text-xs text-gray-600">{primaryContact.designation}</p>}
-                                                {primaryContact.phone && <p className="text-xs text-gray-600">Ph: {primaryContact.phone}</p>}
-                                            </>
-                                        );
-                                    })()}
+                                            <div className="mt-2 text-xs text-gray-600 space-y-0.5">
+                                                <p><span className="font-medium text-gray-900">Attn:</span> {primaryContact.name}</p>
+                                                {primaryContact.designation && <p>{primaryContact.designation}</p>}
+                                                {primaryContact.phone && <p>Ph: {primaryContact.phone}</p>}
+                                            </div>
+                                        )
+                                    }
+                                    return null;
+                                })()}
+
+                                <div className="mt-3 text-xs text-gray-500 leading-relaxed max-w-md">
+                                    {quotation.customer_snapshot?.address || quotation.address || ''}
                                 </div>
-                            </div>
-                        </div>
-                        <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                            <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Quotation Details</h3>
-                            <div className="space-y-3">
-                                <div className="flex justify-between">
-                                    <span className="text-sm text-gray-600">Payment Terms:</span>
-                                    <span className="font-semibold text-gray-900">{quotation.payment_terms || 'Net 30 Days'}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-sm text-gray-600">Delivery:</span>
-                                    <span className="font-semibold text-gray-900">7-14 Working Days</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-sm text-gray-600">Tax Rate:</span>
-                                    <span className="font-semibold text-gray-900">{String(quotation.tax_rate || 18).replace('%', '')}% GST</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-sm text-gray-600">Status:</span>
-                                    <span className="font-semibold text-gray-900">{quotation.status || 'Draft'}</span>
+
+                                <div className="mt-3 grid grid-cols-2 max-w-sm gap-2 text-xs">
+                                    <div className="flex gap-2">
+                                        <span className="font-bold text-gray-700">Phone:</span>
+                                        <span className="text-gray-600">{quotation.customer_snapshot?.phone || quotation.customer_phone || '-'}</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <span className="font-bold text-gray-700">Email:</span>
+                                        <span className="text-gray-600">{quotation.customer_snapshot?.email || quotation.customer_email || '-'}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Items Table - Grouped by Sub-Category → Brand */}
-                    <div className="border border-gray-200 rounded-lg overflow-hidden">
-                        {/* Table Header */}
-                        <table className="w-full">
-                            <thead className="bg-gray-50 border-b border-gray-200">
-                                <tr>
-                                    <th className="text-left px-6 py-4 font-semibold text-gray-700 text-sm uppercase tracking-wider w-[45%]">Product</th>
-                                    <th className="text-right px-4 py-4 font-semibold text-gray-700 text-sm uppercase tracking-wider w-[15%]">MRP</th>
-                                    <th className="text-right px-4 py-4 font-semibold text-gray-700 text-sm uppercase tracking-wider w-[15%]">Your Price</th>
-                                    <th className="text-center px-6 py-4 font-semibold text-gray-700 text-sm uppercase tracking-wider w-[10%]">GST</th>
-                                    <th className="text-center px-4 py-4 font-semibold text-gray-700 text-sm uppercase tracking-wider w-[10%]">Qty</th>
-                                </tr>
-                            </thead>
-                        </table>
+                    {/* Grouped Items Table - Matching PDF Colors exactly */}
+                    <div className="border border-gray-200 rounded-sm overflow-hidden text-xs">
+                        {/* Header - Graphite/Dark Gray */}
+                        <div className="bg-[#374151] text-white flex font-bold py-2 px-4 uppercase tracking-wider">
+                            <div className="w-[57%]">Product</div>
+                            <div className="w-[15%] text-right">Your Price</div>
+                            <div className="w-[10%] text-center">GST</div>
+                            <div className="w-[8%] text-center">Qty</div>
+                            <div className="w-[10%] text-center">UoM</div>
+                        </div>
 
                         {/* Grouped Content */}
                         {Object.entries(groupedBySub).map(([subCat, brands], subIdx) => (
                             <div key={subIdx}>
-                                {/* Sub-Category Header */}
-                                <div className="bg-blue-50 px-6 py-2 border-b border-blue-100">
-                                    <span className="font-bold text-blue-800 text-sm uppercase tracking-wide">{subCat}</span>
+                                {/* Sub-Category Header - Gray-200 */}
+                                <div className="bg-gray-200 px-4 py-1.5 border-b border-gray-300">
+                                    <span className="font-bold text-gray-700 uppercase tracking-wide text-[11px]">{subCat}</span>
                                 </div>
 
                                 {/* Brand Groups */}
                                 {Object.entries(brands).map(([brand, items], brandIdx) => (
                                     <div key={brandIdx}>
-                                        {/* Brand Header */}
-                                        <div className="bg-gray-50 px-6 py-1.5 border-b border-gray-100 pl-10">
-                                            <span className="font-semibold text-gray-700 text-xs uppercase tracking-wider">{brand}</span>
+                                        {/* Brand Header - Blue-50 */}
+                                        <div className="bg-blue-50 px-4 py-1 border-b border-blue-100">
+                                            <span className="font-bold text-blue-700 uppercase tracking-wider text-[10px]">{brand}</span>
                                         </div>
 
                                         {/* Products */}
-                                        <table className="w-full">
-                                            <tbody>
-                                                {items.map((item, idx) => (
-                                                    <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50/50">
-                                                        <td className="px-6 py-3 w-[45%] pl-14">
-                                                            <div className="flex gap-3">
-                                                                {item.is_detailed && (item.image_url || item.image) && (
-                                                                    <div className="w-10 h-10 rounded border bg-gray-50 overflow-hidden shrink-0">
-                                                                        <img src={item.image_url || item.image} className="w-full h-full object-cover" />
-                                                                    </div>
-                                                                )}
-                                                                <div className="flex-1 min-w-0">
-                                                                    <div className="font-medium text-gray-900 text-sm">{item.name || item.product_name}</div>
-                                                                    {item.is_detailed && item.short_description && (
-                                                                        <div className="text-xs text-gray-500 mt-1 line-clamp-2">{item.short_description}</div>
+                                        <div className="divide-y divide-gray-100">
+                                            {items.map((item, idx) => (
+                                                <div key={idx} className="flex px-4 py-2 hover:bg-gray-50 items-start">
+                                                    <div className="w-[57%] pr-4">
+                                                        <div className="flex gap-3">
+                                                            {item.is_detailed && (item.image_url || item.image) && (
+                                                                <div className="w-8 h-8 object-contain shrink-0">
+                                                                    <img src={item.image_url || item.image} className="w-full h-full object-contain" />
+                                                                </div>
+                                                            )}
+                                                            <div>
+                                                                <div className="flex items-center gap-2 flex-wrap">
+                                                                    <span className="font-medium text-gray-800">{item.name || item.product_name}</span>
+                                                                    {item.slug && (
+                                                                        <a
+                                                                            href={`https://www.pavilionsports.com/product/${item.slug}`}
+                                                                            target="_blank"
+                                                                            rel="noreferrer"
+                                                                            className="text-blue-600 hover:text-blue-800 text-[10px] font-bold"
+                                                                        >
+                                                                            [View]
+                                                                        </a>
                                                                     )}
                                                                 </div>
+                                                                {item.is_detailed && item.short_description && (
+                                                                    <p className="text-[10px] text-gray-500 mt-0.5 leading-tight line-clamp-2">{item.short_description}</p>
+                                                                )}
                                                             </div>
-                                                        </td>
-                                                        <td className="text-right px-4 py-3 font-medium text-gray-600 w-[15%]">
-                                                            ₹{getNum(item.mrp).toLocaleString()}
-                                                        </td>
-                                                        <td className="text-right px-4 py-3 font-semibold text-gray-900 w-[15%]">
-                                                            ₹{getNum(item.custom_price || item.unit_price).toLocaleString()}
-                                                        </td>
-                                                        <td className="text-center px-6 py-3 text-sm text-gray-600 w-[10%]">
-                                                            {String(item.gst_rate || '18').replace('%', '')}%
-                                                        </td>
-                                                        <td className="text-center px-4 py-3 font-medium text-gray-900 w-[10%]">
-                                                            {item.quantity || 1}
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                                        </div>
+                                                    </div>
+                                                    <div className="w-[15%] text-right font-bold text-gray-900">
+                                                        Rs. {getNum(item.custom_price || item.unit_price).toLocaleString()}
+                                                    </div>
+                                                    <div className="w-[10%] text-center text-gray-600">
+                                                        {String(item.gst_rate || '18').replace('%', '')}%
+                                                    </div>
+                                                    <div className="w-[8%] text-center font-medium text-gray-900">
+                                                        {item.quantity || 1}
+                                                    </div>
+                                                    <div className="w-[10%] text-center font-medium text-gray-900">
+                                                        {item.uom || 'Single'}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
                         ))}
                     </div>
 
-                    {/* NOTE: Grand Total / Pricing Summary is intentionally hidden per enterprise requirements */}
-                    {/* Pricing calculations exist internally but are not shown in Preview or PDF */}
+                    {/* Terms & Conditions - Always show */}
+                    <div className="mt-8 space-y-4 pt-4 border-t border-gray-100">
+                        <div>
+                            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Terms & Conditions:</h3>
+                            <p className="text-xs text-gray-500 whitespace-pre-line leading-relaxed">{termsToShow || 'No specific terms.'}</p>
+                        </div>
 
-                    {/* Terms & Conditions - Corporate */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {termsToShow && (
-                            <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                                <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Terms & Conditions</h3>
-                                <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">{termsToShow}</p>
+                        {quotation.comments && (
+                            <div className="pt-4 border-t border-gray-100">
+                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Comments / Special Instructions:</h3>
+                                <p className="text-xs text-gray-500 whitespace-pre-line leading-relaxed">{quotation.comments}</p>
                             </div>
                         )}
+
                         {bankDetails && (
-                            <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                                <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Bank Details</h3>
-                                <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed font-mono">{bankDetails}</p>
+                            <div className="pt-4 border-t border-gray-100">
+                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Bank Details:</h3>
+                                <p className="text-xs text-gray-500 whitespace-pre-line leading-relaxed font-mono bg-gray-50 p-3 rounded">{bankDetails}</p>
                             </div>
                         )}
                     </div>
 
                     {/* Footer */}
-                    <div className="text-center py-6 border-t border-gray-200">
-                        <p className="text-sm text-gray-500">This is a computer-generated quotation and does not require a signature.</p>
-                        <div className="mt-4">
-                            <Button onClick={onDownload} className="bg-red-600 hover:bg-red-700 text-white gap-2">
+                    <div className="text-center py-4 mt-8 border-t border-gray-200">
+                        <p className="text-[10px] text-gray-400 uppercase tracking-widest">This is a computer-generated quotation. No signature required.</p>
+                        <div className="mt-6 flex justify-center">
+                            <Button onClick={onDownload} className="bg-red-600 hover:bg-red-700 text-white gap-2 shadow-lg hover:shadow-xl transition-all">
                                 <Download className="w-4 h-4" /> Download PDF
                             </Button>
                         </div>

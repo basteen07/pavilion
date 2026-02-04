@@ -70,57 +70,10 @@ export default function SalesSettingsPage() {
 
             <Tabs defaultValue="quotations" className="space-y-6">
                 <TabsList className="bg-white border p-1 rounded-xl shadow-sm">
-                    <TabsTrigger value="quotations" className="rounded-lg px-6 py-2 transition-all">
-                        <FileText className="w-4 h-4 mr-2" /> Quotations
-                    </TabsTrigger>
                     <TabsTrigger value="legal" className="rounded-lg px-6 py-2 transition-all">
                         <ShieldCheck className="w-4 h-4 mr-2" /> Terms & Legal
                     </TabsTrigger>
                 </TabsList>
-
-                <TabsContent value="quotations">
-                    <Card className="border-none shadow-sm rounded-2xl overflow-hidden">
-                        <CardHeader className="bg-white border-b border-gray-100">
-                            <CardTitle className="text-lg">Quotation Configuration</CardTitle>
-                            <CardDescription>Setup how your quotations are generated</CardDescription>
-                        </CardHeader>
-                        <CardContent className="p-6 space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 font-primary">
-                                <div className="space-y-2">
-                                    <Label className="text-sm font-bold text-gray-700">Quotation Prefix</Label>
-                                    <Input
-                                        value={settings.quotation_prefix}
-                                        onChange={(e) => setSettings({ ...settings, quotation_prefix: e.target.value })}
-                                        placeholder="e.g. QT"
-                                        className="h-10 rounded-xl"
-                                    />
-                                    <p className="text-[10px] text-gray-400">Used for generated quotation numbers</p>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-sm font-bold text-gray-700">Default Validity (Days)</Label>
-                                    <Input
-                                        type="number"
-                                        value={settings.quotation_validity_days}
-                                        onChange={(e) => setSettings({ ...settings, quotation_validity_days: e.target.value })}
-                                        placeholder="30"
-                                        className="h-10 rounded-xl"
-                                    />
-                                    <p className="text-[10px] text-gray-400">Default number of days a quotation remains valid</p>
-                                </div>
-                                <div className="md:col-span-2 space-y-2">
-                                    <Label className="text-sm font-bold text-gray-700">Bank Details for PDF</Label>
-                                    <Textarea
-                                        value={settings.company_bank_details}
-                                        onChange={(e) => setSettings({ ...settings, company_bank_details: e.target.value })}
-                                        placeholder="Account Name: Pavilion Sports\nAccount Number: ...\nIFSC: ..."
-                                        className="min-h-[120px] rounded-xl"
-                                    />
-                                    <p className="text-[10px] text-gray-400">These details will be shown at the bottom of the quotation PDF</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
 
                 <TabsContent value="legal">
                     <Card className="border-none shadow-sm rounded-2xl overflow-hidden">

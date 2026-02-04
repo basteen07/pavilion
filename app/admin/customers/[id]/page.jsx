@@ -13,7 +13,8 @@ import {
     ArrowLeft, Save, Plus, Trash2, Mail, Phone,
     MapPin, Building2, UserCircle2, FileText, Send,
     MoreVertical, ExternalLink, Calculator, Pencil, Search, Calendar,
-    ChevronLeft, ChevronRight, Download, Eye, PenLine, Loader2, Clock
+    ChevronLeft, ChevronRight, Download, Eye, PenLine, Loader2, Clock,
+    UserCheck, UserX
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -30,6 +31,7 @@ import {
 import { QuotationPreviewModal } from '@/components/admin/QuotationPreviewModal';
 import { PaginationControls } from '@/components/admin/PaginationControls';
 import jsPDF from 'jspdf';
+import { Switch } from '@/components/ui/switch';
 
 export default function CustomerDetailPage({ params }) {
     const id = params.id;
@@ -110,6 +112,18 @@ export default function CustomerDetailPage({ params }) {
             queryClient.invalidateQueries(['customers', id]);
             toast.success('Customer updated successfully');
             setIsEditing(false);
+        },
+        onError: (err) => toast.error(err.message)
+    });
+
+    const statusMutation = useMutation({
+        mutationFn: (is_active) => apiCall(`/customers/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify({ is_active })
+        }),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['customers', id]);
+            toast.success('Customer status updated');
         },
         onError: (err) => toast.error(err.message)
     });
@@ -351,19 +365,39 @@ export default function CustomerDetailPage({ params }) {
                             <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
                                 {customer.customer_type_name || 'General'}
                             </Badge>
+                            <Badge
+                                variant={customer.is_active ? "outline" : "destructive"}
+                                className={`transition-all ${customer.is_active ? 'border-green-300 text-green-600 bg-green-50/50' : 'bg-red-50 text-red-600 border-red-200'}`}
+                            >
+                                {customer.is_active ? (
+                                    <span className="flex items-center gap-1"><UserCheck className="w-3" /> Active</span>
+                                ) : (
+                                    <span className="flex items-center gap-1"><UserX className="w-3" /> Inactive</span>
+                                )}
+                            </Badge>
                         </div>
                     </div>
                 </div>
-                <div className="flex gap-2">
-                    <Link href={`/admin/quotations?new=true&customer_id=${id}`}>
-                        <Button variant="outline">
-                            <Plus className="w-4 h-4 mr-2" />
-                            New Quotation
+                <div className="flex gap-4 items-center">
+                    <div className="flex items-center gap-2 bg-white border rounded-md px-3 h-10 shadow-sm">
+                        <Label className="text-[10px] font-bold uppercase text-muted-foreground whitespace-nowrap">Status</Label>
+                        <Switch
+                            checked={customer.is_active}
+                            onCheckedChange={(checked) => statusMutation.mutate(checked)}
+                            className="data-[state=checked]:bg-green-600"
+                        />
+                    </div>
+                    <div className="flex gap-2">
+                        <Link href={`/admin/quotations?new=true&customer_id=${id}`}>
+                            <Button variant="outline">
+                                <Plus className="w-4 h-4 mr-2" />
+                                New Quotation
+                            </Button>
+                        </Link>
+                        <Button onClick={() => setIsEditing(!isEditing)} variant={isEditing ? 'outline' : 'default'} className={isEditing ? '' : 'bg-red-600 hover:bg-red-700'}>
+                            {isEditing ? 'Cancel Edit' : 'Edit Profile'}
                         </Button>
-                    </Link>
-                    <Button onClick={() => setIsEditing(!isEditing)} variant={isEditing ? 'outline' : 'default'} className={isEditing ? '' : 'bg-red-600 hover:bg-red-700'}>
-                        {isEditing ? 'Cancel Edit' : 'Edit Profile'}
-                    </Button>
+                    </div>
                 </div>
             </div>
 
@@ -793,6 +827,7 @@ export default function CustomerDetailPage({ params }) {
                     </Card>
                 </div>
             </div>
+
             {/* Contact Edit Modal */}
             <Dialog open={contactModalOpen} onOpenChange={setContactModalOpen}>
                 <DialogContent>
@@ -833,6 +868,6 @@ export default function CustomerDetailPage({ params }) {
                     onDownload={() => handleDownload(selectedQuoteForPreview.id)}
                 />
             )}
-        </div >
+        </div>
     );
 }

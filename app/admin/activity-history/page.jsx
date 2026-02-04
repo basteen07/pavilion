@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/select"
 import { useAuth } from '@/components/providers/AuthProvider'
 import { format } from 'date-fns'
+import { useRouter } from 'next/navigation'
+import { cn } from '@/lib/utils'
 
 const MODULE_OPTIONS = [
     { value: 'all', label: 'All Modules', icon: LayoutDashboard },
@@ -49,6 +51,7 @@ const EVENT_TYPE_OPTIONS = [
 
 export default function AdminActivityPage() {
     const { user } = useAuth()
+    const router = useRouter()
     const [events, setEvents] = useState([])
     const [isLoading, setIsLoading] = useState(true)
     const [page, setPage] = useState(1)
@@ -180,6 +183,25 @@ export default function AdminActivityPage() {
             pages.push(i)
         }
         return pages
+    }
+
+    const handleActivityRedirect = (activity) => {
+        if (activity.quotation_id) {
+            router.push(`/admin/quotations?id=${activity.quotation_id}`)
+            return
+        }
+        if (activity.order_id) {
+            router.push(`/admin/orders?id=${activity.order_id}`)
+            return
+        }
+        if (activity.customer_id) {
+            if (activity.event_type.startsWith('b2b_')) {
+                router.push(`/admin/wholesale/${activity.customer_id}`)
+            } else {
+                router.push(`/admin/customers/${activity.customer_id}`)
+            }
+            return
+        }
     }
 
     return (
@@ -372,7 +394,14 @@ export default function AdminActivityPage() {
                             ) : (
                                 <div className="space-y-2">
                                     {myActivities.slice(0, 5).map((activity) => (
-                                        <div key={activity.id} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-indigo-50/50 transition-colors">
+                                        <div
+                                            key={activity.id}
+                                            onClick={() => handleActivityRedirect(activity)}
+                                            className={cn(
+                                                "flex items-center gap-3 px-3 py-2 rounded-lg transition-all",
+                                                (activity.quotation_id || activity.order_id || activity.customer_id) ? "hover:bg-indigo-100 hover:shadow-sm cursor-pointer" : "hover:bg-indigo-50/50"
+                                            )}
+                                        >
                                             <div className={`w-8 h-8 rounded-full flex items-center justify-center ${activity.event_type === 'login' ? 'bg-green-100 text-green-600' :
                                                 activity.event_type === 'logout' ? 'bg-gray-100 text-gray-600' :
                                                     activity.event_type.includes('quotation') ? 'bg-orange-100 text-orange-600' :

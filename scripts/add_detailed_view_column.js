@@ -7,21 +7,28 @@ const pool = new Pool({
 });
 
 async function migrate() {
-    console.log('Ensuring quotation_items table columns...');
+    console.log('Ensuring is_detailed column in quotation_items...');
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
 
-        // Add total_price if not exists
-        await client.query(`ALTER TABLE quotation_items ADD COLUMN IF NOT EXISTS total_price NUMERIC(15, 2) DEFAULT 0`);
+        // Check if column exists
+        const res = await client.query(`
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'quotation_items' AND column_name = 'is_detailed'
+        `);
 
-        // Ensure mrp and discount exist (already added in previous steps, but good to double check)
-        await client.query(`ALTER TABLE quotation_items ADD COLUMN IF NOT EXISTS mrp NUMERIC(15, 2) DEFAULT 0`);
-        await client.query(`ALTER TABLE quotation_items ADD COLUMN IF NOT EXISTS discount NUMERIC(5, 2) DEFAULT 0`);
-        await client.query(`ALTER TABLE quotation_items ADD COLUMN IF NOT EXISTS is_detailed BOOLEAN DEFAULT false`);
+        if (res.rows.length === 0) {
+            console.log('Adding is_detailed column...');
+            await client.query(`ALTER TABLE quotation_items ADD COLUMN is_detailed BOOLEAN DEFAULT false`);
+        } else {
+            console.log('is_detailed column already exists.');
+        }
+
+        // Also ensure short_description and image_url exist as they are related to Detailed View
         await client.query(`ALTER TABLE quotation_items ADD COLUMN IF NOT EXISTS short_description TEXT`);
         await client.query(`ALTER TABLE quotation_items ADD COLUMN IF NOT EXISTS image_url TEXT`);
-        await client.query(`ALTER TABLE quotation_items ADD COLUMN IF NOT EXISTS uom TEXT DEFAULT 'Single'`);
 
         await client.query('COMMIT');
         console.log('Migration completed successfully.');
