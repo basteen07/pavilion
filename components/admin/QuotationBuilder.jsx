@@ -545,6 +545,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                             name: item.product_name || item.name,
                             mrp: parseFloat(item.mrp) || parseFloat(item.current_mrp) || 0,
                             dealer_price: parseFloat(item.dealer_price) || parseFloat(item.current_dealer_price) || 0,
+                            recommended_price: parseFloat(item.recommended_price) || parseFloat(item.current_recommended) || 0,
                             custom_price: item.unit_price,
                             gst_rate: '18%',
                             customer_type_base: customer?.base_price_type || 'mrp',
@@ -748,6 +749,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             image: getFirstImage(product.images),
             mrp: parseFloat(product.mrp_price) || 0,
             dealer_price: parseFloat(product.dealer_price) || parseFloat(product.shop_price) || parseFloat(product.mrp_price) || 0,
+            recommended_price: parseFloat(product.recommended_price) || 0,
             discount: discount,
             custom_price: customPrice.toFixed(2),
             quantity: 1,
@@ -1000,6 +1002,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                     unit_price: parseFloat(item.custom_price),
                     mrp: parseFloat(item.mrp),
                     dealer_price: parseFloat(item.dealer_price || 0),
+                    recommended_price: parseFloat(item.recommended_price || 0),
                     discount: parseFloat(item.discount),
                     slug: item.slug,
                     category_name: item.category_name,
@@ -1081,6 +1084,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                     unit_price: parseFloat(item.custom_price),
                     mrp: parseFloat(item.mrp),
                     dealer_price: parseFloat(item.dealer_price || 0),
+                    recommended_price: parseFloat(item.recommended_price || 0),
                     discount: parseFloat(item.discount),
                     slug: item.slug,
                     category_name: item.category_name,
@@ -1478,6 +1482,14 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                                                                 </span>
                                                                             </div>
 
+                                                                            {/* 2.5 Recommended Price */}
+                                                                            <div className="flex flex-col shrink-0 min-w-[50px]">
+                                                                                <span className="text-[9px] text-green-600 font-bold uppercase tracking-tight">Rec. Price</span>
+                                                                                <span className="text-xs font-semibold text-gray-600">
+                                                                                    Rs. {parseFloat(item.recommended_price || 0).toLocaleString()}
+                                                                                </span>
+                                                                            </div>
+
                                                                             {/* 3. Markup/Discount */}
                                                                             <div className="flex flex-col shrink-0">
                                                                                 <span className={`text-[9px] font-bold uppercase tracking-tight mb-0.5 ${item.customer_type_base === 'dealer' ? 'text-green-600' : 'text-blue-600'}`}>
@@ -1868,7 +1880,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                                                 </TableCell>
                                                             )}
                                                             <TableCell className={cn("text-right", modalDetailedView ? "py-4" : "py-1")}>
-                                                                <div className="text-xs font-bold text-gray-700">₹{parseFloat(product.shop_price || 0).toLocaleString()}</div>
+                                                                <div className="text-xs font-bold text-gray-700">₹{parseFloat(product.recommended_price || 0).toLocaleString()}</div>
                                                             </TableCell>
                                                             <TableCell className={cn("text-right border-l-2 border-blue-100 bg-blue-50/20", modalDetailedView ? "py-4" : "py-1")}>
                                                                 <div className="font-bold text-blue-700">

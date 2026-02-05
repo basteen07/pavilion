@@ -1,0 +1,47 @@
+{
+  "products_recommended_price": [
+    {
+      "column_name": "recommended_price",
+      "data_type": "numeric"
+    }
+  ],
+  "quotation_items_recommended_price": [],
+  "sample_products": [
+    {
+      "name": "Kookaburra English Willow Cricket Bats Prime Pro Model",
+      "sku": "KOO-CRI-814-anu7z",
+      "mrp_price": "7737.00",
+      "dealer_price": "3945.00",
+      "recommended_price": "6220"
+    },
+    {
+      "name": "Donic Ply Pro X",
+      "sku": "DON-TAB-9-hj3iwb",
+      "mrp_price": "13479.00",
+      "dealer_price": "8222.00",
+      "recommended_price": "11376"
+    },
+    {
+      "name": "Yonex Grip Classic Edition",
+      "sku": "YON-TEN-8-9p92jd",
+      "mrp_price": "12648.00",
+      "dealer_price": "6703.00",
+      "recommended_price": "10805"
+    },
+    {
+      "name": "Spalding Baseball Glove Select Edition",
+      "sku": "SPA-BAS-1-guheid",
+      "mrp_price": "16480.00",
+      "dealer_price": "8240.00",
+      "recommended_price": "13513"
+    },
+    {
+      "name": "Puma Golf Shoes Classic Series",
+      "sku": "PUM-SHO-2-2ksa47",
+      "mrp_price": "14038.00",
+      "dealer_price": "7019.00",
+      "recommended_price": "11160"
+    }
+  ],
+  "count_products_with_rec": "1001"
+}
