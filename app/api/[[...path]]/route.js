@@ -73,19 +73,9 @@ async function authenticateRequest(request) {
     console.log('[Auth Debug] Superadmin bypass');
     // No timeout check for superadmin
   } else if (user.role_name === 'admin' || user.role_name === 'staff' || user.role_id === 1 || user.role_id === 2) {
-    // Admins/Staff: 1440 minutes (24 hours) timeout
-    const TIMEOUT_MS = 1440 * 60 * 1000;
-    if (user.last_active_at) {
-      const lastActive = new Date(user.last_active_at).getTime();
-      const now = Date.now();
-      const diff = now - lastActive;
-      console.log('[Auth Debug] Admin timeout check:', { email: user.email, diff_min: Math.round(diff / 60000), timeout_min: 1440 });
-
-      if (diff > TIMEOUT_MS) {
-        console.log('Session expired for:', user.email, 'Age:', Math.round(diff / 60000), 'min');
-        return null; // Force 401
-      }
-    }
+    // Admins/Staff: No server-side inactivity timeout (unlimited)
+    // Security is handled by the frontend 7-minute idle timeout
+    console.log('[Auth Debug] Admin unlimited session bypass');
   } else if (user.role_name === 'b2b_user') {
     // B2B Users: No timeout (as per user request)
     console.log('[Auth Debug] B2B user bypass');

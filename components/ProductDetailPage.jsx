@@ -118,19 +118,18 @@ export default function ProductDetailPage({ productSlug }) {
           <div className="flex flex-col lg:flex-row gap-10 xl:gap-14">
 
             {/* LEFT: Image Grid & Details */}
-            <div className="flex-1 min-w-0 self-start space-y-12">
+            {/* LEFT: Image Grid & Details */}
+            <div className="flex-1 min-w-0 self-start space-y-12 order-last lg:order-first">
 
-              {/* 1. IMAGES (Hybrid: Grid + Slider) */}
+              {/* 1. IMAGES (Unified Grid + Slider) */}
               <div className="space-y-4">
-                {/* GRID: First 4 Images */}
-                <div className={`grid ${images.slice(0, 4).length === 1 ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'} gap-2`}>
+                <div className={`grid ${images.slice(0, 4).length === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-2`}>
                   {images.slice(0, 4).map((img, idx) => {
                     const visibleImages = images.slice(0, 4);
-                    // Standard Grid Logic for first 4
                     const isThreeImages = visibleImages.length === 3;
                     let spanClass = 'col-span-1';
                     if (isThreeImages && idx === 0) {
-                      spanClass = 'col-span-1 md:col-span-2';
+                      spanClass = 'col-span-2';
                     }
                     const isSingle = visibleImages.length === 1;
 
@@ -138,7 +137,7 @@ export default function ProductDetailPage({ productSlug }) {
                       <div
                         key={idx}
                         className={`relative bg-slate-50 overflow-hidden group cursor-zoom-in ${spanClass}
-                           ${isSingle ? 'aspect-[3/4] max-h-[600px] w-full mx-auto' : 'aspect-[3/4]'}
+                           ${isSingle ? 'aspect-square md:aspect-[3/4] md:max-h-[600px] w-full mx-auto' : 'aspect-square md:aspect-[3/4]'}
                         `}
                       >
                         <Image
@@ -154,7 +153,6 @@ export default function ProductDetailPage({ productSlug }) {
                   })}
                 </div>
 
-                {/* SLIDER: Remaining Images */}
                 {images.length > 4 && (
                   <div className="w-full max-w-2xl mx-auto pt-4">
                     <Carousel className="w-full">
@@ -231,7 +229,8 @@ export default function ProductDetailPage({ productSlug }) {
             </div>
 
             {/* RIGHT: Product Core Info (Sticky) - SIMPLIFIED */}
-            <div className="lg:w-[40%] xl:w-[35%] relative">
+            {/* RIGHT: Product Core Info (Sticky) - SIMPLIFIED */}
+            <div className="lg:w-[40%] xl:w-[35%] relative order-first lg:order-last">
               <div className="sticky top-24 pt-2">
 
                 <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-2 leading-tight">

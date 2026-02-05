@@ -17,7 +17,7 @@ import { apiCall } from '@/lib/api-client'
 // Idle timeout configuration (in milliseconds)
 const IDLE_TIMEOUT_CONFIG = {
     superadmin: null,           // No idle timeout for superadmin
-    admin: 7 * 60 * 1000,       // 7 minutes for admin (user requirement)
+    admin: 7 * 60 * 1000,       // 7 minutes for admin
     default: 7 * 60 * 1000      // 7 minutes for staff/others
 }
 

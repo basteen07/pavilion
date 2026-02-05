@@ -128,11 +128,12 @@ export function QuotationPreviewModal({ open, onOpenChange, quotation, onDownloa
                     <div className="border border-gray-200 rounded-sm overflow-hidden text-xs">
                         {/* Header - Graphite/Dark Gray */}
                         <div className="bg-[#374151] text-white flex font-bold py-2 px-4 uppercase tracking-wider">
-                            <div className="w-[57%]">Product</div>
+                            <div className="w-[45%]">Product</div>
+                            <div className="w-[10%] text-center">UoM</div>
                             <div className="w-[15%] text-right">Your Price</div>
                             <div className="w-[10%] text-center">GST</div>
-                            <div className="w-[8%] text-center">Qty</div>
-                            <div className="w-[10%] text-center">UoM</div>
+                            <div className="w-[10%] text-center">Qty</div>
+                            <div className="w-[10%] text-right">Total</div>
                         </div>
 
                         {/* Grouped Content */}
@@ -153,49 +154,81 @@ export function QuotationPreviewModal({ open, onOpenChange, quotation, onDownloa
 
                                         {/* Products */}
                                         <div className="divide-y divide-gray-100">
-                                            {items.map((item, idx) => (
-                                                <div key={idx} className="flex px-4 py-2 hover:bg-gray-50 items-start">
-                                                    <div className="w-[57%] pr-4">
-                                                        <div className="flex gap-3">
-                                                            {item.is_detailed && (item.image_url || item.image) && (
-                                                                <div className="w-8 h-8 object-contain shrink-0">
-                                                                    <img src={item.image_url || item.image} className="w-full h-full object-contain" />
-                                                                </div>
-                                                            )}
-                                                            <div>
-                                                                <div className="flex items-center gap-2 flex-wrap">
-                                                                    <span className="font-medium text-gray-800">{item.name || item.product_name}</span>
-                                                                    {item.slug && (
-                                                                        <a
-                                                                            href={`https://www.pavilionsports.com/product/${item.slug}`}
-                                                                            target="_blank"
-                                                                            rel="noreferrer"
-                                                                            className="text-blue-600 hover:text-blue-800 text-[10px] font-bold"
-                                                                        >
-                                                                            [View]
-                                                                        </a>
+                                            {items.map((item, idx) => {
+                                                const unitPrice = getNum(item.custom_price || item.unit_price);
+                                                const quantity = getNum(item.quantity) || 1;
+                                                const total = unitPrice * quantity;
+
+                                                // Handle images for detailed view
+                                                let images = [];
+                                                if (item.is_detailed) {
+                                                    if (Array.isArray(item.images)) {
+                                                        images = item.images;
+                                                    } else if (typeof item.images === 'string') {
+                                                        try {
+                                                            const parsed = JSON.parse(item.images);
+                                                            images = Array.isArray(parsed) ? parsed : [parsed];
+                                                        } catch (e) {
+                                                            images = [item.images];
+                                                        }
+                                                    } else if (item.image_url || item.image) {
+                                                        images = [item.image_url || item.image];
+                                                    }
+                                                }
+
+                                                return (
+                                                    <div key={idx} className="flex px-4 py-3 hover:bg-gray-50 items-start">
+                                                        <div className="w-[45%] pr-4">
+                                                            <div className="flex justify-between items-start">
+                                                                <div className="flex-1">
+                                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                                        <span className="font-medium text-gray-800">{item.name || item.product_name}</span>
+                                                                        {item.slug && (
+                                                                            <a
+                                                                                href={`https://www.pavilionsports.com/product/${item.slug}`}
+                                                                                target="_blank"
+                                                                                rel="noreferrer"
+                                                                                className="text-blue-600 hover:text-blue-800 text-[10px] font-bold"
+                                                                            >
+                                                                                [View]
+                                                                            </a>
+                                                                        )}
+                                                                    </div>
+                                                                    {item.is_detailed && item.short_description && (
+                                                                        <p className="text-[10px] text-gray-500 mt-1 leading-tight line-clamp-3">{item.short_description}</p>
                                                                     )}
                                                                 </div>
-                                                                {item.is_detailed && item.short_description && (
-                                                                    <p className="text-[10px] text-gray-500 mt-0.5 leading-tight line-clamp-2">{item.short_description}</p>
+
+                                                                {/* Horizontal Images on Right */}
+                                                                {item.is_detailed && images.length > 0 && (
+                                                                    <div className="flex gap-2 ml-4 shrink-0">
+                                                                        {images.slice(0, 4).map((img, i) => (
+                                                                            <div key={i} className="w-12 h-16 bg-gray-50 border border-gray-100 rounded-sm overflow-hidden shadow-sm">
+                                                                                <img src={img} alt="" className="w-full h-full object-cover" />
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
                                                                 )}
                                                             </div>
                                                         </div>
+                                                        <div className="w-[10%] text-center text-gray-700">
+                                                            {item.uom || 'Single'}
+                                                        </div>
+                                                        <div className="w-[15%] text-right font-bold text-gray-900">
+                                                            Rs. {unitPrice.toLocaleString()}
+                                                        </div>
+                                                        <div className="w-[10%] text-center text-gray-600">
+                                                            {String(item.gst_rate || '18').replace('%', '')}%
+                                                        </div>
+                                                        <div className="w-[10%] text-center font-medium text-gray-900">
+                                                            {quantity}
+                                                        </div>
+                                                        <div className="w-[10%] text-right font-black text-gray-900">
+                                                            Rs. {total.toLocaleString()}
+                                                        </div>
                                                     </div>
-                                                    <div className="w-[15%] text-right font-bold text-gray-900">
-                                                        Rs. {getNum(item.custom_price || item.unit_price).toLocaleString()}
-                                                    </div>
-                                                    <div className="w-[10%] text-center text-gray-600">
-                                                        {String(item.gst_rate || '18').replace('%', '')}%
-                                                    </div>
-                                                    <div className="w-[8%] text-center font-medium text-gray-900">
-                                                        {item.quantity || 1}
-                                                    </div>
-                                                    <div className="w-[10%] text-center font-medium text-gray-900">
-                                                        {item.uom || 'Single'}
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                )
+                                            })}
                                         </div>
                                     </div>
                                 ))}

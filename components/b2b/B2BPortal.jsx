@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { toast } from 'sonner'
-import { ShoppingCart, LogOut, Home, Package, Search, Filter, ChevronRight, User, Settings, Plus, Trash2, Loader2, X, Check, Save, Clock, FileText, Edit3, Ban, CheckCircle2, Mail, Eye, RotateCcw } from 'lucide-react'
+import { ShoppingCart, LogOut, Home, Package, Search, Filter, ChevronRight, User, Settings, Plus, Trash2, Loader2, X, Check, Save, Clock, FileText, Edit3, Ban, CheckCircle2, Mail, Eye, RotateCcw, Menu } from 'lucide-react'
 import { format } from 'date-fns'
 import { apiCall } from '@/lib/api-client'
 import Image from 'next/image'
@@ -22,6 +22,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { cn } from "@/lib/utils"
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 
 // --- Utility: Get Image ---
 const getFirstImage = (images) => {
@@ -53,6 +54,7 @@ export function B2BPortal() {
     const [currentView, setCurrentView] = useState('dashboard')
     const [showProductModal, setShowProductModal] = useState(false)
     const [isPlacingOrder, setIsPlacingOrder] = useState(false)
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
     // --- Product Modal State ---
     const [searchTerm, setSearchTerm] = useState('')
@@ -363,6 +365,75 @@ export function B2BPortal() {
                             <h1 className="text-xl font-black text-red-600 tracking-tighter italic">WHOLESALE <span className="text-gray-900 not-italic">PORTAL</span></h1>
                         </Link>
                         <Badge variant="secondary" className="font-bold hidden md:flex">{profile.company_name}</Badge>
+
+                        {/* Mobile Toggle */}
+                        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                            <SheetTrigger asChild className="md:hidden">
+                                <Button variant="ghost" size="icon">
+                                    <Menu className="w-5 h-5 text-gray-600" />
+                                </Button>
+                            </SheetTrigger>
+                            <SheetContent side="left" className="w-64 p-0 bg-white">
+                                <SheetHeader className="p-4 border-b">
+                                    <SheetTitle className="text-left">
+                                        <div className="text-sm font-black text-red-600 italic">MENU</div>
+                                        <div className="text-xs font-bold text-gray-400 mt-1 truncate">{profile.company_name}</div>
+                                    </SheetTitle>
+                                </SheetHeader>
+                                <nav className="p-4 space-y-1">
+                                    <Button
+                                        variant={currentView === 'dashboard' ? 'secondary' : 'ghost'}
+                                        className="w-full justify-start font-bold"
+                                        onClick={() => { setCurrentView('dashboard'); setMobileMenuOpen(false); }}
+                                    >
+                                        <Home className="w-4 h-4 mr-2" />
+                                        Dashboard
+                                    </Button>
+                                    <Button
+                                        variant={currentView === 'create-order' ? 'secondary' : 'ghost'}
+                                        className="w-full justify-start font-bold"
+                                        onClick={() => { setCurrentView('create-order'); setMobileMenuOpen(false); }}
+                                    >
+                                        <Package className="w-4 h-4 mr-2" />
+                                        Create Order {cart.length > 0 && <Badge className="ml-auto bg-red-600">{cart.length}</Badge>}
+                                    </Button>
+                                    <Button
+                                        variant={currentView === 'orders' || currentView === 'order-details' ? 'secondary' : 'ghost'}
+                                        className="w-full justify-start font-bold"
+                                        onClick={() => { setCurrentView('orders'); setMobileMenuOpen(false); }}
+                                    >
+                                        <ShoppingCart className="w-4 h-4 mr-2" />
+                                        Order History
+                                    </Button>
+                                    <Button
+                                        variant={currentView === 'activity-history' ? 'secondary' : 'ghost'}
+                                        className="w-full justify-start font-bold"
+                                        onClick={() => { setCurrentView('activity-history'); setMobileMenuOpen(false); }}
+                                    >
+                                        <Clock className="w-4 h-4 mr-2" />
+                                        Activity History
+                                    </Button>
+                                    <div className="pt-4 mt-4 border-t border-gray-100">
+                                        <Button
+                                            variant={currentView === 'profile' ? 'secondary' : 'ghost'}
+                                            className="w-full justify-start font-bold text-gray-600"
+                                            onClick={() => { setCurrentView('profile'); setMobileMenuOpen(false); }}
+                                        >
+                                            <User className="w-4 h-4 mr-2" />
+                                            Profile
+                                        </Button>
+                                        <Button
+                                            variant={currentView === 'settings' ? 'secondary' : 'ghost'}
+                                            className="w-full justify-start font-bold text-gray-600"
+                                            onClick={() => { setCurrentView('settings'); setMobileMenuOpen(false); }}
+                                        >
+                                            <Settings className="w-4 h-4 mr-2" />
+                                            Account Settings
+                                        </Button>
+                                    </div>
+                                </nav>
+                            </SheetContent>
+                        </Sheet>
                     </div>
                     <div className="flex items-center gap-4">
                         <Button
@@ -459,12 +530,12 @@ export function B2BPortal() {
 
                     {currentView === 'create-order' && (
                         <div className="max-w-[1200px] mx-auto space-y-6">
-                            <div className="flex justify-between items-center">
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                                 <div>
                                     <h2 className="text-2xl font-bold">Building Order</h2>
                                     <p className="text-sm text-gray-500">Add products to your wholesale order list.</p>
                                 </div>
-                                <Button onClick={() => setShowProductModal(true)} className="bg-black hover:bg-gray-800 text-white font-bold">
+                                <Button onClick={() => setShowProductModal(true)} className="bg-black hover:bg-gray-800 text-white font-bold w-full sm:w-auto">
                                     <Plus className="w-4 h-4 mr-2" />
                                     Add Products
                                 </Button>
@@ -481,68 +552,71 @@ export function B2BPortal() {
                                         <Button variant="outline" onClick={() => setShowProductModal(true)}>Browse Catalog</Button>
                                     </div>
                                 ) : (
-                                    <div className="bg-white">
-                                        <Table>
-                                            <TableHeader>
-                                                <TableRow className="bg-gray-50 hover:bg-gray-50">
-                                                    <TableHead className="pl-6 w-[350px]">Product</TableHead>
-                                                    <TableHead className="text-right">Dealer Price</TableHead>
-                                                    <TableHead className="text-right">Markup</TableHead> {/* Explicit View of Logic */}
-                                                    <TableHead className="text-right">Your Price</TableHead>
-                                                    <TableHead className="text-center w-[120px]">Quantity</TableHead>
-                                                    <TableHead className="text-right w-[150px]">Total</TableHead>
-                                                    <TableHead className="w-[50px]"></TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {cart.map((item, idx) => (
-                                                    <TableRow key={idx}>
-                                                        <TableCell className="pl-6">
-                                                            <div className="flex items-center gap-4">
-                                                                <div className="w-12 h-12 bg-gray-100 rounded border overflow-hidden shrink-0">
-                                                                    <img src={item.image} className="w-full h-full object-cover" />
-                                                                </div>
-                                                                <div>
-                                                                    <div className="font-bold text-sm text-gray-900">
-                                                                        {/* Link to Product Page */}
-                                                                        <a href={`/product/${item.slug}`} target="_blank" className="hover:underline hover:text-blue-600">
-                                                                            {item.name}
-                                                                        </a>
+                                    <>
+                                        <div className="bg-white overflow-x-auto">
+                                            <div className="min-w-[800px]">
+                                                <Table>
+                                                    <TableHeader>
+                                                        <TableRow className="bg-gray-50 hover:bg-gray-50">
+                                                            <TableHead className="pl-6 w-[350px]">Product</TableHead>
+                                                            <TableHead className="text-right">Dealer Price</TableHead>
+                                                            <TableHead className="text-right">Markup</TableHead> {/* Explicit View of Logic */}
+                                                            <TableHead className="text-right">Your Price</TableHead>
+                                                            <TableHead className="text-center w-[120px]">Quantity</TableHead>
+                                                            <TableHead className="text-right w-[150px]">Total</TableHead>
+                                                            <TableHead className="w-[50px]"></TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {cart.map((item, idx) => (
+                                                            <TableRow key={idx}>
+                                                                <TableCell className="pl-6">
+                                                                    <div className="flex items-center gap-4">
+                                                                        <div className="w-12 h-12 bg-gray-100 rounded border overflow-hidden shrink-0">
+                                                                            <img src={item.image} className="w-full h-full object-cover" />
+                                                                        </div>
+                                                                        <div>
+                                                                            <div className="font-bold text-sm text-gray-900">
+                                                                                <a href={`/product/${item.slug}`} target="_blank" className="hover:underline hover:text-blue-600">
+                                                                                    {item.name}
+                                                                                </a>
+                                                                            </div>
+                                                                            <div className="text-xs text-gray-500">{item.brand_name}</div>
+                                                                        </div>
                                                                     </div>
-                                                                    <div className="text-xs text-gray-500">{item.brand_name}</div>
-                                                                </div>
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell className="text-right text-xs text-gray-600">₹{item.dealer_price ? item.dealer_price.toLocaleString() : '-'}</TableCell>
-                                                        <TableCell className="text-right">
-                                                            <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200">
-                                                                +{item.percentage}%
-                                                            </Badge>
-                                                        </TableCell>
-                                                        <TableCell className="text-right font-bold text-gray-900">
-                                                            ₹{parseFloat(item.price).toLocaleString()}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <Input
-                                                                type="number"
-                                                                min="1"
-                                                                className="h-8 text-center"
-                                                                value={item.quantity}
-                                                                onChange={(e) => updateCartItem(idx, 'quantity', e.target.value)}
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell className="text-right font-black text-gray-900">
-                                                            ₹{(parseFloat(item.price) * parseInt(item.quantity || 1)).toLocaleString()}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <Button size="sm" variant="ghost" className="h-8 w-8 text-red-500 hover:bg-red-50" onClick={() => setCart(cart.filter((_, i) => i !== idx))}>
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </Button>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
+                                                                </TableCell>
+                                                                <TableCell className="text-right text-xs text-gray-600">₹{item.dealer_price ? item.dealer_price.toLocaleString() : '-'}</TableCell>
+                                                                <TableCell className="text-right">
+                                                                    <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200">
+                                                                        +{item.percentage}%
+                                                                    </Badge>
+                                                                </TableCell>
+                                                                <TableCell className="text-right font-bold text-gray-900">
+                                                                    ₹{parseFloat(item.price).toLocaleString()}
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <Input
+                                                                        type="number"
+                                                                        min="1"
+                                                                        className="h-8 text-center"
+                                                                        value={item.quantity}
+                                                                        onChange={(e) => updateCartItem(idx, 'quantity', e.target.value)}
+                                                                    />
+                                                                </TableCell>
+                                                                <TableCell className="text-right font-black text-gray-900">
+                                                                    ₹{(parseFloat(item.price) * parseInt(item.quantity || 1)).toLocaleString()}
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <Button size="sm" variant="ghost" className="h-8 w-8 text-red-500 hover:bg-red-50" onClick={() => setCart(cart.filter((_, i) => i !== idx))}>
+                                                                        <Trash2 className="w-4 h-4" />
+                                                                    </Button>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        ))}
+                                                    </TableBody>
+                                                </Table>
+                                            </div>
+                                        </div>
 
                                         <div className="p-6 bg-gray-50 flex flex-col items-end gap-3 border-t border-gray-100">
                                             <div className="w-full max-w-xs space-y-2">
@@ -567,7 +641,7 @@ export function B2BPortal() {
                                                 Confirm Order
                                             </Button>
                                         </div>
-                                    </div>
+                                    </>
                                 )}
                             </Card>
                         </div>
@@ -576,38 +650,42 @@ export function B2BPortal() {
                     {currentView === 'orders' && (
                         <div className="max-w-[1200px] mx-auto space-y-6">
                             <h2 className="text-2xl font-bold">Order History</h2>
-                            <Card className="border-none shadow-sm rounded-xl">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow className="bg-gray-50 hover:bg-gray-50">
-                                            <TableHead>Order #</TableHead>
-                                            <TableHead>Date</TableHead>
-                                            <TableHead>Status</TableHead>
-                                            <TableHead className="text-right">Items</TableHead>
-                                            <TableHead className="text-right">Total Amount</TableHead>
-                                            <TableHead className="text-right">Action</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {orders.map((order) => (
-                                            <TableRow key={order.id}>
-                                                <TableCell className="font-medium text-blue-600">{order.order_number}</TableCell>
-                                                <TableCell>{new Date(order.created_at).toLocaleDateString()}</TableCell>
-                                                <TableCell><Badge variant="outline">{order.status}</Badge></TableCell>
-                                                <TableCell className="text-right">{order.items_count || order.products?.length || order.items?.length || '-'}</TableCell>
-                                                <TableCell className="text-right font-bold">₹{parseFloat(order.total).toLocaleString()}</TableCell>
-                                                <TableCell className="text-right">
-                                                    <Button size="sm" variant="outline" onClick={() => viewOrder(order)}>View</Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                        {orders.length === 0 && (
-                                            <TableRow>
-                                                <TableCell colSpan={6} className="text-center py-8 text-gray-500">No orders found.</TableCell>
-                                            </TableRow>
-                                        )}
-                                    </TableBody>
-                                </Table>
+                            <Card className="border-none shadow-sm rounded-xl overflow-hidden">
+                                <div className="overflow-x-auto">
+                                    <div className="min-w-[800px]">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow className="bg-gray-50 hover:bg-gray-50">
+                                                    <TableHead>Order #</TableHead>
+                                                    <TableHead>Date</TableHead>
+                                                    <TableHead>Status</TableHead>
+                                                    <TableHead className="text-right">Items</TableHead>
+                                                    <TableHead className="text-right">Total Amount</TableHead>
+                                                    <TableHead className="text-right">Action</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {orders.map((order) => (
+                                                    <TableRow key={order.id}>
+                                                        <TableCell className="font-medium text-blue-600">{order.order_number}</TableCell>
+                                                        <TableCell>{new Date(order.created_at).toLocaleDateString()}</TableCell>
+                                                        <TableCell><Badge variant="outline">{order.status}</Badge></TableCell>
+                                                        <TableCell className="text-right">{order.items_count || order.products?.length || order.items?.length || '-'}</TableCell>
+                                                        <TableCell className="text-right font-bold">₹{parseFloat(order.total).toLocaleString()}</TableCell>
+                                                        <TableCell className="text-right">
+                                                            <Button size="sm" variant="outline" onClick={() => viewOrder(order)}>View</Button>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                                {orders.length === 0 && (
+                                                    <TableRow>
+                                                        <TableCell colSpan={6} className="text-center py-8 text-gray-500">No orders found.</TableCell>
+                                                    </TableRow>
+                                                )}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                </div>
                             </Card>
                         </div>
                     )}
@@ -654,42 +732,46 @@ export function B2BPortal() {
                                         </div>
                                     </div>
                                 </div>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow className="bg-gray-50">
-                                            <TableHead className="pl-6">Product</TableHead>
-                                            <TableHead>Category</TableHead>
-                                            <TableHead className="text-right">Dealer Price</TableHead>
-                                            <TableHead className="text-right">Price</TableHead>
-                                            <TableHead className="text-right">GST</TableHead>
-                                            <TableHead className="text-center">Qty</TableHead>
-                                            <TableHead className="text-right">Total</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {(selectedOrder.items || selectedOrder.products || []).map((item, idx) => (
-                                            <TableRow key={idx}>
-                                                <TableCell className="pl-6">
-                                                    <a href={`/product/${item.slug}`} target="_blank" className="font-medium text-blue-600 hover:underline">
-                                                        {item.name || item.product_name}
-                                                    </a>
-                                                    {/* Hide SKU as requested */}
-                                                </TableCell>
-                                                <TableCell>{item.category_name || item.data?.category_name || '-'}</TableCell>
-                                                <TableCell className="text-right">
-                                                    {/* Attempt to show Dealer Price if saved in data or if we can infer it. 
-                                                        If not saved, we can't show it accurately for history, so show '-' or maybe current if available? 
-                                                        Better to show '-' if missing to avoid confusion. */}
-                                                    {item.dealer_price || item.data?.dealer_price ? `₹${(item.dealer_price || item.data?.dealer_price).toLocaleString()}` : '-'}
-                                                </TableCell>
-                                                <TableCell className="text-right font-bold">₹{parseFloat(item.price || item.unit_price).toLocaleString()}</TableCell>
-                                                <TableCell className="text-right">{item.gst_rate || item.data?.gst_rate || '18%'}</TableCell>
-                                                <TableCell className="text-center">{item.quantity}</TableCell>
-                                                <TableCell className="text-right font-bold">₹{(parseFloat(item.price || item.unit_price) * item.quantity).toLocaleString()}</TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
+                                <div className="overflow-x-auto">
+                                    <div className="min-w-[800px]">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow className="bg-gray-50">
+                                                    <TableHead className="pl-6">Product</TableHead>
+                                                    <TableHead>Category</TableHead>
+                                                    <TableHead className="text-right">Dealer Price</TableHead>
+                                                    <TableHead className="text-right">Price</TableHead>
+                                                    <TableHead className="text-right">GST</TableHead>
+                                                    <TableHead className="text-center">Qty</TableHead>
+                                                    <TableHead className="text-right">Total</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {(selectedOrder.items || selectedOrder.products || []).map((item, idx) => (
+                                                    <TableRow key={idx}>
+                                                        <TableCell className="pl-6">
+                                                            <a href={`/product/${item.slug}`} target="_blank" className="font-medium text-blue-600 hover:underline">
+                                                                {item.name || item.product_name}
+                                                            </a>
+                                                            {/* Hide SKU as requested */}
+                                                        </TableCell>
+                                                        <TableCell>{item.category_name || item.data?.category_name || '-'}</TableCell>
+                                                        <TableCell className="text-right">
+                                                            {/* Attempt to show Dealer Price if saved in data or if we can infer it. 
+                                                                If not saved, we can't show it accurately for history, so show '-' or maybe current if available? 
+                                                                Better to show '-' if missing to avoid confusion. */}
+                                                            {item.dealer_price || item.data?.dealer_price ? `₹${(item.dealer_price || item.data?.dealer_price).toLocaleString()}` : '-'}
+                                                        </TableCell>
+                                                        <TableCell className="text-right font-bold">₹{parseFloat(item.price || item.unit_price).toLocaleString()}</TableCell>
+                                                        <TableCell className="text-right">{item.gst_rate || item.data?.gst_rate || '18%'}</TableCell>
+                                                        <TableCell className="text-center">{item.quantity}</TableCell>
+                                                        <TableCell className="text-right font-bold">₹{(parseFloat(item.price || item.unit_price) * item.quantity).toLocaleString()}</TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                </div>
                             </Card>
                         </div>
                     )}
@@ -811,10 +893,10 @@ export function B2BPortal() {
                     )}
 
                 </main>
-            </div>
+            </div >
 
             {/* Product Selection Modal - Reused from QuotationBuilder */}
-            <Dialog open={showProductModal} onOpenChange={setShowProductModal}>
+            < Dialog open={showProductModal} onOpenChange={setShowProductModal} >
                 <DialogContent className="max-w-5xl h-[85vh] p-0 gap-0 overflow-hidden flex flex-col bg-white">
                     <div className="px-6 py-4 flex items-center justify-between border-b border-gray-200 bg-white z-10">
                         <DialogTitle className="text-lg font-bold">Select Products</DialogTitle>
@@ -902,7 +984,7 @@ export function B2BPortal() {
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-auto bg-gray-50 relative" id="scroll-container">
+                    <div className="flex-1 overflow-x-auto bg-gray-50 relative" id="scroll-container">
                         <div className="min-w-[800px] pb-20">
                             {Object.entries(groupedProducts).map(([groupName, groupProducts]) => {
                                 const isExpanded = expandedGroups[groupName];
@@ -1064,16 +1146,16 @@ export function B2BPortal() {
                             {isFetchingNextPage && <Loader2 className="w-5 h-5 animate-spin text-gray-400" />}
                         </div>
                     </div>
-                    <div className="p-4 border-t border-gray-200 bg-white flex justify-between items-center z-20 relative shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-                        <div className="text-sm text-gray-500 ml-2 font-medium bg-gray-100 px-3 py-1 rounded-full">
+                    <div className="p-4 border-t border-gray-200 bg-white flex flex-col sm:flex-row justify-between items-center gap-4 z-20 relative shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                        <div className="text-sm text-gray-500 font-medium bg-gray-100 px-3 py-1 rounded-full">
                             {selectedProducts.length} products selected
                         </div>
-                        <div className="flex gap-3">
-                            <Button variant="outline" className="px-6" onClick={() => setShowProductModal(false)}>
+                        <div className="flex gap-3 w-full sm:w-auto">
+                            <Button variant="outline" className="flex-1 sm:flex-initial px-6" onClick={() => setShowProductModal(false)}>
                                 Cancel
                             </Button>
                             <Button
-                                className="px-6 bg-[#1a1a1a] hover:bg-[#333] text-white"
+                                className="flex-1 sm:flex-initial px-6 bg-[#1a1a1a] hover:bg-[#333] text-white"
                                 disabled={selectedProducts.length === 0}
                                 onClick={addSelectedProducts}
                             >
@@ -1082,7 +1164,7 @@ export function B2BPortal() {
                         </div>
                     </div>
                 </DialogContent>
-            </Dialog>
-        </div>
+            </Dialog >
+        </div >
     )
 }

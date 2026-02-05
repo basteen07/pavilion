@@ -269,17 +269,18 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             return acc;
         }, {});
 
-        // Table Header - Updated: Product, MRP, Your Price, GST, Qty, UoM
+        // Table Header - Updated: Product, UoM, Your Price, GST, Qty, Total
         doc.setFillColor(55, 65, 81)
         doc.rect(15, currentY, 180, 7, 'F')
         doc.setTextColor(255)
         doc.setFontSize(8)
         doc.setFont('helvetica', 'bold')
         doc.text('Product', 20, currentY + 5)
-        doc.text('Your Price', 125, currentY + 5)
-        doc.text('GST', 158, currentY + 5)
-        doc.text('Qty', 173, currentY + 5)
-        doc.text('UoM', 185, currentY + 5)
+        doc.text('UoM', 90, currentY + 5)
+        doc.text('Your Price', 115, currentY + 5, { align: 'right' })
+        doc.text('GST', 140, currentY + 5, { align: 'center' })
+        doc.text('Qty', 160, currentY + 5, { align: 'center' })
+        doc.text('Total', 190, currentY + 5, { align: 'right' })
         currentY += 10
 
         // Iterate Sub-Categories
@@ -316,57 +317,108 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
 
                 // Products under this brand
                 items.forEach((item) => {
-                    if (currentY > 250) {
+                    const isDetailed = !!item.is_detailed;
+                    const unitPriceNum = parseFloat(item.custom_price) || 0;
+                    const quantityNum = parseInt(item.quantity) || 1;
+                    const totalNum = unitPriceNum * quantityNum;
+
+                    doc.setFont('helvetica', 'normal')
+                    doc.setTextColor(40)
+                    doc.setFontSize(8)
+
+                    // Product cell area (X: 20, Max Width: 65 if standard, 25 if detailed)
+                    const productX = 20;
+                    const productNameMaxWidth = isDetailed ? 28 : 65;
+                    const productNameLines = doc.splitTextToSize(item.name || '', productNameMaxWidth);
+
+                    // Description lines if detailed
+                    let descLines = [];
+                    if (isDetailed && item.short_description) {
+                        doc.setFontSize(6)
+                        doc.setTextColor(100)
+                        descLines = doc.splitTextToSize(item.short_description, 28);
+                    }
+
+                    // Height calculation
+                    const nameLineHeight = 4;
+                    const descLineHeight = 3;
+                    const textHeight = (productNameLines.length * nameLineHeight) + (descLines.length > 0 ? (descLines.length * descLineHeight) + 2 : 0);
+                    const imageHeight = isDetailed ? 15 : 0; // Padding for images
+
+                    const rowHeight = Math.max(textHeight, imageHeight, 8) + 2;
+
+                    if (currentY + rowHeight > 275) {
                         doc.addPage()
                         currentY = 20
                     }
 
-                    const isDetailed = !!item.is_detailed;
-
-                    // Detailed View: Show image if enabled for this product
-                    const imageSource = item.image_url || item.image;
-                    if (isDetailed && imageSource) {
-                        try {
-                            doc.addImage(imageSource, 'JPEG', 20, currentY, 12, 12)
-                        } catch (e) {
-                            console.error('Image add error:', e)
-                        }
-                    }
-
-                    doc.setFont('helvetica', 'normal')
-                    doc.setTextColor(40)
-                    doc.setFontSize(7)
-
-                    // Product name (truncated if needed) - with offset for image if detailed
+                    // Render Product Name
                     doc.setFontSize(8)
-                    const productX = isDetailed && imageSource ? 35 : 20;
-                    const productName = item.name.length > 40 ? item.name.substring(0, 37) + '...' : item.name;
-                    doc.text(productName, productX, currentY + 3)
+                    doc.setTextColor(40)
+                    doc.text(productNameLines, productX, currentY + 3)
 
-                    // Add "View" link next to product name
+                    // Add "View" link next to last line of product name
                     if (item.slug) {
-                        const nameWidth = doc.getTextWidth(productName);
-                        doc.setTextColor(37, 99, 235); // Blue
-                        doc.textWithLink('[View]', productX + nameWidth + 2, currentY + 3, { url: `https://www.pavilionsports.com/product/${item.slug}` });
-                        doc.setTextColor(40); // Reset to default
+                        const lastLine = productNameLines[productNameLines.length - 1];
+                        const lastLineWidth = doc.getTextWidth(lastLine);
+                        const lastLineY = currentY + 3 + ((productNameLines.length - 1) * nameLineHeight);
+                        doc.setTextColor(37, 99, 235);
+                        doc.setFontSize(7)
+                        doc.textWithLink('[View]', productX + lastLineWidth + 2, lastLineY, { url: `https://www.pavilionsports.com/product/${item.slug}` });
+                        doc.setTextColor(40);
                     }
 
-                    // Detailed View: Show description if enabled for this product
-                    if (isDetailed && item.short_description) {
+                    // Render Description
+                    if (descLines.length > 0) {
                         doc.setFontSize(6)
                         doc.setTextColor(100)
-                        const desc = item.short_description.length > 55 ? item.short_description.substring(0, 52) + '...' : item.short_description
-                        doc.text(desc, productX, currentY + 7)
+                        const descY = currentY + 3 + (productNameLines.length * nameLineHeight);
+                        doc.text(descLines.slice(0, 4), productX, descY) // Limit to 4 lines
                         doc.setTextColor(40)
                     }
 
-                    doc.setFontSize(8)
-                    doc.text(`Rs. ${parseFloat(item.custom_price).toLocaleString()}`, 125, currentY + 3)
-                    doc.text(`${item.gst_rate || '18'}%`.replace('%', ''), 160, currentY + 3)
-                    doc.text(String(item.quantity || 1), 173, currentY + 3)
-                    doc.text(item.uom || 'Single', 185, currentY + 3)
+                    // Detailed View: Images on Right
+                    if (isDetailed) {
+                        let images = [];
+                        if (Array.isArray(item.images)) {
+                            images = item.images;
+                        } else if (typeof item.images === 'string') {
+                            try {
+                                const parsed = JSON.parse(item.images);
+                                images = Array.isArray(parsed) ? parsed : [parsed];
+                            } catch (e) {
+                                images = [item.images];
+                            }
+                        } else if (item.image_url || item.image) {
+                            images = [item.image_url || item.image];
+                        }
 
-                    currentY += isDetailed ? 15 : 8
+                        if (images.length > 0) {
+                            const imgWidth = 9;
+                            const imgHeight = 12;
+                            const imgGap = 2;
+                            images.slice(0, 3).forEach((img, i) => {
+                                try {
+                                    doc.addImage(img, 'JPEG', 52 + (i * (imgWidth + imgGap)), currentY, imgWidth, imgHeight);
+                                } catch (e) {
+                                    console.error('PDF Image add error:', e);
+                                }
+                            });
+                        }
+                    }
+
+                    // Render other columns (vertically centered roughly)
+                    const columnY = currentY + 4;
+                    doc.setFontSize(8)
+                    doc.text(item.uom || 'Single', 90, columnY)
+                    doc.text(`Rs. ${unitPriceNum.toLocaleString()}`, 115, columnY, { align: 'right' })
+                    doc.text(`${item.gst_rate || '18'}%`.replace('%', ''), 140, columnY, { align: 'center' })
+                    doc.text(String(quantityNum), 160, columnY, { align: 'center' })
+                    doc.setFont('helvetica', 'bold')
+                    doc.text(`Rs. ${totalNum.toLocaleString()}`, 190, columnY, { align: 'right' })
+                    doc.setFont('helvetica', 'normal')
+
+                    currentY += rowHeight
                 })
                 currentY += 2
             })
