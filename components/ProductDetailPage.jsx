@@ -31,12 +31,24 @@ export default function ProductDetailPage({ productSlug }) {
   const { addToCart } = useB2BCart()
   const [quantity, setQuantity] = useState(1)
   const [enquiryOpen, setEnquiryOpen] = useState(false)
+  const [selectedVariant, setSelectedVariant] = useState(null)
 
 
   const { data: product, isLoading: productLoading } = useQuery({
     queryKey: ['product', productSlug],
     queryFn: () => apiCall(`/products/${productSlug}`)
   })
+
+  // Set default variant on load - MODIFIED: Prioritize main product if it has attributes
+  const variants = product?.product_variants || []
+  if (product && variants.length > 0 && !selectedVariant) {
+    // Only auto-select if main product DOES NOT have defining attributes
+    // If main product has size/color, we want to show that by default (selectedVariant = null)
+    if (!product.size && !product.color) {
+      const defaultVar = variants.find(v => v.is_default) || variants[0]
+      setSelectedVariant(defaultVar)
+    }
+  }
 
   const { data: similarProductsData } = useQuery({
     queryKey: ['similar-products', product?.category_id],
@@ -65,13 +77,23 @@ export default function ProductDetailPage({ productSlug }) {
     )
   }
 
+  // MODIFIED: Image Resolution Logic
+  // If selectedVariant has images => use them
+  // Else if product has images => use them
+  // This allows logic: Main Product selected -> shows main images. Variant selected -> shows variant images (or fallback to main).
+
+  const hasVariantImages = selectedVariant?.images &&
+    (Array.isArray(selectedVariant.images) ? selectedVariant.images.length > 0 : selectedVariant.images !== '[]')
+
+  let rawImages = hasVariantImages ? selectedVariant.images : product.images
+
   let images = []
   try {
-    if (Array.isArray(product.images)) {
-      images = product.images
-    } else if (typeof product.images === 'string') {
+    if (Array.isArray(rawImages)) {
+      images = rawImages
+    } else if (typeof rawImages === 'string') {
       try {
-        images = JSON.parse(product.images)
+        images = JSON.parse(rawImages)
       } catch (e) {
         console.error("Failed to parse images JSON string", e)
       }
@@ -87,19 +109,68 @@ export default function ProductDetailPage({ productSlug }) {
   }).filter(img => img && img.image_url) : []
 
   if (images.length === 0) {
+    // If we are on a variant but it has no images, fallback to main product images specifically
+    // (Though logic above mostly covers this, ensures we always have something if main has it)
+    if (selectedVariant) {
+      let mainRaw = product.images
+      let mainImages = []
+      try {
+        if (Array.isArray(mainRaw)) mainImages = mainRaw
+        else if (typeof mainRaw === 'string') mainImages = JSON.parse(mainRaw)
+      } catch (e) { }
+
+      const normMain = Array.isArray(mainImages) ? mainImages.map(img => {
+        if (typeof img === 'string') return { image_url: img }
+        return img
+      }).filter(img => img && img.image_url) : []
+
+      if (normMain.length > 0) images = normMain
+    }
+  }
+
+  if (images.length === 0) {
     images = [
       { image_url: 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=1200' }
     ]
   }
 
-  const discount = product.discount_percentage ? Math.round(product.discount_percentage) : 0
-  const hasSalePrice = product.shop_price && Number(product.shop_price) > 0 && Number(product.shop_price) < Number(product.mrp_price);
-  const finalPrice = hasSalePrice ? product.shop_price : product.mrp_price;
+  // Determine current display values (Variant or Main Product)
+  const getNonZeroPrice = (...prices) => {
+    for (const p of prices) {
+      const val = parseFloat(p);
+      if (val > 0) return val;
+    }
+    return 0;
+  };
 
-  // Grid Logic:
-  // 1 image => grid-cols-1
-  // 2+ images => grid-cols-2
-  const gridClass = images.length === 1 ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'
+  const currentPrice = selectedVariant
+    ? getNonZeroPrice(selectedVariant.shop_price, selectedVariant.mrp_price, product.shop_price, product.mrp_price)
+    : getNonZeroPrice(product.shop_price, product.mrp_price);
+
+  const currentMrp = selectedVariant
+    ? getNonZeroPrice(selectedVariant.mrp_price, product.mrp_price)
+    : getNonZeroPrice(product.mrp_price);
+
+  const currentSku = selectedVariant ? selectedVariant.sku : product.sku
+
+  const discount = currentMrp && currentPrice < currentMrp
+    ? Math.round(((currentMrp - currentPrice) / currentMrp) * 100)
+    : 0
+
+  // Extract unique options for UI
+  // MODIFIED: Include Main Product attributes in the list of options
+  const allSizes = variants.map(v => v.size).filter(Boolean)
+  if (product.size) allSizes.push(product.size)
+  const uniqueSizes = [...new Set(allSizes)]
+
+  const allColors = variants.map(v => v.color).filter(Boolean)
+  if (product.color) allColors.push(product.color)
+  const uniqueColors = [...new Set(allColors)]
+
+  // Current Size/Color being viewed (from Variant OR Main Product)
+  const currentSize = selectedVariant ? selectedVariant.size : product.size;
+  const currentColor = selectedVariant ? selectedVariant.color : product.color;
+
 
   return (
     <>
@@ -118,11 +189,10 @@ export default function ProductDetailPage({ productSlug }) {
           <div className="flex flex-col lg:flex-row gap-10 xl:gap-14">
 
             {/* LEFT: Image Grid & Details */}
-            {/* LEFT: Image Grid & Details */}
             <div className="flex-1 min-w-0 self-start space-y-12 order-last lg:order-first">
 
               {/* 1. IMAGES (Unified Grid + Slider) */}
-              <div className="space-y-4">
+              <div className="space-y-4" key={selectedVariant?.id || 'main'}>
                 <div className={`grid ${images.slice(0, 4).length === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-2`}>
                   {images.slice(0, 4).map((img, idx) => {
                     const visibleImages = images.slice(0, 4);
@@ -201,9 +271,10 @@ export default function ProductDetailPage({ productSlug }) {
                           <td className="p-4 bg-slate-50/50 w-1/3 font-semibold text-slate-500 uppercase text-xs tracking-wider">Category</td>
                           <td className="p-4 font-medium text-slate-900">{product.category_name}</td>
                         </tr>
+                        {/* SKU tracks currently selected */}
                         <tr className="border-b border-slate-100 hover:bg-slate-50">
                           <td className="p-4 bg-slate-50/50 w-1/3 font-semibold text-slate-500 uppercase text-xs tracking-wider">SKU</td>
-                          <td className="p-4 font-medium text-slate-900">{product.sku}</td>
+                          <td className="p-4 font-medium text-slate-900">{currentSku}</td>
                         </tr>
                         {product.hsn_code && (
                           <tr className="border-b border-slate-100 hover:bg-slate-50">
@@ -211,7 +282,19 @@ export default function ProductDetailPage({ productSlug }) {
                             <td className="p-4 font-medium text-slate-900">{product.hsn_code}</td>
                           </tr>
                         )}
-                        {/* Add dynamic attributes map here if you have them in the future */}
+                        {/* MODIFIED: Show Size/Color if they exist on selected variant OR main product */}
+                        {currentSize && (
+                          <tr className="border-b border-slate-100 hover:bg-slate-50">
+                            <td className="p-4 bg-slate-50/50 w-1/3 font-semibold text-slate-500 uppercase text-xs tracking-wider">Size</td>
+                            <td className="p-4 font-medium text-slate-900">{currentSize}</td>
+                          </tr>
+                        )}
+                        {currentColor && (
+                          <tr className="border-b border-slate-100 hover:bg-slate-50">
+                            <td className="p-4 bg-slate-50/50 w-1/3 font-semibold text-slate-500 uppercase text-xs tracking-wider">Color</td>
+                            <td className="p-4 font-medium text-slate-900">{currentColor}</td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -228,7 +311,6 @@ export default function ProductDetailPage({ productSlug }) {
 
             </div>
 
-            {/* RIGHT: Product Core Info (Sticky) - SIMPLIFIED */}
             {/* RIGHT: Product Core Info (Sticky) - SIMPLIFIED */}
             <div className="lg:w-[40%] xl:w-[35%] relative order-first lg:order-last">
               <div className="sticky top-24 pt-2">
@@ -251,12 +333,12 @@ export default function ProductDetailPage({ productSlug }) {
                 <div className="mb-8">
                   <div className="flex items-baseline gap-3 mb-2">
                     <span className="text-3xl font-bold text-slate-900">
-                      ₹{finalPrice?.toLocaleString('en-IN')}
+                      ₹{Number(currentPrice).toLocaleString('en-IN')}
                     </span>
-                    {hasSalePrice && (
+                    {discount > 0 && (
                       <>
                         <span className="text-lg text-slate-400 line-through">
-                          ₹{product.mrp_price?.toLocaleString('en-IN')}
+                          ₹{Number(currentMrp).toLocaleString('en-IN')}
                         </span>
                         <span className="text-lg font-bold text-orange-600">
                           ({discount}% OFF)
@@ -267,6 +349,136 @@ export default function ProductDetailPage({ productSlug }) {
                   <p className="text-emerald-700 font-bold text-xs uppercase tracking-wide">inclusive of all taxes</p>
                 </div>
 
+                {/* --- VARIANT SELECTORS --- */}
+                {/* Display if we have variants OR if main product has attributes that effectively creates 'options' */}
+                {((variants && variants.length > 0) || (uniqueSizes.length > 1 || uniqueColors.length > 1)) && (
+                  <div className="mb-8 space-y-4">
+                    {uniqueSizes.length > 0 && (
+                      <div>
+                        <label className="block text-xs font-bold text-slate-900 uppercase mb-2">Size</label>
+                        <div className="flex flex-wrap gap-2">
+                          {uniqueSizes.map(size => {
+                            const isSelected = currentSize === size
+
+                            // Check if this size is MAIN product's or one of variants
+                            // Simplified availability assumption
+                            return (
+                              <button
+                                key={size}
+                                onClick={() => {
+                                  // Logic:
+                                  // 1. Check if MAIN product matches this size (and potentially current color)
+                                  // 2. Check if a VARIANT matches
+
+                                  const isMainMatch = product.size === size && (uniqueColors.length > 0 ? (product.color === currentColor) : true);
+
+                                  if (isMainMatch) {
+                                    setSelectedVariant(null);
+                                    return;
+                                  }
+
+                                  // Find best variant match
+                                  // Try to keep current Color if possible
+                                  const match = variants.find(v => v.size === size && (uniqueColors.length > 0 ? v.color === currentColor : true))
+                                    || variants.find(v => v.size === size)
+
+                                  if (match) setSelectedVariant(match)
+                                  else if (product.size === size) setSelectedVariant(null) // Fallback to main if simplified find failed
+                                }}
+                                className={`h-10 px-4 rounded border text-sm font-medium transition-all
+                                   ${isSelected
+                                    ? 'border-slate-900 bg-slate-900 text-white'
+                                    : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400'
+                                  }
+                                 `}
+                              >
+                                {size}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {uniqueColors.length > 0 && (
+                      <div>
+                        <label className="block text-xs font-bold text-slate-900 uppercase mb-2">Color</label>
+                        <div className="flex flex-wrap gap-2">
+                          {uniqueColors.map(color => {
+                            const isSelected = currentColor === color
+                            return (
+                              <button
+                                key={color}
+                                onClick={() => {
+                                  // Logic:
+                                  // 1. Check if MAIN product matches
+                                  const isMainMatch = product.color === color && (uniqueSizes.length > 0 ? (product.size === currentSize) : true);
+
+                                  if (isMainMatch) {
+                                    setSelectedVariant(null);
+                                    return;
+                                  }
+
+                                  const match = variants.find(v => v.color === color && (uniqueSizes.length > 0 ? v.size === currentSize : true))
+                                    || variants.find(v => v.color === color)
+
+                                  if (match) setSelectedVariant(match)
+                                  else if (product.color === color) setSelectedVariant(null)
+                                }}
+                                className={`h-10 px-4 rounded border text-sm font-medium transition-all
+                                   ${isSelected
+                                    ? 'border-slate-900 bg-slate-900 text-white'
+                                    : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400'
+                                  }
+                                 `}
+                              >
+                                {color}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Fallback for named variants if no size/color structure */}
+                    {uniqueSizes.length === 0 && uniqueColors.length === 0 && variants.length > 0 && (
+                      <div>
+                        <label className="block text-xs font-bold text-slate-900 uppercase mb-2">Options</label>
+                        <div className="flex flex-wrap gap-2">
+                          {/* Main Product Option if applicable (e.g. Default) */}
+                          <button
+                            onClick={() => setSelectedVariant(null)}
+                            className={`h-10 px-4 rounded border text-sm font-medium transition-all
+                                    ${!selectedVariant
+                                ? 'border-slate-900 bg-slate-900 text-white'
+                                : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400'
+                              }
+                                `}
+                          >
+                            Default
+                          </button>
+                          {variants.map((v, idx) => (
+                            <button
+                              key={v.id || idx}
+                              onClick={() => setSelectedVariant(v)}
+                              className={`h-10 px-4 rounded border text-sm font-medium transition-all
+                                   ${selectedVariant?.id === v.id
+                                  ? 'border-slate-900 bg-slate-900 text-white'
+                                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400'
+                                }
+                                 `}
+                            >
+                              {v.option1_value || v.sku || `Variant ${idx + 1}`}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  </div>
+                )}
+
+
                 {/* Actions */}
                 <div className="flex flex-col gap-3 mb-8">
                   <div className="flex gap-2">
@@ -274,7 +486,7 @@ export default function ProductDetailPage({ productSlug }) {
                       user.b2b_status === 'approved' ? (
                         <Button
                           className="flex-1 h-14 bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-wider text-sm rounded-sm"
-                          onClick={() => addToCart(product, quantity)}
+                          onClick={() => addToCart({ ...product, ...selectedVariant }, quantity)}
                         >
                           <ShoppingCart className="w-4 h-4 mr-2" /> Add to Order
                         </Button>
@@ -315,53 +527,11 @@ export default function ProductDetailPage({ productSlug }) {
         </div>
       </div>
 
-      {/* Similar Products - Kept simple below */}
-      {similarProducts.length > 0 && (
-        <section className="py-16 bg-slate-50 border-t border-slate-200">
-          <div className="container max-w-[1400px] mx-auto px-4 lg:px-6">
-            <h3 className="text-lg font-bold text-slate-900 uppercase tracking-widest mb-10">Similar Products</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-              {similarProducts.map((p) => (
-                <Link key={p.id} href={`/product/${p.slug}`} className="group bg-white flex flex-col hover:shadow-lg transition-shadow duration-300">
-                  <div className="relative aspect-[3/4] overflow-hidden bg-slate-100">
-                    <Image
-                      src={p.images?.[0]?.image_url || 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=600'}
-                      alt={p.name}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    {p.discount_percentage > 0 && (
-                      <span className="absolute bottom-2 left-2 bg-white/90 px-2 py-1 text-[10px] font-bold text-orange-600 uppercase tracking-wider backdrop-blur-sm">
-                        {Math.round(p.discount_percentage)}% Off
-                      </span>
-                    )}
-                  </div>
-                  <div className="p-4 flex flex-col gap-1">
-                    <h4 className="font-bold text-slate-900 text-sm uppercase truncate">{p.brand_name}</h4>
-                    <p className="text-slate-500 text-xs truncate mb-2">{p.name}</p>
-                    <div className="mt-auto flex items-baseline gap-2">
-                      <span className="text-sm font-bold text-slate-900">
-                        {Number(p.shop_price) > 0
-                          ? `₹${Number(p.shop_price).toLocaleString('en-IN')}`
-                          : `₹${Number(p.mrp_price).toLocaleString('en-IN')}`
-                        }
-                      </span>
-                      {Number(p.shop_price) > 0 && Number(p.shop_price) < Number(p.mrp_price) && (
-                        <span className="text-xs text-slate-400 line-through">₹{Number(p.mrp_price).toLocaleString('en-IN')}</span>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
+      {/* Enquiry Modal */}
       <EnquiryModal
         open={enquiryOpen}
         onOpenChange={setEnquiryOpen}
-        product={product}
+        product={{ ...product, ...selectedVariant }}
       />
     </>
   )

@@ -46,15 +46,30 @@ const productSchema = z.object({
     unit: z.string().default('1'),
     images: z.array(z.string()).default([]),
     videos: z.array(z.string()).default([]),
+    // Base Attributes (Optional)
+    size: z.string().optional(),
+    color: z.string().optional(),
+    option1_name: z.string().optional(),
+    option1_value: z.string().optional(),
+    option2_name: z.string().optional(),
+    option2_value: z.string().optional(),
     variants: z.array(z.object({
-        size: z.string(),
-        color: z.string(),
-        mrp: z.coerce.number().optional(),
-        dealer_price: z.coerce.number().optional(),
-        counter_price: z.coerce.number().optional(),
-        recommended_price: z.coerce.number().optional(),
-        price: z.coerce.number(), // This is the shop price
-        stock: z.coerce.number()
+        id: z.string().optional(),
+        sku: z.string().min(1, 'Variant SKU is required'),
+        size: z.string().optional().default(''),
+        color: z.string().optional().default(''),
+        option1_name: z.string().optional().default(''),
+        option1_value: z.string().optional().default(''),
+        option2_name: z.string().optional().default(''),
+        option2_value: z.string().optional().default(''),
+        mrp_price: z.coerce.number().min(0).default(0),
+        dealer_price: z.coerce.number().min(0).default(0),
+        counter_price: z.coerce.number().min(0).default(0),
+        recommended_price: z.coerce.number().min(0).default(0),
+        shop_price: z.coerce.number().min(0).default(0),
+        inventory: z.coerce.number().min(0).default(0),
+        is_default: z.boolean().default(false),
+        images: z.array(z.string()).default([])
     })).default([])
 })
 
@@ -91,7 +106,15 @@ export function ProductForm({ product, onCancel, onSuccess }) {
             unit: product?.unit || '1',
             images: safeJSONParse(product?.images),
             videos: safeJSONParse(product?.videos),
-            variants: safeJSONParse(product?.variants)
+            images: safeJSONParse(product?.images),
+            videos: safeJSONParse(product?.videos),
+            variants: product?.product_variants || safeJSONParse(product?.variants) || [],
+            size: product?.size || '',
+            color: product?.color || '',
+            option1_name: product?.option1_name || '',
+            option1_value: product?.option1_value || '',
+            option2_name: product?.option2_name || '',
+            option2_value: product?.option2_value || ''
         }
     })
 
@@ -217,8 +240,13 @@ export function ProductForm({ product, onCancel, onSuccess }) {
         }
     }
 
+    const onError = (errors) => {
+        console.error('Form Errors:', errors)
+        toast.error('Please check the form for errors. Required fields might be missing.')
+    }
+
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 pb-10">
+        <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-8 pb-10">
             <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg sticky top-0 z-10 border-b">
                 <div>
                     <h2 className="text-xl font-bold">{product ? 'Edit Product' : 'Create New Product'}</h2>
@@ -439,7 +467,6 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                 </Select>
                                 {errors.category_id && <p className="text-xs text-red-500">{errors.category_id.message}</p>}
                             </div>
-
                             <div className="space-y-2">
                                 <Label>Sub-Category</Label>
                                 <Select
@@ -520,30 +547,77 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                 <TabsContent value="pricing">
                     <Card className="mb-6">
                         <CardContent className="pt-6">
-                            <h3 className="font-semibold mb-4 text-red-600">Base Pricing (4 Types)</h3>
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                <div className="space-y-2">
-                                    <Label className="text-blue-700">Dealer Price</Label>
-                                    <Input type="number" {...register('dealer_price')} placeholder="0.00" />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-orange-700">Counter Price</Label>
-                                    <Input type="number" {...register('counter_price')} placeholder="0.00" />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-red-700">MRP *</Label>
-                                    <Input type="number" {...register('mrp_price')} />
-                                    {errors.mrp_price && <p className="text-red-500 text-xs">{errors.mrp_price.message}</p>}
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-green-700">Recommended Price</Label>
-                                    <Input type="number" {...register('recommended_price')} placeholder="0.00" />
+                            <div className="flex items-center justify-between mb-6 border-b pb-4">
+                                <div>
+                                    <h3 className="font-semibold text-lg">Product Configuration</h3>
+                                    <p className="text-sm text-gray-500">Define base attributes and pricing strategy.</p>
                                 </div>
                             </div>
-                            <div className="mt-4 pt-4 border-t space-y-2">
-                                <Label className="text-gray-900 font-bold">Shop Price </Label>
-                                <Input type="number" {...register('shop_price')} className="max-w-[200px] border-2 border-red-200" />
-                                {errors.shop_price && <p className="text-red-500 text-xs">{errors.shop_price.message}</p>}
+
+                            <div className="space-y-8">
+                                {/* Base Attributes */}
+                                <div>
+                                    <h4 className="font-bold text-xs text-gray-500 uppercase tracking-wider mb-3">Base Attributes (Optional)</h4>
+                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                        <div className="space-y-2">
+                                            <Label>Size</Label>
+                                            <Input {...register('size')} placeholder="e.g. M" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Color</Label>
+                                            <Input {...register('color')} placeholder="e.g. Red" />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+                                        <div className="space-y-2">
+                                            <Label>Option 1 Name</Label>
+                                            <Input {...register('option1_name')} placeholder="e.g. Material" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Option 1 Value</Label>
+                                            <Input {...register('option1_value')} placeholder="e.g. Cotton" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Option 2 Name</Label>
+                                            <Input {...register('option2_name')} placeholder="e.g. Style" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Option 2 Value</Label>
+                                            <Input {...register('option2_value')} placeholder="e.g. Round Neck" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Base Pricing */}
+                                <div>
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <h4 className="font-bold text-xs text-gray-500 uppercase tracking-wider">Base Pricing</h4>
+                                    </div>
+                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                        <div className="space-y-2">
+                                            <Label className="text-blue-700">Dealer Price</Label>
+                                            <Input type="number" {...register('dealer_price')} placeholder="0.00" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-orange-700">Counter Price</Label>
+                                            <Input type="number" {...register('counter_price')} placeholder="0.00" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-red-700">MRP *</Label>
+                                            <Input type="number" {...register('mrp_price')} />
+                                            {errors.mrp_price && <p className="text-red-500 text-xs">{errors.mrp_price.message}</p>}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-green-700">Recommended Price</Label>
+                                            <Input type="number" {...register('recommended_price')} placeholder="0.00" />
+                                        </div>
+                                    </div>
+                                    <div className="mt-4 pt-4 border-t space-y-2">
+                                        <Label className="text-gray-900 font-bold">Shop Price </Label>
+                                        <Input type="number" {...register('shop_price')} className="max-w-[200px] border-2 border-red-200" />
+                                        {errors.shop_price && <p className="text-red-500 text-xs">{errors.shop_price.message}</p>}
+                                    </div>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
@@ -552,10 +626,22 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                         <CardContent className="pt-6">
                             <div className="flex justify-between items-center mb-4">
                                 <div>
-                                    <h3 className="font-semibold">Variants</h3>
-                                    <p className="text-sm text-gray-500">Manage sizes, colors and specific pricing per variant</p>
+                                    <h3 className="font-semibold">Product Variants</h3>
+                                    <p className="text-sm text-gray-500">Each variant requires a unique SKU</p>
                                 </div>
-                                <Button type="button" size="sm" variant="outline" onClick={() => appendVariant({ size: '', color: '', price: 0, stock: 0 })}>
+                                <Button type="button" size="sm" variant="outline" onClick={() => appendVariant({
+                                    sku: `${watch('sku')}-${variants.length + 1}`,
+                                    size: '', color: '',
+                                    option1_name: '', option1_value: '',
+                                    option2_name: '', option2_value: '',
+                                    mrp_price: watch('mrp_price') || 0,
+                                    dealer_price: watch('dealer_price') || 0,
+                                    counter_price: watch('counter_price') || 0,
+                                    recommended_price: watch('recommended_price') || 0,
+                                    shop_price: watch('shop_price') || 0,
+                                    inventory: 0,
+                                    is_default: variants.length === 0
+                                })}>
                                     <Plus className="w-4 h-4 mr-2" />
                                     Add Variant
                                 </Button>
@@ -564,11 +650,14 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                             <div className="space-y-4">
                                 {variants.length === 0 && (
                                     <div className="text-center py-8 bg-gray-50 rounded border border-dashed">
-                                        <p className="text-gray-500 text-sm">No variants added. Product will look like a single item.</p>
+                                        <p className="text-gray-500 text-sm">No variants added. Click "Add Variant" to create size/color variants.</p>
                                     </div>
                                 )}
                                 {variants.map((field, index) => (
                                     <div key={field.id} className="relative bg-gray-50 p-4 rounded-lg border group shadow-sm">
+                                        <div className="absolute -top-2 -left-2 h-6 w-6 rounded-full bg-red-600 text-white text-xs flex items-center justify-center font-bold">
+                                            {index + 1}
+                                        </div>
                                         <Button
                                             type="button"
                                             size="icon"
@@ -579,45 +668,72 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                             <X className="w-3 h-3 text-red-500" />
                                         </Button>
 
-                                        <div className="grid grid-cols-2 gap-4 mb-4">
+                                        {/* Variant SKU - Required */}
+                                        <div className="mb-4">
+                                            <Label className="text-xs font-bold text-red-600">Variant SKU *</Label>
+                                            <Input
+                                                placeholder="Unique SKU for this variant"
+                                                {...register(`variants.${index}.sku`)}
+                                                className="border-red-200"
+                                            />
+                                            {errors.variants?.[index]?.sku && (
+                                                <p className="text-red-500 text-xs mt-1">{errors.variants[index].sku.message}</p>
+                                            )}
+                                        </div>
+
+                                        {/* Size & Color */}
+                                        <div className="grid grid-cols-4 gap-3 mb-4">
                                             <div className="space-y-1">
                                                 <Label className="text-[10px] uppercase font-bold text-gray-400">Size</Label>
-                                                <Input placeholder="Size" {...register(`variants.${index}.size`)} />
+                                                <Input placeholder="e.g. M, L, XL" {...register(`variants.${index}.size`)} />
                                             </div>
                                             <div className="space-y-1">
                                                 <Label className="text-[10px] uppercase font-bold text-gray-400">Color</Label>
-                                                <Input placeholder="Color" {...register(`variants.${index}.color`)} />
+                                                <Input placeholder="e.g. Red, Blue" {...register(`variants.${index}.color`)} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-[10px] uppercase font-bold text-gray-400">Option 1</Label>
+                                                <Input placeholder="Name:Value" {...register(`variants.${index}.option1_value`)} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-[10px] uppercase font-bold text-gray-400">Option 2</Label>
+                                                <Input placeholder="Name:Value" {...register(`variants.${index}.option2_value`)} />
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-4 gap-2 mb-4">
+                                        {/* All Price Types */}
+                                        <div className="grid grid-cols-5 gap-2 mb-4">
                                             <div className="space-y-1">
-                                                <Label className="text-[10px] uppercase font-bold text-gray-400">Dealer</Label>
-                                                <Input type="number" placeholder="Dealer" {...register(`variants.${index}.dealer_price`)} />
+                                                <Label className="text-[10px] uppercase font-bold text-blue-600">Dealer</Label>
+                                                <Input type="number" step="0.01" {...register(`variants.${index}.dealer_price`)} />
                                             </div>
                                             <div className="space-y-1">
-                                                <Label className="text-[10px] uppercase font-bold text-gray-400">Counter</Label>
-                                                <Input type="number" placeholder="Counter" {...register(`variants.${index}.counter_price`)} />
+                                                <Label className="text-[10px] uppercase font-bold text-orange-600">Counter</Label>
+                                                <Input type="number" step="0.01" {...register(`variants.${index}.counter_price`)} />
                                             </div>
                                             <div className="space-y-1">
-                                                <Label className="text-[10px] uppercase font-bold text-gray-400">MRP</Label>
-                                                <Input type="number" placeholder="MRP" {...register(`variants.${index}.mrp`)} />
+                                                <Label className="text-[10px] uppercase font-bold text-red-600">MRP</Label>
+                                                <Input type="number" step="0.01" {...register(`variants.${index}.mrp_price`)} />
                                             </div>
                                             <div className="space-y-1">
-                                                <Label className="text-[10px] uppercase font-bold text-gray-400">Rec.</Label>
-                                                <Input type="number" placeholder="Rec." {...register(`variants.${index}.recommended_price`)} />
+                                                <Label className="text-[10px] uppercase font-bold text-green-600">Recommended</Label>
+                                                <Input type="number" step="0.01" {...register(`variants.${index}.recommended_price`)} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-[10px] uppercase font-bold text-gray-700">Shop Price</Label>
+                                                <Input type="number" step="0.01" {...register(`variants.${index}.shop_price`)} />
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-4 border-t pt-3">
-                                            <div className="space-y-1">
-                                                <Label className="text-xs font-bold text-red-600">Shop Price *</Label>
-                                                <Input type="number" placeholder="Price" {...register(`variants.${index}.price`)} />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <Label className="text-xs font-bold text-gray-600">Stock Qty</Label>
-                                                <Input type="number" placeholder="Stock" {...register(`variants.${index}.stock`)} />
-                                            </div>
+
+                                        {/* Variant Images */}
+                                        <div className="mb-4 border-t pt-3">
+                                            <Label className="text-xs font-bold text-gray-600 mb-2 block">Variant Specific Images</Label>
+                                            <ImageUploader
+                                                value={watch(`variants.${index}.images`) || []}
+                                                onChange={(urls) => setValue(`variants.${index}.images`, urls)}
+                                                maxFiles={5}
+                                            />
                                         </div>
                                     </div>
                                 ))}
@@ -661,8 +777,8 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                         </CardContent>
                     </Card>
                 </TabsContent>
-            </Tabs>
-        </form>
+            </Tabs >
+        </form >
     )
 }
 

@@ -100,6 +100,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
     const [searchTerm, setSearchTerm] = useState('')
     const [selectedProducts, setSelectedProducts] = useState([])
     const [expandedGroups, setExpandedGroups] = useState({})
+    const [expandedProductIds, setExpandedProductIds] = useState(new Set())
 
     const [modalDetailedView, setModalDetailedView] = useState(false)
     const [showDetailed, setShowDetailed] = useState(false)
@@ -672,13 +673,33 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
 
     function handleToggleProduct(product) {
         setSelectedProducts(prev => {
-            const exists = prev.find(p => p.id === product.id)
+            const exists = prev.find(p => p.product.id === product.id && !p.variant)
             if (exists) {
-                return prev.filter(p => p.id !== product.id)
+                return prev.filter(p => !(p.product.id === product.id && !p.variant))
             } else {
-                return [...prev, product]
+                return [...prev, { product, variant: null }]
             }
         })
+    }
+
+    function handleToggleVariant(product, variant) {
+        setSelectedProducts(prev => {
+            const exists = prev.find(p => p.product.id === product.id && p.variant?.id === variant.id)
+            if (exists) {
+                return prev.filter(p => !(p.product.id === product.id && p.variant?.id === variant.id))
+            } else {
+                return [...prev, { product, variant }]
+            }
+        })
+    }
+
+    function toggleProductExpansion(productId) {
+        setExpandedProductIds(prev => {
+            const next = new Set(prev);
+            if (next.has(productId)) next.delete(productId);
+            else next.add(productId);
+            return next;
+        });
     }
 
     // Add single product immediately (Keep Modal Open)
@@ -692,9 +713,11 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
     }
 
     function addSelectedProducts() {
-        selectedProducts.forEach(product => {
-            if (!quotationItems.find(i => i.product_id === product.id)) {
-                processAddProduct(product);
+        selectedProducts.forEach(item => {
+            // Check if already in quotation with same SKU
+            const sku = item.variant?.sku || item.product.sku;
+            if (!quotationItems.find(i => i.product_id === item.product.id && i.sku === sku)) {
+                processAddProduct(item.product, item.variant);
             }
         });
         setSelectedProducts([])
@@ -702,7 +725,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
         toast.success(`Added selected products`)
     }
 
-    function processAddProduct(product) {
+    function processAddProduct(product, variant = null) {
         const customer = customers.find(c => c.id === selectedCustomer);
 
         // Use data directly from customer object (already joined from API)
@@ -713,43 +736,63 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
         const customerTypeBase = customer?.base_price_type || custType?.base_price_type || 'mrp';
         const percentage = parseFloat(customer?.percentage || custType?.percentage || 0);
 
-        let customPrice = parseFloat(product.shop_price) || parseFloat(product.mrp_price);
+        // Helper to get first positive price among candidates
+        const getNonZeroPrice = (...prices) => {
+            for (const p of prices) {
+                const val = parseFloat(p);
+                if (val > 0) return val;
+            }
+            return 0;
+        };
+
+        // Determine price values based on Variant OR Product (with field-by-field fallback)
+        const sourceMrp = getNonZeroPrice(variant?.mrp_price, product.mrp_price);
+        const sourceDealer = getNonZeroPrice(variant?.dealer_price, product.dealer_price);
+        const sourceShop = getNonZeroPrice(variant?.shop_price, product.shop_price);
+        const sourceRecommended = getNonZeroPrice(variant?.recommended_price, product.recommended_price);
+        const sourceSku = variant?.sku || product.sku;
+
+        let customPrice = parseFloat(sourceShop) || parseFloat(sourceMrp);
         let discount = 0;
 
         // Apply pricing logic based on customer type
         if (customerTypeBase === 'dealer') {
             // Dealer: base is dealer_price, ADD markup percentage
-            const basePrice = parseFloat(product.dealer_price) || parseFloat(product.shop_price) || parseFloat(product.mrp_price);
+            const basePrice = parseFloat(sourceDealer) || parseFloat(sourceShop) || parseFloat(sourceMrp);
             customPrice = basePrice * (1 + percentage / 100);
             // For dealer, discount is the markup percentage (stored as positive for markup)
             discount = percentage;
         } else {
             // MRP: base is MRP, SUBTRACT discount percentage
-            const basePrice = parseFloat(product.mrp_price);
+            const basePrice = parseFloat(sourceMrp);
             customPrice = basePrice * (1 - percentage / 100);
             // For MRP, discount is the discount percentage
             discount = percentage;
         }
 
         // If no customer type, fallback to dealer price if available
-        if (!customer?.base_price_type && !custType && parseFloat(product.dealer_price)) {
-            customPrice = parseFloat(product.dealer_price);
-            discount = ((parseFloat(product.mrp_price) - customPrice) / parseFloat(product.mrp_price) * 100).toFixed(2);
+        if (!customer?.base_price_type && !custType && parseFloat(sourceDealer)) {
+            customPrice = parseFloat(sourceDealer);
+            discount = ((parseFloat(sourceMrp) - customPrice) / parseFloat(sourceMrp) * 100).toFixed(2);
         }
+
+        const sourceImages = (variant?.images && (Array.isArray(variant.images) ? variant.images.length > 0 : variant.images !== '[]'))
+            ? variant.images
+            : product.images;
 
         const newItem = {
             product_id: product.id,
-            name: product.name,
+            name: product.name + (variant ? ` - ${variant.size || ''} ${variant.color || ''}` : ''),
             slug: product.slug,
-            sku: product.sku,
+            sku: sourceSku,
             brand: product.brand_name || product.brand || '',
             category_name: product.category_name,
             sub_category_name: product.sub_category_name,
             brand_name: product.brand_name || product.brand || '',
-            image: getFirstImage(product.images),
-            mrp: parseFloat(product.mrp_price) || 0,
-            dealer_price: parseFloat(product.dealer_price) || parseFloat(product.shop_price) || parseFloat(product.mrp_price) || 0,
-            recommended_price: parseFloat(product.recommended_price) || 0,
+            image: getFirstImage(sourceImages),
+            mrp: sourceMrp,
+            dealer_price: sourceDealer,
+            recommended_price: sourceRecommended,
             discount: discount,
             custom_price: customPrice.toFixed(2),
             quantity: 1,
@@ -757,7 +800,10 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             gst_rate: product.gst_rate || '18%',
             is_detailed: !!modalDetailedView, // Force boolean from modal state
             uom: product.unit || product.unit_type || 'Single',
-            customer_type_base: customerTypeBase
+            customer_type_base: customerTypeBase,
+            size: variant?.size || product.size || '',
+            color: variant?.color || product.color || '',
+            variants: variant ? { ...variant } : null
         }
         console.log(`[addSingleProduct] Added: ${product.name} | is_detailed: ${newItem.is_detailed} | modalDetailedView: ${modalDetailedView}`);
         setQuotationItems(prev => [...prev, newItem])
@@ -1122,8 +1168,6 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             });
 
             // Redirect or callback
-            // Success view will take over if successData is set, 
-            // but we might still want to trigger onSuccess if it's external
             // onSuccess && onSuccess();
 
         } catch (error) { toast.error(error.message) } finally { setIsSaving(false) }
@@ -1809,113 +1853,288 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                             </TableHeader>
                                             <TableBody>
                                                 {products.map((product) => {
-                                                    const isSelected = selectedProducts.find(p => p.id === product.id)
-                                                    return (
-                                                        <TableRow
-                                                            key={product.id}
-                                                            className={cn(
-                                                                "hover:bg-gray-50 cursor-pointer",
-                                                                isSelected && "bg-blue-50/50"
-                                                            )}
-                                                            onClick={() => handleToggleProduct(product)}
-                                                        >
-                                                            <TableCell className="pl-6">
-                                                                <div
-                                                                    className={cn(
-                                                                        "w-5 h-5 border-2 rounded flex items-center justify-center cursor-pointer transition-colors shadow-sm",
-                                                                        isSelected ? "bg-red-600 border-red-600" : "bg-white border-gray-300 hover:border-red-500"
-                                                                    )}
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleToggleProduct(product);
-                                                                    }}
-                                                                >
-                                                                    {isSelected && <Check className="w-3.5 h-3.5 text-white stroke-[3px]" />}
-                                                                </div>
-                                                            </TableCell>
-                                                            <TableCell className={cn(modalDetailedView ? "py-4" : "py-1")}>
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className={cn(
-                                                                        "border bg-gray-100 overflow-hidden shrink-0 transition-all",
-                                                                        modalDetailedView ? "w-20 h-20 rounded-md" : "w-8 h-8 rounded"
-                                                                    )}>
-                                                                        <img
-                                                                            src={getFirstImage(product.images)}
-                                                                            className="w-full h-full object-cover"
-                                                                            onError={(e) => e.target.style.display = 'none'}
-                                                                        />
-                                                                    </div>
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <div className={cn("font-medium text-gray-900 truncate", modalDetailedView ? "text-base" : "text-[13px]")}>{product.name}</div>
-                                                                        {modalDetailedView ? (
-                                                                            <>
-                                                                                <div className="text-xs text-gray-500 font-mono mt-0.5">{product.sku}</div>
-                                                                                <div className="text-xs text-gray-600 mt-2 line-clamp-2 max-w-lg">{product.short_description}</div>
-                                                                                {Array.isArray(product.images) && product.images.length > 1 && (
-                                                                                    <div className="flex gap-1 mt-2">
-                                                                                        {product.images.slice(1, 5).map((img, i) => (
-                                                                                            <img key={i} src={img} className="w-8 h-8 rounded border object-cover" />
-                                                                                        ))}
-                                                                                    </div>
-                                                                                )}
-                                                                            </>
-                                                                        ) : (
-                                                                            <div className="text-[10px] text-gray-400 font-mono inline-block ml-1">({product.sku})</div>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            </TableCell>
-                                                            <TableCell className={cn("text-right", modalDetailedView ? "py-4" : "py-1")}>
-                                                                <div className="text-[11px] text-gray-600 font-bold">{product.category_name}</div>
-                                                                {product.sub_category_name && (
-                                                                    <div className="text-[10px] text-gray-400">{product.sub_category_name}</div>
-                                                                )}
-                                                            </TableCell>
-                                                            <TableCell className={cn("text-right", modalDetailedView ? "py-4" : "py-1")}>
-                                                                <div className="text-xs font-bold text-gray-900">₹{parseFloat(product.mrp_price).toLocaleString()}</div>
-                                                            </TableCell>
-                                                            {isSuperAdmin && (
-                                                                <TableCell className={cn("text-right", modalDetailedView ? "py-4" : "py-1")}>
-                                                                    <div className="text-xs font-bold text-gray-600">{parseFloat(product.dealer_price || 0).toLocaleString()}</div>
-                                                                </TableCell>
-                                                            )}
-                                                            <TableCell className={cn("text-right", modalDetailedView ? "py-4" : "py-1")}>
-                                                                <div className="text-xs font-bold text-gray-700">₹{parseFloat(product.recommended_price || 0).toLocaleString()}</div>
-                                                            </TableCell>
-                                                            <TableCell className={cn("text-right border-l-2 border-blue-100 bg-blue-50/20", modalDetailedView ? "py-4" : "py-1")}>
-                                                                <div className="font-bold text-blue-700">
-                                                                    {(() => {
-                                                                        const customer = customers.find(c => c.id === selectedCustomer);
-                                                                        const custType = customerTypes.find(t => String(t.id) === String(customer?.customer_type_id));
-                                                                        const customerTypeBase = customer?.base_price_type || custType?.base_price_type || 'mrp';
-                                                                        const percentage = parseFloat(customer?.percentage || custType?.percentage || 0);
+                                                    const isSelected = selectedProducts.find(p => p.product.id === product.id && !p.variant)
 
-                                                                        let customPrice = parseFloat(product.shop_price || product.mrp_price);
-                                                                        if (customerTypeBase === 'dealer') {
-                                                                            const basePrice = parseFloat(product.dealer_price || product.shop_price || product.mrp_price);
-                                                                            customPrice = basePrice * (1 + percentage / 100);
-                                                                        } else {
-                                                                            const basePrice = parseFloat(product.mrp_price);
-                                                                            customPrice = basePrice * (1 - percentage / 100);
-                                                                        }
-                                                                        if (!customer?.base_price_type && !custType && product.dealer_price) {
-                                                                            customPrice = parseFloat(product.dealer_price);
-                                                                        }
-                                                                        return customPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                                                                    })()}
-                                                                </div>
-                                                            </TableCell>
-                                                            <TableCell className={cn(modalDetailedView ? "py-4" : "py-1")}>
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="ghost"
-                                                                    className="h-8 w-8 p-0"
-                                                                    onClick={(e) => { e.stopPropagation(); addSingleProduct(product); }}
-                                                                >
-                                                                    <Plus className="w-4 h-4" />
-                                                                </Button>
-                                                            </TableCell>
-                                                        </TableRow>
+                                                    // MODIFIED: Robust variants check to ensure chevron only shows if actual variants exist
+                                                    const variantsList = Array.isArray(product.product_variants)
+                                                        ? product.product_variants
+                                                        : (typeof product.product_variants === 'string' && product.product_variants !== '[]'
+                                                            ? JSON.parse(product.product_variants)
+                                                            : []);
+                                                    const hasVariants = variantsList.length > 0;
+                                                    const isExpanded = expandedProductIds.has(product.id);
+
+                                                    return (
+                                                        <Fragment key={product.id}>
+                                                            <TableRow
+                                                                className={cn(
+                                                                    "hover:bg-gray-50 cursor-pointer",
+                                                                    isSelected && "bg-blue-50/50"
+                                                                )}
+                                                                onClick={() => {
+                                                                    // If variants exist, clicking the row toggles expansion
+                                                                    if (hasVariants) {
+                                                                        toggleProductExpansion(product.id);
+                                                                    } else {
+                                                                        handleToggleProduct(product);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <TableCell className="pl-6">
+                                                                    <div className="flex items-center gap-2">
+                                                                        {hasVariants ? (
+                                                                            <Button
+                                                                                variant="ghost"
+                                                                                size="icon"
+                                                                                className="h-6 w-6 p-0 hover:bg-gray-200 rounded-full"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    toggleProductExpansion(product.id);
+                                                                                }}
+                                                                            >
+                                                                                {isExpanded ? <ChevronDown className="w-4 h-4 text-gray-500" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
+                                                                            </Button>
+                                                                        ) : (
+                                                                            <div className="w-6" /> // spacer
+                                                                        )}
+                                                                        <div
+                                                                            className={cn(
+                                                                                "w-5 h-5 border-2 rounded flex items-center justify-center cursor-pointer transition-colors shadow-sm",
+                                                                                isSelected ? "bg-red-600 border-red-600" : "bg-white border-gray-300 hover:border-red-500"
+                                                                            )}
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleToggleProduct(product);
+                                                                            }}
+                                                                        >
+                                                                            {isSelected && <Check className="w-3.5 h-3.5 text-white stroke-[3px]" />}
+                                                                        </div>
+                                                                    </div>
+                                                                </TableCell>
+                                                                <TableCell className={cn(modalDetailedView ? "py-4" : "py-1")}>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className={cn(
+                                                                            "border bg-gray-100 overflow-hidden shrink-0 transition-all",
+                                                                            modalDetailedView ? "w-20 h-20 rounded-md" : "w-8 h-8 rounded"
+                                                                        )}>
+                                                                            <img
+                                                                                src={getFirstImage(product.images)}
+                                                                                className="w-full h-full object-cover"
+                                                                                onError={(e) => e.target.style.display = 'none'}
+                                                                            />
+                                                                        </div>
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <div className={cn("font-medium text-gray-900 truncate", modalDetailedView ? "text-base" : "text-[13px]")}>{product.name}</div>
+                                                                            {modalDetailedView ? (
+                                                                                <>
+                                                                                    <div className="text-xs text-gray-500 font-mono mt-0.5">{product.sku}</div>
+                                                                                    <div className="text-xs text-gray-600 mt-2 line-clamp-2 max-w-lg">{product.short_description}</div>
+                                                                                    {Array.isArray(product.images) && product.images.length > 1 && (
+                                                                                        <div className="flex gap-1 mt-2">
+                                                                                            {product.images.slice(1, 5).map((img, i) => (
+                                                                                                <img key={i} src={img} className="w-8 h-8 rounded border object-cover" />
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    )}
+                                                                                </>
+                                                                            ) : (
+                                                                                <div className="text-[10px] text-gray-400 font-mono inline-block ml-1">({product.sku})</div>
+                                                                            )}
+                                                                            {hasVariants && !isExpanded && (
+                                                                                <div className="text-[10px] text-blue-600 font-medium mt-0.5 ml-1 inline-block bg-blue-50 px-1.5 rounded">{product.product_variants.length} Variants</div>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                </TableCell>
+                                                                <TableCell className={cn("text-right", modalDetailedView ? "py-4" : "py-1")}>
+                                                                    <div className="text-[11px] text-gray-600 font-bold">{product.category_name}</div>
+                                                                    {product.sub_category_name && (
+                                                                        <div className="text-[10px] text-gray-400">{product.sub_category_name}</div>
+                                                                    )}
+                                                                </TableCell>
+                                                                <TableCell className={cn("text-right", modalDetailedView ? "py-4" : "py-1")}>
+                                                                    <div className="text-xs font-bold text-gray-900">₹{parseFloat(product.mrp_price).toLocaleString()}</div>
+                                                                </TableCell>
+                                                                {isSuperAdmin && (
+                                                                    <TableCell className={cn("text-right", modalDetailedView ? "py-4" : "py-1")}>
+                                                                        <div className="text-xs font-bold text-gray-600">{parseFloat(product.dealer_price || 0).toLocaleString()}</div>
+                                                                    </TableCell>
+                                                                )}
+                                                                <TableCell className={cn("text-right", modalDetailedView ? "py-4" : "py-1")}>
+                                                                    <div className="text-xs font-bold text-gray-700">₹{parseFloat(product.recommended_price || 0).toLocaleString()}</div>
+                                                                </TableCell>
+                                                                <TableCell className={cn("text-right border-l-2 border-blue-100 bg-blue-50/20", modalDetailedView ? "py-4" : "py-1")}>
+                                                                    <div className="font-bold text-blue-700">
+                                                                        {(() => {
+                                                                            const customer = customers.find(c => c.id === selectedCustomer);
+                                                                            const custType = customerTypes.find(t => String(t.id) === String(customer?.customer_type_id));
+                                                                            const customerTypeBase = customer?.base_price_type || custType?.base_price_type || 'mrp';
+                                                                            const percentage = parseFloat(customer?.percentage || custType?.percentage || 0);
+
+                                                                            let customPrice = parseFloat(product.shop_price || product.mrp_price);
+                                                                            if (customerTypeBase === 'dealer') {
+                                                                                const basePrice = parseFloat(product.dealer_price || product.shop_price || product.mrp_price);
+                                                                                customPrice = basePrice * (1 + percentage / 100);
+                                                                            } else {
+                                                                                const basePrice = parseFloat(product.mrp_price);
+                                                                                customPrice = basePrice * (1 - percentage / 100);
+                                                                            }
+                                                                            if (!customer?.base_price_type && !custType && product.dealer_price) {
+                                                                                customPrice = parseFloat(product.dealer_price);
+                                                                            }
+                                                                            return customPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                                                        })()}
+                                                                    </div>
+                                                                </TableCell>
+                                                                <TableCell className={cn(modalDetailedView ? "py-4" : "py-1")}>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="ghost"
+                                                                        className="h-8 w-8 p-0"
+                                                                        onClick={(e) => { e.stopPropagation(); addSingleProduct(product); }}
+                                                                    >
+                                                                        <Plus className="w-4 h-4" />
+                                                                    </Button>
+                                                                </TableCell>
+                                                            </TableRow>
+
+                                                            {/* Variants Sub-Table */}
+                                                            {isExpanded && hasVariants && (
+                                                                <TableRow className="bg-gray-50/50 hover:bg-gray-50">
+                                                                    <TableCell colSpan={8} className="p-0 border-b border-gray-100">
+                                                                        <div className="pl-16 pr-4 py-3 bg-slate-50 border-l-[3px] border-blue-200 ml-4 mb-2 rounded-r-md inner-shadow-sm">
+                                                                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                                                                <div className="h-px bg-slate-300 w-4"></div>
+                                                                                Available Variants
+                                                                            </div>
+                                                                            <div className="space-y-1">
+                                                                                {variantsList.map(variant => {
+                                                                                    const isVariantSelected = selectedProducts.find(p => p.product.id === product.id && p.variant?.id === variant.id);
+                                                                                    return (
+                                                                                        <div key={variant.id} className={cn(
+                                                                                            "flex items-center justify-between p-2 rounded border transition-colors group",
+                                                                                            isVariantSelected ? "bg-blue-50 border-blue-400 shadow-md" : "bg-white border-gray-200 shadow-sm hover:border-blue-300"
+                                                                                        )}>
+                                                                                            <div className="flex items-center gap-3">
+                                                                                                <div
+                                                                                                    className={cn(
+                                                                                                        "w-5 h-5 border-2 rounded flex items-center justify-center cursor-pointer transition-colors shadow-sm shrink-0",
+                                                                                                        isVariantSelected ? "bg-red-600 border-red-600" : "bg-white border-gray-300 hover:border-red-500"
+                                                                                                    )}
+                                                                                                    onClick={(e) => {
+                                                                                                        e.stopPropagation();
+                                                                                                        handleToggleVariant(product, variant);
+                                                                                                    }}
+                                                                                                >
+                                                                                                    {isVariantSelected && <Check className="w-3.5 h-3.5 text-white stroke-[3px]" />}
+                                                                                                </div>
+
+                                                                                                <div className="w-10 h-10 border rounded bg-gray-50 overflow-hidden shrink-0">
+                                                                                                    <img
+                                                                                                        src={(() => {
+                                                                                                            const vImg = getFirstImage(variant.images);
+                                                                                                            return (vImg && vImg !== '/placeholder.png' && vImg !== 'undefined') ? vImg : getFirstImage(product.images);
+                                                                                                        })()}
+                                                                                                        className="w-full h-full object-cover"
+                                                                                                        onError={(e) => {
+                                                                                                            // Fallback if image fails to load
+                                                                                                            const mainImg = getFirstImage(product.images);
+                                                                                                            if (e.target.src !== mainImg) e.target.src = mainImg;
+                                                                                                            else e.target.style.display = 'none';
+                                                                                                        }}
+                                                                                                    />
+                                                                                                </div>
+
+                                                                                                <div className="text-xs font-mono text-slate-500 w-24 truncate">{variant.sku}</div>
+                                                                                                <div className="flex items-center gap-2">
+                                                                                                    {variant.size && <Badge variant="outline" className="text-[10px] h-5">{variant.size}</Badge>}
+                                                                                                    {variant.color && <div className="flex items-center gap-1 text-[10px] text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded"><div className="w-2 h-2 rounded-full bg-current" style={{ color: variant.color.toLowerCase() }}></div>{variant.color}</div>}
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            <div className="flex items-center gap-4">
+                                                                                                {isSuperAdmin && (
+                                                                                                    <div className="text-right">
+                                                                                                        <div className="text-[10px] text-blue-400">Dealer</div>
+                                                                                                        <div className="text-xs font-semibold text-gray-500">
+                                                                                                            ₹{(() => {
+                                                                                                                const dealer = parseFloat(variant.dealer_price) || parseFloat(product.dealer_price) || 0;
+                                                                                                                return dealer.toLocaleString();
+                                                                                                            })()}
+                                                                                                        </div>
+                                                                                                    </div>
+                                                                                                )}
+                                                                                                <div className="text-right">
+                                                                                                    <div className="text-[10px] text-gray-400">Rec. Price</div>
+                                                                                                    <div className="text-xs font-semibold text-gray-600">
+                                                                                                        ₹{(() => {
+                                                                                                            const rec = parseFloat(variant.recommended_price) || parseFloat(product.recommended_price) || 0;
+                                                                                                            return rec.toLocaleString();
+                                                                                                        })()}
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div className="text-right">
+                                                                                                    <div className="text-[10px] text-gray-400">MRP</div>
+                                                                                                    <div className="text-xs font-semibold text-gray-600">
+                                                                                                        ₹{(() => {
+                                                                                                            const mrp = parseFloat(variant.mrp_price) || parseFloat(product.mrp_price);
+                                                                                                            return mrp.toLocaleString();
+                                                                                                        })()}
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div className="text-right">
+                                                                                                    <div className="text-[10px] text-blue-500">Your Price</div>
+                                                                                                    <div className="text-xs font-bold text-blue-700">
+                                                                                                        ₹{(() => {
+                                                                                                            const customer = customers.find(c => c.id === selectedCustomer);
+                                                                                                            const custType = customerTypes.find(t => String(t.id) === String(customer?.customer_type_id));
+                                                                                                            const customerTypeBase = customer?.base_price_type || custType?.base_price_type || 'mrp';
+                                                                                                            const percentage = parseFloat(customer?.percentage || custType?.percentage || 0);
+
+                                                                                                            // Selection logic with fallback
+                                                                                                            const getVPrice = (vp, pp) => (parseFloat(vp) || parseFloat(pp) || 0);
+
+                                                                                                            const vMrp = getVPrice(variant.mrp_price, product.mrp_price);
+                                                                                                            const vDealer = getVPrice(variant.dealer_price, product.dealer_price);
+                                                                                                            const vShop = getVPrice(variant.shop_price, product.shop_price);
+
+                                                                                                            let vPrice = vShop || vMrp;
+                                                                                                            if (customerTypeBase === 'dealer') {
+                                                                                                                const base = vDealer || vShop || vMrp;
+                                                                                                                vPrice = base * (1 + percentage / 100);
+                                                                                                            } else {
+                                                                                                                vPrice = vMrp * (1 - percentage / 100);
+                                                                                                            }
+
+                                                                                                            if (!customer?.base_price_type && !custType && vDealer) {
+                                                                                                                vPrice = vDealer;
+                                                                                                            }
+
+                                                                                                            return vPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                                                                                        })()}
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <Button
+                                                                                                    size="sm"
+                                                                                                    variant="secondary"
+                                                                                                    className="h-8 px-3 text-[11px] font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                                                                                                    onClick={(e) => {
+                                                                                                        e.stopPropagation();
+                                                                                                        processAddProduct(product, variant);
+                                                                                                        toast.success(`Variant added: ${variant.sku}`);
+                                                                                                    }}
+                                                                                                >
+                                                                                                    Add
+                                                                                                </Button>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    )
+                                                                                })}
+                                                                            </div>
+                                                                        </div>
+                                                                    </TableCell>
+                                                                </TableRow>
+                                                            )}
+                                                        </Fragment>
                                                     )
                                                 })}
                                             </TableBody>

@@ -28,21 +28,76 @@ export function BulkUploadDialog({ open, onOpenChange }) {
         try {
             const templateData = [
                 {
-                    'Product Name *': 'Premium Cricket Bat',
-                    'SKU *': 'CRIC-BAT-001',
-                    'MRP Price *': 1500,
-                    'Dealer Price': 1100,
-                    'Selling Price': 1300,
-                    'Category *': 'Cricket',
-                    'Sub-Category': 'Bats',
-                    'Brand *': 'MRF',
-                    'Description': 'Full grain leather handle, grade A willow...',
-                    'Short Description': 'Professional Grade Bat',
-                    'HSN Code': '9506',
-                    'Tax Class': 'GST 12%',
-                    'Buy URL': 'https://pavilion.com/bat',
+                    'Product Handle': 'cotton-tshirt',
+                    'Product Name *': 'Cotton T-Shirt',
+                    'SKU *': 'TS-RED-M',
+                    'Option1 Name': 'Size',
+                    'Option1 Value': 'M',
+                    'Option2 Name': 'Color',
+                    'Option2 Value': 'Red',
+                    'MRP Price *': 799,
+                    'Dealer Price': 650,
+                    'Counter Price': 700,
+                    'Recommended Price': 750,
+                    'Shop Price': 749,
+                    'Inventory': 50,
+                    'Category': 'Apparel',
+                    'Sub-Category': 'T-Shirts',
+                    'Brand': 'Nike',
+                    'Description': 'Soft cotton tee with premium finish',
+                    'Short Description': 'Cotton T-Shirt',
+                    'HSN Code': '6109',
                     'Is Featured': 'false',
-                    'Is Active': 'true'
+                    'Is Active': 'true',
+                    'Images': 'https://example.com/red-m-1.jpg, https://example.com/red-m-2.jpg'
+                },
+                {
+                    'Product Handle': 'cotton-tshirt',
+                    'Product Name *': 'Cotton T-Shirt',
+                    'SKU *': 'TS-BLUE-L',
+                    'Option1 Name': 'Size',
+                    'Option1 Value': 'L',
+                    'Option2 Name': 'Color',
+                    'Option2 Value': 'Blue',
+                    'MRP Price *': 849,
+                    'Dealer Price': 700,
+                    'Counter Price': 750,
+                    'Recommended Price': 800,
+                    'Shop Price': 799,
+                    'Inventory': 30,
+                    'Category': 'Apparel',
+                    'Sub-Category': 'T-Shirts',
+                    'Brand': 'Nike',
+                    'Description': '',
+                    'Short Description': '',
+                    'HSN Code': '',
+                    'Is Featured': '',
+                    'Is Active': '',
+                    'Images': 'https://example.com/blue-l-1.jpg'
+                },
+                {
+                    'Product Handle': 'ceramic-vase',
+                    'Product Name *': 'Ceramic Vase',
+                    'SKU *': 'VASE-001',
+                    'Option1 Name': '',
+                    'Option1 Value': '',
+                    'Option2 Name': '',
+                    'Option2 Value': '',
+                    'MRP Price *': 2499,
+                    'Dealer Price': 2000,
+                    'Counter Price': 2200,
+                    'Recommended Price': 2300,
+                    'Shop Price': 2399,
+                    'Inventory': 15,
+                    'Category': 'Home Decor',
+                    'Sub-Category': '',
+                    'Brand': '',
+                    'Description': 'Handmade ceramic vase with artistic finish',
+                    'Short Description': 'Handmade Ceramic Vase',
+                    'HSN Code': '6913',
+                    'Is Featured': 'true',
+                    'Is Active': 'true',
+                    'Images': 'https://example.com/vase-1.jpg'
                 }
             ]
 
@@ -88,21 +143,33 @@ export function BulkUploadDialog({ open, onOpenChange }) {
 
                     // Map user-friendly headers to internal keys
                     const mappedData = jsonData.map(row => ({
-                        name: row['Product Name *'] || row.name,
-                        sku: row['SKU *'] || row.sku,
-                        mrp_price: row['MRP Price *'] || row.mrp_price,
+                        product_handle: row['Product Handle'] || row.product_handle,
+                        product_name: row['Product Name *'] || row['Product Name'] || row.product_name,
+                        name: row['Product Name *'] || row['Product Name'] || row.name,
+                        sku: row['SKU *'] || row['SKU'] || row.sku,
+                        option1_name: row['Option1 Name'] || row.option1_name,
+                        option1_value: row['Option1 Value'] || row.option1_value,
+                        option2_name: row['Option2 Name'] || row.option2_name,
+                        option2_value: row['Option2 Value'] || row.option2_value,
+                        size: row['Size'] || row.size,
+                        color: row['Color'] || row.color,
+                        mrp_price: row['MRP Price *'] || row['MRP Price'] || row.mrp_price,
                         dealer_price: row['Dealer Price'] || row.dealer_price,
-                        selling_price: row['Selling Price'] || row.selling_price,
-                        category: row['Category *'] || row.category,
+                        counter_price: row['Counter Price'] || row.counter_price,
+                        recommended_price: row['Recommended Price'] || row.recommended_price,
+                        shop_price: row['Shop Price'] || row['Selling Price'] || row.shop_price || row.selling_price,
+                        inventory: row['Inventory'] || row['Stock'] || row.inventory || row.stock_quantity,
+                        category: row['Category *'] || row['Category'] || row.category,
                         sub_category: row['Sub-Category'] || row.sub_category,
-                        brand: row['Brand *'] || row.brand,
+                        brand: row['Brand *'] || row['Brand'] || row.brand,
                         description: row['Description'] || row.description,
                         short_description: row['Short Description'] || row.short_description,
                         hsn_code: row['HSN Code'] || row.hsn_code,
                         tax_class: row['Tax Class'] || row.tax_class,
                         buy_url: row['Buy URL'] || row.buy_url,
                         is_featured: row['Is Featured'] === 'true' || row['Is Featured'] === true || row.is_featured === true,
-                        is_active: row['Is Active'] === 'false' ? false : true
+                        is_active: row['Is Active'] === 'false' ? false : true,
+                        images: row['Images'] || row.images
                     }))
 
                     const response = await apiCall('/products/bulk', {
@@ -113,10 +180,12 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                     setResults(response)
                     queryClient.invalidateQueries(['products'])
 
+                    const totalProducts = (response.created || 0) + (response.updated || 0);
+                    const totalVariants = (response.variants_created || 0) + (response.variants_updated || 0);
                     if (response.errors.length === 0) {
-                        toast.success(`Successfully processed ${response.created + response.updated} products`)
-                    } else if (response.created + response.updated > 0) {
-                        toast.warning(`Processed with some errors. Created: ${response.created}, Updated: ${response.updated}`)
+                        toast.success(`Successfully processed ${totalProducts} products and ${totalVariants} variants`)
+                    } else if (totalProducts > 0 || totalVariants > 0) {
+                        toast.warning(`Processed with some errors. Products: ${totalProducts}, Variants: ${totalVariants}`)
                     } else {
                         toast.error('Failed to process any products')
                     }
@@ -145,8 +214,8 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                         <Info className="h-4 w-4 text-blue-600" />
                         <AlertTitle className="text-blue-800">Instructions</AlertTitle>
                         <AlertDescription className="text-blue-700 text-xs">
-                            Upload a CSV or Excel file (.xls, .xlsx) with product details. Ensure category and brand names exist in the system.
-                            Duplicate SKUs will update existing products.
+                            <p><strong>Supports product variants!</strong> Group rows by Product Handle to create multi-variant products (e.g. same T-Shirt in different sizes/colors).</p>
+                            <p className="mt-1">Duplicate SKUs will update existing products & variants. Download template for format.</p>
                         </AlertDescription>
                     </Alert>
 
@@ -201,14 +270,22 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            <div className="flex gap-4">
-                                <div className="flex-1 bg-green-50 p-4 rounded-lg border border-green-100 text-center">
-                                    <p className="text-2xl font-bold text-green-700">{results.created}</p>
-                                    <p className="text-xs text-green-600 uppercase font-semibold">New Items</p>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="bg-green-50 p-3 rounded-lg border border-green-100 text-center">
+                                    <p className="text-xl font-bold text-green-700">{results.created || 0}</p>
+                                    <p className="text-[10px] text-green-600 uppercase font-semibold">New Products</p>
                                 </div>
-                                <div className="flex-1 bg-blue-50 p-4 rounded-lg border border-blue-100 text-center">
-                                    <p className="text-2xl font-bold text-blue-700">{results.updated}</p>
-                                    <p className="text-xs text-blue-600 uppercase font-semibold">Updated</p>
+                                <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 text-center">
+                                    <p className="text-xl font-bold text-blue-700">{results.updated || 0}</p>
+                                    <p className="text-[10px] text-blue-600 uppercase font-semibold">Updated Products</p>
+                                </div>
+                                <div className="bg-emerald-50 p-3 rounded-lg border border-emerald-100 text-center">
+                                    <p className="text-xl font-bold text-emerald-700">{results.variants_created || 0}</p>
+                                    <p className="text-[10px] text-emerald-600 uppercase font-semibold">New Variants</p>
+                                </div>
+                                <div className="bg-cyan-50 p-3 rounded-lg border border-cyan-100 text-center">
+                                    <p className="text-xl font-bold text-cyan-700">{results.variants_updated || 0}</p>
+                                    <p className="text-[10px] text-cyan-600 uppercase font-semibold">Updated Variants</p>
                                 </div>
                             </div>
 

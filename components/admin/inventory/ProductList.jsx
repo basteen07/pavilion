@@ -225,7 +225,15 @@ export function ProductList({ onEdit, onCreate }) {
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex gap-2">
-                                            <Button size="sm" variant="ghost" onClick={() => onEdit(product)}>
+                                            <Button size="sm" variant="ghost" onClick={async () => {
+                                                // Fetch full product details including variants
+                                                try {
+                                                    const fullProduct = await apiCall(`/products/${product.slug}`)
+                                                    onEdit(fullProduct)
+                                                } catch (err) {
+                                                    toast.error('Failed to load product details')
+                                                }
+                                            }}>
                                                 <Edit className="w-4 h-4" />
                                             </Button>
                                             <Button size="sm" variant="ghost" onClick={() => deleteMutation.mutate(product.id)}>
