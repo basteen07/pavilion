@@ -1,4 +1,4 @@
-import { B2BPortal } from '@/components/b2b/B2BPortal'
+import B2BPortal from '@/components/b2b/B2BPortal'
 
 export const metadata = {
     title: 'Wholesale Portal - Pavilion',

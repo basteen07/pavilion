@@ -10,6 +10,7 @@ const B2BCartContext = createContext({
     cart: [],
     addToCart: () => { },
     removeFromCart: () => { },
+    updateQuantity: () => { },
     clearCart: () => { },
     placeOrder: async () => { },
     cartTotal: 0
@@ -40,31 +41,43 @@ export function B2BCartProvider({ children }) {
             return
         }
 
-        console.log('Adding to cart:', product.name, quantity)
+        const variantId = product.variant_id || null;
+        console.log('Adding to cart:', product.name, 'Variant:', variantId, 'Qty:', quantity)
 
         setCart(prev => {
-            const existing = prev.find(item => item.id === product.id)
+            const existing = prev.find(item => item.id === product.id && item.variant_id === variantId)
             if (existing) {
                 return prev.map(item =>
-                    item.id === product.id
+                    (item.id === product.id && item.variant_id === variantId)
                         ? { ...item, quantity: item.quantity + quantity }
                         : item
                 )
             }
-            // Ensure we store price info
-            return [...prev, { ...product, quantity }]
+            // Ensure we store price info and variant info
+            return [...prev, { ...product, variant_id: variantId, quantity }]
         })
         toast.success(`Added ${product.name} to Order List`)
     }
 
-    const removeFromCart = (productId) => {
-        setCart(prev => prev.filter(item => item.id !== productId))
+    const removeFromCart = (productId, variantId = null) => {
+        setCart(prev => prev.filter(item => !(item.id === productId && item.variant_id === variantId)))
+    }
+
+    const updateQuantity = (productId, variantId, quantity) => {
+        const qty = parseInt(quantity)
+        if (isNaN(qty) || qty < 1) return
+
+        setCart(prev => prev.map(item =>
+            (item.id === productId && item.variant_id === variantId)
+                ? { ...item, quantity: qty }
+                : item
+        ))
     }
 
     const clearCart = () => setCart([])
 
     const cartTotal = cart.reduce((sum, item) => {
-        const price = parseFloat(item.dealer_price || item.selling_price || item.mrp_price || 0)
+        const price = parseFloat(item.price || item.dealer_price || item.selling_price || item.mrp_price || 0)
         return sum + (isNaN(price) ? 0 : price) * item.quantity
     }, 0)
 
@@ -74,8 +87,10 @@ export function B2BCartProvider({ children }) {
         const orderData = {
             products: cart.map(item => ({
                 product_id: item.id,
+                variant_id: item.variant_id,
+                sku: item.sku,
                 name: item.name,
-                price: parseFloat(item.dealer_price || item.selling_price || item.mrp_price || 0),
+                price: parseFloat(item.price || item.dealer_price || item.selling_price || item.mrp_price || 0),
                 quantity: item.quantity
             })),
             notes: notes || 'Order from Wholesale Portal'
@@ -88,6 +103,7 @@ export function B2BCartProvider({ children }) {
             body: JSON.stringify(orderData)
         })
         clearCart()
+        toast.success('Order placed successfully')
     }
 
     return (
@@ -95,6 +111,7 @@ export function B2BCartProvider({ children }) {
             cart,
             addToCart,
             removeFromCart,
+            updateQuantity,
             clearCart,
             placeOrder,
             cartTotal

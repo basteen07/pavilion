@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { ImageUploader } from '@/components/ui/image-uploader'
 import { toast } from 'sonner'
-import { X, Plus, Loader2, Printer, QrCode } from 'lucide-react'
+import { X, Plus, Loader2, Printer, QrCode, Clock } from 'lucide-react'
 import QRCode from 'qrcode'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import TiptapEditor from '@/components/admin/TiptapEditor'
@@ -106,8 +106,6 @@ export function ProductForm({ product, onCancel, onSuccess }) {
             unit: product?.unit || '1',
             images: safeJSONParse(product?.images),
             videos: safeJSONParse(product?.videos),
-            images: safeJSONParse(product?.images),
-            videos: safeJSONParse(product?.videos),
             variants: product?.product_variants || safeJSONParse(product?.variants) || [],
             size: product?.size || '',
             color: product?.color || '',
@@ -161,9 +159,14 @@ export function ProductForm({ product, onCancel, onSuccess }) {
     })
 
     const { data: brands = [] } = useQuery({
-        queryKey: ['brands', selectedSubCategoryId],
-        queryFn: () => apiCall(`/brands?sub_category_id=${selectedSubCategoryId}`),
-        enabled: !!selectedSubCategoryId
+        queryKey: ['brands', selectedCategoryId, selectedSubCategoryId],
+        queryFn: () => {
+            const params = new URLSearchParams()
+            if (selectedCategoryId) params.append('category_id', selectedCategoryId)
+            if (selectedSubCategoryId) params.append('sub_category_id', selectedSubCategoryId)
+            return apiCall(`/brands?${params.toString()}`)
+        },
+        enabled: !!selectedCategoryId
     })
 
     const { data: tags = [] } = useQuery({
@@ -590,30 +593,66 @@ export function ProductForm({ product, onCancel, onSuccess }) {
 
                                 {/* Base Pricing */}
                                 <div>
-                                    <div className="flex items-center gap-2 mb-3">
+                                    <div className="flex items-center justify-between mb-3">
                                         <h4 className="font-bold text-xs text-gray-500 uppercase tracking-wider">Base Pricing</h4>
                                     </div>
                                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                         <div className="space-y-2">
-                                            <Label className="text-blue-700">Dealer Price</Label>
+                                            <div className="flex items-center justify-between">
+                                                <Label className="text-blue-700">Dealer Price</Label>
+                                                {(product?.dealer_price_updated_at || product?.created_at) && (
+                                                    <span className="text-[9px] text-gray-400 font-medium">
+                                                        {new Date(product.dealer_price_updated_at || product.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                    </span>
+                                                )}
+                                            </div>
                                             <Input type="number" {...register('dealer_price')} placeholder="0.00" />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label className="text-orange-700">Counter Price</Label>
+                                            <div className="flex items-center justify-between">
+                                                <Label className="text-orange-700">Counter Price</Label>
+                                                {(product?.counter_price_updated_at || product?.created_at) && (
+                                                    <span className="text-[9px] text-gray-400 font-medium">
+                                                        {new Date(product.counter_price_updated_at || product.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                    </span>
+                                                )}
+                                            </div>
                                             <Input type="number" {...register('counter_price')} placeholder="0.00" />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label className="text-red-700">MRP *</Label>
+                                            <div className="flex items-center justify-between">
+                                                <Label className="text-red-700">MRP *</Label>
+                                                {(product?.mrp_updated_at || product?.created_at) && (
+                                                    <span className="text-[9px] text-gray-400 font-medium">
+                                                        {new Date(product.mrp_updated_at || product.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                    </span>
+                                                )}
+                                            </div>
                                             <Input type="number" {...register('mrp_price')} />
                                             {errors.mrp_price && <p className="text-red-500 text-xs">{errors.mrp_price.message}</p>}
                                         </div>
                                         <div className="space-y-2">
-                                            <Label className="text-green-700">Recommended Price</Label>
+                                            <div className="flex items-center justify-between">
+                                                <Label className="text-green-700">Recommended Price</Label>
+                                                {(product?.recommended_price_updated_at || product?.created_at) && (
+                                                    <span className="text-[9px] text-gray-400 font-medium">
+                                                        {new Date(product.recommended_price_updated_at || product.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                    </span>
+                                                )}
+                                            </div>
                                             <Input type="number" {...register('recommended_price')} placeholder="0.00" />
                                         </div>
                                     </div>
                                     <div className="mt-4 pt-4 border-t space-y-2">
-                                        <Label className="text-gray-900 font-bold">Shop Price </Label>
+                                        <div className="flex items-center gap-4">
+                                            <Label className="text-gray-900 font-bold">Shop Price </Label>
+                                            {(product?.shop_price_updated_at || product?.created_at) && (
+                                                <span className="text-[10px] text-blue-500 font-medium flex items-center gap-1">
+                                                    <Clock className="w-2.5 h-2.5" />
+                                                    Last Updated: {new Date(product.shop_price_updated_at || product.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                </span>
+                                            )}
+                                        </div>
                                         <Input type="number" {...register('shop_price')} className="max-w-[200px] border-2 border-red-200" />
                                         {errors.shop_price && <p className="text-red-500 text-xs">{errors.shop_price.message}</p>}
                                     </div>
@@ -669,16 +708,18 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                         </Button>
 
                                         {/* Variant SKU - Required */}
-                                        <div className="mb-4">
-                                            <Label className="text-xs font-bold text-red-600">Variant SKU *</Label>
-                                            <Input
-                                                placeholder="Unique SKU for this variant"
-                                                {...register(`variants.${index}.sku`)}
-                                                className="border-red-200"
-                                            />
-                                            {errors.variants?.[index]?.sku && (
-                                                <p className="text-red-500 text-xs mt-1">{errors.variants[index].sku.message}</p>
-                                            )}
+                                        <div className="mb-4 flex items-center justify-between gap-4">
+                                            <div className="flex-1">
+                                                <Label className="text-xs font-bold text-red-600">Variant SKU *</Label>
+                                                <Input
+                                                    placeholder="Unique SKU for this variant"
+                                                    {...register(`variants.${index}.sku`)}
+                                                    className="border-red-200"
+                                                />
+                                                {errors.variants?.[index]?.sku && (
+                                                    <p className="text-red-500 text-xs mt-1">{errors.variants[index].sku.message}</p>
+                                                )}
+                                            </div>
                                         </div>
 
                                         {/* Size & Color */}
@@ -704,23 +745,58 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                         {/* All Price Types */}
                                         <div className="grid grid-cols-5 gap-2 mb-4">
                                             <div className="space-y-1">
-                                                <Label className="text-[10px] uppercase font-bold text-blue-600">Dealer</Label>
+                                                <div className="flex items-center justify-between">
+                                                    <Label className="text-[10px] uppercase font-bold text-blue-600">Dealer</Label>
+                                                    {(field.dealer_price_updated_at || field.created_at) && (
+                                                        <span className="text-[8px] text-gray-400 font-medium">
+                                                            {new Date(field.dealer_price_updated_at || field.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <Input type="number" step="0.01" {...register(`variants.${index}.dealer_price`)} />
                                             </div>
                                             <div className="space-y-1">
-                                                <Label className="text-[10px] uppercase font-bold text-orange-600">Counter</Label>
+                                                <div className="flex items-center justify-between">
+                                                    <Label className="text-[10px] uppercase font-bold text-orange-600">Counter</Label>
+                                                    {(field.counter_price_updated_at || field.created_at) && (
+                                                        <span className="text-[8px] text-gray-400 font-medium">
+                                                            {new Date(field.counter_price_updated_at || field.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <Input type="number" step="0.01" {...register(`variants.${index}.counter_price`)} />
                                             </div>
                                             <div className="space-y-1">
-                                                <Label className="text-[10px] uppercase font-bold text-red-600">MRP</Label>
+                                                <div className="flex items-center justify-between">
+                                                    <Label className="text-[10px] uppercase font-bold text-red-600">MRP</Label>
+                                                    {(field.mrp_updated_at || field.created_at) && (
+                                                        <span className="text-[8px] text-gray-400 font-medium">
+                                                            {new Date(field.mrp_updated_at || field.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <Input type="number" step="0.01" {...register(`variants.${index}.mrp_price`)} />
                                             </div>
                                             <div className="space-y-1">
-                                                <Label className="text-[10px] uppercase font-bold text-green-600">Recommended</Label>
+                                                <div className="flex items-center justify-between">
+                                                    <Label className="text-[10px] uppercase font-bold text-green-600">Recommended</Label>
+                                                    {(field.recommended_price_updated_at || field.created_at) && (
+                                                        <span className="text-[8px] text-gray-400 font-medium">
+                                                            {new Date(field.recommended_price_updated_at || field.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <Input type="number" step="0.01" {...register(`variants.${index}.recommended_price`)} />
                                             </div>
                                             <div className="space-y-1">
-                                                <Label className="text-[10px] uppercase font-bold text-gray-700">Shop Price</Label>
+                                                <div className="flex items-center justify-between">
+                                                    <Label className="text-[10px] uppercase font-bold text-gray-700">Shop Price</Label>
+                                                    {(field.shop_price_updated_at || field.created_at) && (
+                                                        <span className="text-[8px] text-gray-400 font-medium">
+                                                            {new Date(field.shop_price_updated_at || field.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <Input type="number" step="0.01" {...register(`variants.${index}.shop_price`)} />
                                             </div>
                                         </div>

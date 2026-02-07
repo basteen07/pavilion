@@ -114,6 +114,10 @@ async function handleRoute(request, { params }) {
   try {
     console.log('API Route called:', { route, method, path });
 
+    // Lazy migration: Add price_updated_at to products and variants
+    await query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS price_updated_at TIMESTAMPTZ;`);
+    await query(`ALTER TABLE product_variants ADD COLUMN IF NOT EXISTS price_updated_at TIMESTAMPTZ;`);
+
     // ============ PUBLIC ENDPOINTS ============
 
     // ============ PUBLIC ENDPOINTS ============
@@ -226,6 +230,14 @@ async function handleRoute(request, { params }) {
         return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
       }
       return import('@/lib/api/products').then(async m => m.bulkUploadProducts(await request.json()));
+    }
+
+    if (route === '/admin/bulk-template-masters' && method === 'GET') {
+      const user = await authenticateRequest(request);
+      if (!user || (user.role_name !== 'superadmin' && user.role_name !== 'admin')) {
+        return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+      }
+      return import('@/lib/api/bulk-template-masters').then(m => m.getBulkTemplateMasters());
     }
 
     // --- NEW: Banners API ---
@@ -955,6 +967,10 @@ async function handleRoute(request, { params }) {
       const body = await request.json();
       const { products, notes } = body;
 
+      // Lazy migration: Add variant_id and sku to order_items
+      await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS variant_id UUID;`);
+      await query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS sku TEXT;`);
+
       let subtotal = 0;
       products.forEach(item => {
         subtotal += parseFloat(item.price) * item.quantity;
@@ -977,9 +993,9 @@ async function handleRoute(request, { params }) {
 
       for (const item of products) {
         await query(
-          `INSERT INTO order_items (order_id, product_id, product_name, quantity, unit_price, line_total)
-           VALUES ($1, $2, $3, $4, $5, $6)`,
-          [orderId, item.product_id, item.name, item.quantity, item.price, item.price * item.quantity]
+          `INSERT INTO order_items (order_id, product_id, product_name, quantity, unit_price, line_total, variant_id, sku)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+          [orderId, item.product_id, item.name, item.quantity, item.price, item.price * item.quantity, item.variant_id || null, item.sku || null]
         );
       }
 

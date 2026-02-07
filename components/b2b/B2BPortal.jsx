@@ -1,151 +1,180 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { toast } from 'sonner'
-import { ShoppingCart, LogOut, Home, Package, Search, Filter, ChevronRight, User, Settings, Plus, Trash2, Loader2, X, Check, Save, Clock, FileText, Edit3, Ban, CheckCircle2, Mail, Eye, RotateCcw, Menu } from 'lucide-react'
-import { format } from 'date-fns'
+import {
+    Package,
+    ShoppingCart,
+    User,
+    Settings,
+    Home,
+    LogOut,
+    Plus,
+    Search,
+    Filter,
+    ChevronRight,
+    ChevronDown,
+    Check,
+    Trash2,
+    Loader2,
+    Clock,
+    FileText,
+    Mail,
+    CheckCircle2,
+    Eye,
+    RotateCcw,
+    Edit3,
+    Ban,
+    Menu,
+    X,
+    LayoutDashboard,
+    Boxes,
+    History,
+    MoreVertical,
+    Download
+} from 'lucide-react'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow
+} from "@/components/ui/table"
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger
+} from "@/components/ui/sheet"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter
+} from "@/components/ui/dialog"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger
+} from "@/components/ui/popover"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+} from "@/components/ui/select"
 import { apiCall } from '@/lib/api-client'
-import Image from 'next/image'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Slider } from '@/components/ui/slider'
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
-import { cn } from "@/lib/utils"
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { toast } from 'sonner'
+import { format } from 'date-fns'
+import { cn } from '@/lib/utils'
+import { useInfiniteQuery } from '@tanstack/react-query'
+import { useB2BCart } from '@/components/providers/B2BCartProvider'
 
-// --- Utility: Get Image ---
-const getFirstImage = (images) => {
-    if (!images) return '/placeholder.png';
-    try {
-        if (Array.isArray(images)) return images[0];
-        const parsed = JSON.parse(images);
-        return Array.isArray(parsed) ? parsed[0] : parsed;
-    } catch (e) {
-        return images;
-    }
-}
-
-export function B2BPortal() {
+export default function B2BPortal() {
     const router = useRouter()
-    const queryClient = useQueryClient()
-
-    // --- User & Meta Data ---
     const [user, setUser] = useState(null)
     const [profile, setProfile] = useState(null)
-    const [customerType, setCustomerType] = useState(null)
-
-    // --- Main Data ---
     const [orders, setOrders] = useState([])
     const [timeline, setTimeline] = useState([])
-    const [cart, setCart] = useState([]) // "Quotation Items"
-
-    // --- Navigation & UI State ---
     const [currentView, setCurrentView] = useState('dashboard')
-    const [showProductModal, setShowProductModal] = useState(false)
-    const [isPlacingOrder, setIsPlacingOrder] = useState(false)
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-    // --- Product Modal State ---
-    const [searchTerm, setSearchTerm] = useState('')
-    const [selectedProducts, setSelectedProducts] = useState([])
-    const [expandedGroups, setExpandedGroups] = useState({})
+    // Catalog State
+    const [searchQuery, setSearchQuery] = useState('')
     const [activeFilters, setActiveFilters] = useState([])
-    const [filterPopoverOpen, setFilterPopoverOpen] = useState(false)
-    const getFilterValue = (type) => activeFilters.find(f => f.type === type)?.value
-    const observerTarget = useRef(null)
-
-    // --- Meta Types ---
     const [categories, setCategories] = useState([])
     const [subCategories, setSubCategories] = useState([])
     const [brands, setBrands] = useState([])
+    const [customerType, setCustomerType] = useState(null)
 
-    // --- Initial Load ---
+    // Modal State
+    const [showProductModal, setShowProductModal] = useState(false)
+    const [selectedProducts, setSelectedProducts] = useState([])
+    const [expandedGroups, setExpandedGroups] = useState({})
+    const [expandedProductIds, setExpandedProductIds] = useState(new Set())
+    const [filterPopoverOpen, setFilterPopoverOpen] = useState(false)
+
+    const observerTarget = useRef(null)
+    const { cart, addToCart, removeFromCart, updateQuantity, cartTotal, isPlacingOrder, setIsPlacingOrder } = useB2BCart()
+
     useEffect(() => {
-        const userData = localStorage.getItem('user')
-        if (!userData) {
+        const storedUser = localStorage.getItem('user')
+        if (!storedUser) {
             router.push('/login')
             return
         }
-        setUser(JSON.parse(userData))
-        loadData()
+        const parsedUser = JSON.parse(storedUser)
+        setUser(parsedUser)
+        loadData(parsedUser.id)
     }, [])
 
-    async function loadData() {
+    async function loadData(userId) {
         try {
-            const [profileData, ordersData, categoriesData, brandsData, customerTypesData, timelineData] = await Promise.all([
-                apiCall('/b2b/profile'),
-                apiCall('/b2b/orders'),
+            const [profileData, ordersData, cats, brnds, types, history] = await Promise.all([
+                apiCall(`/b2b/customers/profile?userId=${userId}`),
+                apiCall(`/b2b/orders?userId=${userId}`),
                 apiCall('/categories'),
                 apiCall('/brands'),
-                apiCall('/customer-types'),
-                apiCall('/b2b/timeline')
+                apiCall('/b2b/customer-types'),
+                apiCall(`/b2b/customers/timeline?userId=${userId}`)
             ])
             setProfile(profileData)
-            setOrders(ordersData)
-            setTimeline(timelineData || [])
-            setCategories(categoriesData || [])
-            setBrands(brandsData || [])
+            setOrders(ordersData || [])
+            setCategories(cats || [])
+            setBrands(brnds || [])
+            setTimeline(history || [])
 
-            // Determine Customer Type Logic
-            if (profileData) {
-                // Try to match specific customer type, otherwise rely on profile discount
-                if (profileData.customer_type_id) {
-                    const type = customerTypesData.find(t => t.id === profileData.customer_type_id)
-                    if (type) setCustomerType(type)
-                }
-                // If no specific type ID in profile (legacy), we might construct a dummy one based on discount
-                else if (customerTypesData) {
-                    // Fallback or default
-                }
+            if (profileData?.customer_type_id) {
+                const type = types.find(t => t.id === profileData.customer_type_id)
+                setCustomerType(type)
             }
         } catch (error) {
-            console.error('Error loading data:', error)
+            console.error("Load error:", error)
+            toast.error("Failed to load portal data")
         }
     }
 
-    // --- Infinite Product Query (Matching QuotationBuilder) ---
+    // Infinite Scroll Products
     const {
-        data: productsData,
+        data,
         fetchNextPage,
         hasNextPage,
-        isFetchingNextPage
+        isFetchingNextPage,
+        status,
+        refetch
     } = useInfiniteQuery({
-        queryKey: ['products-b2b-infinite', activeFilters, searchTerm],
-        queryFn: ({ pageParam = 1 }) => {
-            const cat = getFilterValue('category');
-            const subcat = getFilterValue('sub-category');
-            const brand = getFilterValue('brand');
-            const price = getFilterValue('price');
-            const params = new URLSearchParams({
-                limit: '100', page: pageParam.toString(), search: searchTerm,
-                ...(cat && { category: cat }),
-                ...(subcat && { sub_category: subcat }),
-                ...(brand && { brand: brand }),
-                ...(price?.min && { price_min: price.min }),
-                ...(price?.max && { price_max: price.max })
+        queryKey: ['b2b-products', searchQuery, activeFilters],
+        queryFn: async ({ pageParam = 1 }) => {
+            let url = `/products?page=${pageParam}&limit=20&search=${searchQuery}`
+            activeFilters.forEach(f => {
+                if (f.value) url += `&${f.type}=${f.value}`
             })
-            return apiCall(`/products?${params}`)
+            return apiCall(url)
         },
-        getNextPageParam: (lastPage) => lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
-        enabled: showProductModal
+        getNextPageParam: (lastPage, allPages) => {
+            if (lastPage.length < 20) return undefined
+            return allPages.length + 1
+        }
     })
 
-    const products = productsData?.pages.flatMap(page => page.products) || []
+    const products = useMemo(() => data?.pages.flat() || [], [data])
 
     const groupedProducts = useMemo(() => {
-        const catId = getFilterValue('category');
-        const subCatId = getFilterValue('sub-category');
+        const catFilter = activeFilters.find(f => f.type === 'category')
+        const subCatFilter = activeFilters.find(f => f.type === 'sub-category')
+        const catId = catFilter?.value
+        const subCatId = subCatFilter?.value
+
         let groups = {};
         if (catId && !subCatId) {
             products.forEach(p => {
@@ -202,6 +231,15 @@ export function B2BPortal() {
 
     // --- Cart/Order Logic ---
 
+    const toggleProductExpansion = (productId) => {
+        setExpandedProductIds(prev => {
+            const next = new Set(prev);
+            if (next.has(productId)) next.delete(productId);
+            else next.add(productId);
+            return next;
+        });
+    };
+
     function calculateProductPrice(product) {
         // Dealer Price + Markup Logic (Strict)
         // Formula: Price = Dealer Price + (Dealer Price * Percentage / 100)
@@ -231,47 +269,44 @@ export function B2BPortal() {
         }
     }
 
-    function addSelectedProducts() {
-        selectedProducts.forEach(product => {
-            if (!cart.find(i => i.product_id === product.id)) {
-
-                const { price, basePrice, percentage } = calculateProductPrice(product);
-
-                const newItem = {
-                    product_id: product.id,
-                    name: product.name,
-                    slug: product.slug,
-                    sku: product.sku,
-                    image: getFirstImage(product.images),
-                    category_name: product.category_name,
-                    brand_name: product.brand_name || product.brand,
-                    mrp: parseFloat(product.mrp_price),
-                    dealer_price: basePrice, // Save the base (dealer) price used
-                    price: price, // Final calculated unit price
-                    quantity: 1,
-                    gst_rate: product.gst_rate || '18%',
-                    percentage: percentage
-                }
-                setCart(prev => [...prev, newItem])
+    function handleSelectProduct(product, variant = null) {
+        setSelectedProducts(prev => {
+            const exists = prev.find(p => p.id === product.id && (variant ? p.variant?.id === variant.id : !p.variant));
+            if (exists) {
+                return prev.filter(p => !(p.id === product.id && (variant ? p.variant?.id === variant.id : !p.variant)));
+            } else {
+                return [...prev, { ...product, variant }];
             }
         });
-        setSelectedProducts([])
-        setShowProductModal(false)
-        toast.success(`Broadcasting ${selectedProducts.length} items to order list`)
     }
 
-    function handleToggleProduct(product) {
-        setSelectedProducts(prev => {
-            const exists = prev.find(p => p.id === product.id)
-            if (exists) return prev.filter(p => p.id !== product.id)
-            return [...prev, product]
-        })
-    }
+    function addSelectedProducts() {
+        if (selectedProducts.length === 0) return;
 
-    function updateCartItem(index, field, value) {
-        const newCart = [...cart];
-        newCart[index][field] = value;
-        setCart(newCart);
+        selectedProducts.forEach(item => {
+            const product = item;
+            const variant = item.variant;
+            const pricing = calculateProductPrice(variant || product);
+
+            addToCart({
+                ...product,
+                variant_id: variant?.id || null,
+                sku: variant?.sku || product.sku,
+                name: variant ? `${product.name} - ${variant.size || ''} ${variant.color || ''}`.trim() : product.name,
+                price: pricing.price,
+                basePrice: pricing.basePrice,
+                percentage: pricing.percentage,
+                size: variant?.size || product.size,
+                color: variant?.color || product.color,
+                images: variant?.images || product.images,
+                category_name: product.category_name || '',
+                brand_name: product.brand_name || product.brand || ''
+            }, 1);
+        });
+
+        setSelectedProducts([]);
+        setShowProductModal(false);
+        toast.success(`Added ${selectedProducts.length} items to order list`)
     }
 
     async function placeOrder() {
@@ -283,13 +318,11 @@ export function B2BPortal() {
                 body: JSON.stringify({
                     products: cart.map(item => ({
                         product_id: item.product_id,
+                        variant_id: item.variant_id,
+                        sku: item.sku,
                         name: item.name,
                         price: item.price,
                         quantity: parseInt(item.quantity),
-                        // Try to convert metadata to string/json if backend supports flexible columns, or just rely on 'notes' if needed. 
-                        // Assuming backend might take extra fields or we just rely on price.
-                        // Ideally we should save dealer_price too if the schema supports it.
-                        // For now we send what we have.
                         data: {
                             dealer_price: item.dealer_price,
                             gst_rate: item.gst_rate,
@@ -300,8 +333,9 @@ export function B2BPortal() {
                 })
             })
             toast.success('Order placed successfully!')
-            setCart([])
-            loadData()
+            // The provider handles clearing the cart or we can do it here if needed
+            // loadData() will refresh the order history
+            loadData(user.id)
             setCurrentView('orders')
         } catch (error) {
             toast.error(error.message)
@@ -332,6 +366,20 @@ export function B2BPortal() {
         localStorage.removeItem('token')
         localStorage.removeItem('user')
         router.push('/login')
+    }
+
+    function getFirstImage(images) {
+        if (!images) return '/placeholder-product.png';
+        if (Array.isArray(images) && images.length > 0) return images[0];
+        if (typeof images === 'string') {
+            try {
+                const parsed = JSON.parse(images);
+                return Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : (typeof parsed === 'string' ? parsed : '/placeholder-product.png');
+            } catch (e) {
+                return images;
+            }
+        }
+        return '/placeholder-product.png';
     }
 
     if (!user) return null
@@ -558,22 +606,24 @@ export function B2BPortal() {
                                                 <Table>
                                                     <TableHeader>
                                                         <TableRow className="bg-gray-50 hover:bg-gray-50">
-                                                            <TableHead className="pl-6 w-[350px]">Product</TableHead>
+                                                            <TableHead className="pl-6 w-[250px]">Product</TableHead>
+                                                            <TableHead>SKU</TableHead>
+                                                            <TableHead>Size</TableHead>
+                                                            <TableHead>Color</TableHead>
                                                             <TableHead className="text-right">Dealer Price</TableHead>
-                                                            <TableHead className="text-right">Markup</TableHead> {/* Explicit View of Logic */}
                                                             <TableHead className="text-right">Your Price</TableHead>
-                                                            <TableHead className="text-center w-[120px]">Quantity</TableHead>
-                                                            <TableHead className="text-right w-[150px]">Total</TableHead>
+                                                            <TableHead className="text-center w-[100px]">Qty</TableHead>
+                                                            <TableHead className="text-right w-[120px]">Total</TableHead>
                                                             <TableHead className="w-[50px]"></TableHead>
                                                         </TableRow>
                                                     </TableHeader>
                                                     <TableBody>
-                                                        {cart.map((item, idx) => (
-                                                            <TableRow key={idx}>
+                                                        {cart.map((item) => (
+                                                            <TableRow key={`${item.product_id}-${item.variant_id || 'main'}`}>
                                                                 <TableCell className="pl-6">
                                                                     <div className="flex items-center gap-4">
                                                                         <div className="w-12 h-12 bg-gray-100 rounded border overflow-hidden shrink-0">
-                                                                            <img src={item.image} className="w-full h-full object-cover" />
+                                                                            <img src={getFirstImage(item.images || item.image)} className="w-full h-full object-cover" />
                                                                         </div>
                                                                         <div>
                                                                             <div className="font-bold text-sm text-gray-900">
@@ -585,13 +635,11 @@ export function B2BPortal() {
                                                                         </div>
                                                                     </div>
                                                                 </TableCell>
-                                                                <TableCell className="text-right text-xs text-gray-600">₹{item.dealer_price ? item.dealer_price.toLocaleString() : '-'}</TableCell>
-                                                                <TableCell className="text-right">
-                                                                    <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200">
-                                                                        +{item.percentage}%
-                                                                    </Badge>
-                                                                </TableCell>
-                                                                <TableCell className="text-right font-bold text-gray-900">
+                                                                <TableCell className="text-xs text-gray-600 font-mono">{item.sku}</TableCell>
+                                                                <TableCell className="text-xs text-gray-600">{item.size || '-'}</TableCell>
+                                                                <TableCell className="text-xs text-gray-600">{item.color || '-'}</TableCell>
+                                                                <TableCell className="text-right text-xs text-gray-600 whitespace-nowrap">₹{parseFloat(item.dealer_price || item.basePrice || 0).toLocaleString()}</TableCell>
+                                                                <TableCell className="text-right font-bold text-gray-900 whitespace-nowrap">
                                                                     ₹{parseFloat(item.price).toLocaleString()}
                                                                 </TableCell>
                                                                 <TableCell>
@@ -600,14 +648,14 @@ export function B2BPortal() {
                                                                         min="1"
                                                                         className="h-8 text-center"
                                                                         value={item.quantity}
-                                                                        onChange={(e) => updateCartItem(idx, 'quantity', e.target.value)}
+                                                                        onChange={(e) => updateQuantity(item.product_id, item.variant_id, e.target.value)}
                                                                     />
                                                                 </TableCell>
-                                                                <TableCell className="text-right font-black text-gray-900">
+                                                                <TableCell className="text-right font-black text-gray-900 whitespace-nowrap">
                                                                     ₹{(parseFloat(item.price) * parseInt(item.quantity || 1)).toLocaleString()}
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    <Button size="sm" variant="ghost" className="h-8 w-8 text-red-500 hover:bg-red-50" onClick={() => setCart(cart.filter((_, i) => i !== idx))}>
+                                                                    <Button size="sm" variant="ghost" className="h-8 w-8 text-red-500 hover:bg-red-50" onClick={() => removeFromCart(item.product_id, item.variant_id)}>
                                                                         <Trash2 className="w-4 h-4" />
                                                                     </Button>
                                                                 </TableCell>
@@ -622,12 +670,12 @@ export function B2BPortal() {
                                             <div className="w-full max-w-xs space-y-2">
                                                 <div className="flex justify-between items-center text-sm">
                                                     <span className="text-gray-500 font-medium">Order Subtotal</span>
-                                                    <span className="font-bold">₹{cart.reduce((acc, item) => acc + (parseFloat(item.price) * parseInt(item.quantity || 1)), 0).toLocaleString()}</span>
+                                                    <span className="font-bold">₹{cartTotal.toLocaleString()}</span>
                                                 </div>
                                                 <div className="flex justify-between items-center pt-2 border-t border-gray-200">
                                                     <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Grand Total (Inc. GST)</span>
                                                     <div className="text-2xl font-black tracking-tight">
-                                                        ₹{(cart.reduce((acc, item) => acc + (parseFloat(item.price) * parseInt(item.quantity || 1)), 0) * 1.18).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                                                        ₹{(cartTotal * 1.18).toLocaleString(undefined, { maximumFractionDigits: 2 })}
                                                     </div>
                                                 </div>
                                             </div>
@@ -753,13 +801,9 @@ export function B2BPortal() {
                                                             <a href={`/product/${item.slug}`} target="_blank" className="font-medium text-blue-600 hover:underline">
                                                                 {item.name || item.product_name}
                                                             </a>
-                                                            {/* Hide SKU as requested */}
                                                         </TableCell>
                                                         <TableCell>{item.category_name || item.data?.category_name || '-'}</TableCell>
                                                         <TableCell className="text-right">
-                                                            {/* Attempt to show Dealer Price if saved in data or if we can infer it. 
-                                                                If not saved, we can't show it accurately for history, so show '-' or maybe current if available? 
-                                                                Better to show '-' if missing to avoid confusion. */}
                                                             {item.dealer_price || item.data?.dealer_price ? `₹${(item.dealer_price || item.data?.dealer_price).toLocaleString()}` : '-'}
                                                         </TableCell>
                                                         <TableCell className="text-right font-bold">₹{parseFloat(item.price || item.unit_price).toLocaleString()}</TableCell>
@@ -893,102 +937,88 @@ export function B2BPortal() {
                     )}
 
                 </main>
-            </div >
+            </div>
 
-            {/* Product Selection Modal - Reused from QuotationBuilder */}
-            < Dialog open={showProductModal} onOpenChange={setShowProductModal} >
-                <DialogContent className="max-w-5xl h-[85vh] p-0 gap-0 overflow-hidden flex flex-col bg-white">
-                    <div className="px-6 py-4 flex items-center justify-between border-b border-gray-200 bg-white z-10">
-                        <DialogTitle className="text-lg font-bold">Select Products</DialogTitle>
-                        <button onClick={() => setShowProductModal(false)} className="text-gray-500 hover:text-gray-700">
-                            <X className="w-5 h-5" />
-                        </button>
-                    </div>
-
-                    <div className="px-6 py-3 border-b border-gray-200 bg-white space-y-3">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 shadow-sm" />
-                            <Input
-                                placeholder="Search products by name or SKU"
-                                className="pl-9 border-blue-500 ring-2 ring-blue-50/50"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
+            {/* Product Selection Modal */}
+            <Dialog open={showProductModal} onOpenChange={setShowProductModal}>
+                <DialogContent className="max-w-[1100px] h-[90vh] p-0 flex flex-col gap-0 overflow-hidden">
+                    <DialogHeader className="p-6 pb-4 border-b shrink-0">
+                        <div className="flex items-center justify-between gap-4">
+                            <div>
+                                <DialogTitle className="text-xl font-black">PRODUCT CATALOG</DialogTitle>
+                                <DialogDescription className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">
+                                    Select products and variants to add to your order.
+                                </DialogDescription>
+                            </div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                            <Popover open={filterPopoverOpen} onOpenChange={setFilterPopoverOpen}>
-                                <PopoverTrigger asChild>
-                                    <Button variant="outline" size="sm" className="h-7 text-xs bg-white border-dashed border-gray-300 text-gray-600">
-                                        Add filter +
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[200px] p-0" align="start">
-                                    <Command>
-                                        <CommandInput placeholder="Filter by..." />
-                                        <CommandList>
-                                            <CommandGroup>
-                                                <CommandItem onSelect={() => addFilter('category')}>Category</CommandItem>
-                                                <CommandItem onSelect={() => addFilter('sub-category')}>Sub-Category</CommandItem>
-                                                <CommandItem onSelect={() => addFilter('brand')}>Brand</CommandItem>
-                                            </CommandGroup>
-                                        </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
 
-                            {activeFilters.map((f) => (
-                                <div key={f.type} className="flex items-center bg-blue-50 border border-blue-100 rounded-full px-2 py-0.5 gap-1 shadow-sm">
-                                    <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">
-                                        {f.type}:
-                                    </span>
-                                    {f.type === 'category' && (
-                                        <Select value={f.value} onValueChange={(val) => updateFilterValue('category', val)}>
-                                            <SelectTrigger className="h-5 py-0 px-1 border-none bg-transparent shadow-none text-xs font-medium focus:ring-0">
-                                                <SelectValue placeholder="Select" />
-                                            </SelectTrigger>
-                                            <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                    )}
-                                    {f.type === 'sub-category' && (
-                                        <Select value={f.value} onValueChange={(val) => updateFilterValue('sub-category', val)}>
-                                            <SelectTrigger className="h-5 py-0 px-1 border-none bg-transparent shadow-none text-xs font-medium focus:ring-0">
-                                                <SelectValue placeholder="Select" />
+                        <div className="flex flex-col md:flex-row gap-3 mt-4">
+                            <div className="relative flex-1 group">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-black transition-colors" />
+                                <Input
+                                    placeholder="Search products by name, SKU or brand..."
+                                    className="pl-10 h-10 bg-gray-50 border-gray-200 focus:bg-white transition-all font-medium"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Popover open={filterPopoverOpen} onOpenChange={setFilterPopoverOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" className="h-10 px-4 font-bold border-2 hover:bg-gray-50">
+                                            <Filter className="w-4 h-4 mr-2" />
+                                            Filters
+                                            {activeFilters.length > 0 && (
+                                                <Badge className="ml-2 bg-black text-white h-5 min-w-[20px] p-0 flex items-center justify-center">
+                                                    {activeFilters.length}
+                                                </Badge>
+                                            )}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-56 p-2" align="end">
+                                        <div className="space-y-1">
+                                            <Button variant="ghost" className="w-full justify-start text-xs font-bold" onClick={() => addFilter('category')}>Category</Button>
+                                            <Button variant="ghost" className="w-full justify-start text-xs font-bold" onClick={() => addFilter('sub-category')}>Sub-Category</Button>
+                                            <Button variant="ghost" className="w-full justify-start text-xs font-bold" onClick={() => addFilter('brand')}>Brand</Button>
+                                        </div>
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+                        </div>
+
+                        {activeFilters.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-dashed">
+                                {activeFilters.map((filter, idx) => (
+                                    <div key={idx} className="flex items-center gap-1 pl-3 pr-1 py-1 bg-gray-100 rounded-full border border-gray-200 shadow-sm animate-in fade-in slide-in-from-left-2 duration-300">
+                                        <span className="text-[10px] font-black text-gray-400 uppercase mr-1">{filter.type}:</span>
+                                        <Select
+                                            value={filter.value || ""}
+                                            onValueChange={(val) => updateFilterValue(filter.type, val)}
+                                        >
+                                            <SelectTrigger className="h-6 border-none bg-transparent p-0 gap-1 focus:ring-0 text-xs font-bold w-auto min-w-[60px]">
+                                                <SelectValue placeholder={`Select ${filter.type}...`} />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {(getFilterValue('category')
-                                                    ? subCategories.filter(sc => sc.category_id === getFilterValue('category'))
-                                                    : subCategories
-                                                ).map(sc => <SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>)}
+                                                {filter.type === 'category' && categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                                                {filter.type === 'sub-category' && subCategories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                                                {filter.type === 'brand' && brands.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
-                                    )}
-                                    {f.type === 'brand' && (
-                                        <Select value={f.value} onValueChange={(val) => updateFilterValue('brand', val)}>
-                                            <SelectTrigger className="h-5 py-0 px-1 border-none bg-transparent shadow-none text-xs font-medium focus:ring-0">
-                                                <SelectValue placeholder="Select" />
-                                            </SelectTrigger>
-                                            <SelectContent>{brands.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                    )}
+                                        <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full hover:bg-white text-gray-400 hover:text-red-500" onClick={() => removeFilter(filter.type)}>
+                                            <X className="w-3 h-3" />
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </DialogHeader>
 
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-3 w-3 p-0 hover:bg-blue-100 rounded-full"
-                                        onClick={() => removeFilter(f.type)}
-                                    >
-                                        <X className="w-2 h-2 text-blue-400" />
-                                    </Button>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="flex-1 overflow-x-auto bg-gray-50 relative" id="scroll-container">
-                        <div className="min-w-[800px] pb-20">
+                    <div className="flex-1 overflow-y-auto bg-white">
+                        <div className="p-0">
                             {Object.entries(groupedProducts).map(([groupName, groupProducts]) => {
-                                const isExpanded = expandedGroups[groupName];
-                                const displayedProducts = isExpanded || groupName === 'All Products' ? groupProducts : groupProducts.slice(0, 10);
+                                const isGroupExpanded = expandedGroups[groupName];
+                                const displayedProductsCount = isGroupExpanded || groupName === 'All Products' ? groupProducts.length : 10;
+                                const displayedProducts = groupProducts.slice(0, displayedProductsCount);
                                 const hasMore = groupProducts.length > 10;
 
                                 return (
@@ -999,27 +1029,14 @@ export function B2BPortal() {
                                                     {groupName === 'Others' ? 'Uncategorized' : groupName}
                                                     <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-white">{groupProducts.length}</Badge>
                                                 </h3>
-                                                <ChevronRight className={cn("w-4 h-4 text-gray-400 transition-transform", isExpanded && "rotate-90")} />
+                                                <ChevronRight className={cn("w-4 h-4 text-gray-400 transition-transform", isGroupExpanded && "rotate-90")} />
                                             </div>
                                         )}
 
                                         <Table>
                                             <TableHeader className="bg-white">
                                                 <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b">
-                                                    <TableHead className="bg-white w-[50px] pl-6">
-                                                        <div
-                                                            className={cn(
-                                                                "w-5 h-5 border-2 rounded flex items-center justify-center cursor-pointer transition-colors shadow-sm",
-                                                                groupProducts.length > 0 && groupProducts.every(p => selectedProducts.find(sp => sp.id === p.id)) ? "bg-black border-black" : "bg-white border-gray-300 hover:border-black"
-                                                            )}
-                                                            onClick={() => {
-                                                                const isAllSelected = groupProducts.length > 0 && groupProducts.every(p => selectedProducts.find(sp => sp.id === p.id));
-                                                                handleToggleGroup(groupProducts, isAllSelected);
-                                                            }}
-                                                        >
-                                                            {groupProducts.length > 0 && groupProducts.every(p => selectedProducts.find(sp => sp.id === p.id)) && <Check className="w-3.5 h-3.5 text-white stroke-[3px]" />}
-                                                        </div>
-                                                    </TableHead>
+                                                    <TableHead className="bg-white w-[50px] pl-6"></TableHead>
                                                     <TableHead className="bg-white w-[300px]">Product</TableHead>
                                                     <TableHead className="bg-white text-right">Category</TableHead>
                                                     <TableHead className="bg-white text-right">Dealer Price</TableHead>
@@ -1032,101 +1049,132 @@ export function B2BPortal() {
                                             </TableHeader>
                                             <TableBody>
                                                 {displayedProducts.map((product) => {
-                                                    const isSelected = selectedProducts.find(p => p.id === product.id);
-                                                    const { price } = calculateProductPrice(product);
+                                                    const isSelected = selectedProducts.some(p => p.id === product.id && !p.variant);
+                                                    const pricing = calculateProductPrice(product);
+                                                    const variants = product.product_variants || [];
+                                                    const isExpanded = expandedProductIds.has(product.id);
 
                                                     return (
-                                                        <TableRow
-                                                            key={product.id}
-                                                            className={cn(
-                                                                "hover:bg-gray-50 cursor-pointer",
-                                                                isSelected && "bg-blue-50/50"
-                                                            )}
-                                                            onClick={() => handleToggleProduct(product)}
-                                                        >
-                                                            <TableCell className="pl-6">
-                                                                <div
-                                                                    className={cn(
-                                                                        "w-5 h-5 border-2 rounded flex items-center justify-center cursor-pointer transition-colors shadow-sm",
-                                                                        isSelected ? "bg-black border-black" : "bg-white border-gray-300 hover:border-black"
-                                                                    )}
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleToggleProduct(product);
-                                                                    }}
-                                                                >
-                                                                    {isSelected && <Check className="w-3.5 h-3.5 text-white stroke-[3px]" />}
-                                                                </div>
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="w-10 h-10 rounded border bg-gray-100 overflow-hidden shrink-0">
-                                                                        <img src={getFirstImage(product.images)} className="w-full h-full object-cover" />
-                                                                    </div>
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <div className="font-medium text-sm text-gray-900 truncate">
-                                                                            <a href={`/product/${product.slug}`} target="_blank" onClick={(e) => e.stopPropagation()} className="hover:underline hover:text-blue-600">
-                                                                                {product.name}
-                                                                            </a>
+                                                        <Fragment key={product.id}>
+                                                            <TableRow
+                                                                className={cn(
+                                                                    "hover:bg-gray-50 cursor-pointer",
+                                                                    isSelected && "bg-blue-50/50"
+                                                                )}
+                                                                onClick={() => handleSelectProduct(product)}
+                                                            >
+                                                                <TableCell className="pl-6">
+                                                                    <div className="flex items-center gap-2">
+                                                                        {variants.length > 0 && (
+                                                                            <div
+                                                                                className="hover:bg-gray-200 p-0.5 rounded cursor-pointer transition-colors"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    toggleProductExpansion(product.id);
+                                                                                }}
+                                                                            >
+                                                                                {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                                                                            </div>
+                                                                        )}
+                                                                        <div
+                                                                            className={cn(
+                                                                                "w-5 h-5 border-2 rounded flex items-center justify-center cursor-pointer transition-colors shadow-sm",
+                                                                                isSelected ? "bg-black border-black" : "bg-white border-gray-300 hover:border-black"
+                                                                            )}
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleSelectProduct(product);
+                                                                            }}
+                                                                        >
+                                                                            {isSelected && <Check className="w-3.5 h-3.5 text-white stroke-[3px]" />}
                                                                         </div>
-                                                                        <div className="text-xs text-gray-500">{product.brand_name || product.brand}</div>
                                                                     </div>
-                                                                </div>
-                                                            </TableCell>
-                                                            <TableCell className="text-right text-xs text-gray-600">{product.category_name}</TableCell>
-                                                            <TableCell className="text-right text-xs text-gray-600">
-                                                                ₹{calculateProductPrice(product).basePrice.toLocaleString()}
-                                                            </TableCell>
-                                                            <TableCell className="text-right">
-                                                                <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200">
-                                                                    +{calculateProductPrice(product).percentage}%
-                                                                </Badge>
-                                                            </TableCell>
-                                                            <TableCell className="text-right border-l-2 border-blue-100 bg-blue-50/20 font-bold text-blue-700">
-                                                                ₹{price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="ghost"
-                                                                    className="h-8 w-8 hover:bg-black hover:text-white rounded-full"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        // Check if already in cart
-                                                                        if (cart.find(i => i.product_id === product.id)) {
-                                                                            toast.info("Product already in order");
-                                                                            return;
-                                                                        }
-                                                                        // Add single item
-                                                                        const { price, basePrice, percentage } = calculateProductPrice(product);
-                                                                        const newItem = {
-                                                                            product_id: product.id,
-                                                                            name: product.name,
-                                                                            slug: product.slug,
-                                                                            sku: product.sku,
-                                                                            image: getFirstImage(product.images),
-                                                                            category_name: product.category_name,
-                                                                            brand_name: product.brand_name || product.brand,
-                                                                            mrp: parseFloat(product.mrp_price),
-                                                                            dealer_price: basePrice,
-                                                                            price: price,
-                                                                            quantity: 1,
-                                                                            gst_rate: product.gst_rate || '18%',
-                                                                            percentage: percentage
-                                                                        };
-                                                                        setCart(prev => [...prev, newItem]);
-                                                                        toast.success("Added to order");
-                                                                    }}
-                                                                >
-                                                                    <Plus className="w-4 h-4" />
-                                                                </Button>
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    )
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="w-10 h-10 rounded border bg-gray-100 overflow-hidden shrink-0">
+                                                                            <img src={getFirstImage(product.images)} className="w-full h-full object-cover" />
+                                                                        </div>
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <div className="font-medium text-sm text-gray-900 truncate">
+                                                                                <a href={`/product/${product.slug}`} target="_blank" onClick={(e) => e.stopPropagation()} className="hover:underline hover:text-blue-600">
+                                                                                    {product.name}
+                                                                                </a>
+                                                                            </div>
+                                                                            <div className="text-xs text-gray-500">{product.brand_name || product.brand}</div>
+                                                                        </div>
+                                                                    </div>
+                                                                </TableCell>
+                                                                <TableCell className="text-right text-xs text-gray-600 font-medium whitespace-nowrap">{product.category_name}</TableCell>
+                                                                <TableCell className="text-right text-xs text-gray-600 whitespace-nowrap">
+                                                                    ₹{pricing.basePrice.toLocaleString()}
+                                                                </TableCell>
+                                                                <TableCell className="text-right">
+                                                                    <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200">
+                                                                        +{pricing.percentage}%
+                                                                    </Badge>
+                                                                </TableCell>
+                                                                <TableCell className="text-right border-l-2 border-blue-100 bg-blue-50/20 font-bold text-blue-700 whitespace-nowrap">
+                                                                    ₹{pricing.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                                </TableCell>
+                                                                <TableCell></TableCell>
+                                                            </TableRow>
+
+                                                            {/* Variant Rows */}
+                                                            {isExpanded && variants.map((variant) => {
+                                                                const variantPricing = calculateProductPrice(variant);
+                                                                const isVariantSelected = selectedProducts.some(p => p.id === product.id && p.variant?.id === variant.id);
+
+                                                                return (
+                                                                    <TableRow
+                                                                        key={variant.id}
+                                                                        className={cn(
+                                                                            "bg-slate-50/50 hover:bg-slate-100/50 cursor-pointer",
+                                                                            isVariantSelected && "bg-blue-50/30"
+                                                                        )}
+                                                                        onClick={() => handleSelectProduct(product, variant)}
+                                                                    >
+                                                                        <TableCell className="pl-14">
+                                                                            <div
+                                                                                className={cn(
+                                                                                    "w-4 h-4 border-2 rounded flex items-center justify-center cursor-pointer transition-colors shadow-sm",
+                                                                                    isVariantSelected ? "bg-black border-black" : "bg-white border-gray-300 hover:border-black"
+                                                                                )}
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    handleSelectProduct(product, variant);
+                                                                                }}
+                                                                            >
+                                                                                {isVariantSelected && <Check className="w-2.5 h-2.5 text-white stroke-[3px]" />}
+                                                                            </div>
+                                                                        </TableCell>
+                                                                        <TableCell>
+                                                                            <div className="flex items-center gap-3">
+                                                                                <div className="w-8 h-8 rounded border bg-white overflow-hidden shrink-0">
+                                                                                    <img src={getFirstImage(variant.images || product.images)} className="w-full h-full object-cover" />
+                                                                                </div>
+                                                                                <div className="flex-1 min-w-0">
+                                                                                    <div className="text-sm font-medium text-gray-700 truncate">
+                                                                                        {variant.size} {variant.color} {variant.option1_value} {variant.option2_value}
+                                                                                    </div>
+                                                                                    <div className="text-[10px] text-gray-500 font-mono">{variant.sku}</div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </TableCell>
+                                                                        <TableCell colSpan={2}></TableCell>
+                                                                        <TableCell className="text-right border-l border-blue-100 bg-blue-50/10 font-bold text-blue-600 whitespace-nowrap">
+                                                                            ₹{variantPricing.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                                        </TableCell>
+                                                                        <TableCell></TableCell>
+                                                                    </TableRow>
+                                                                );
+                                                            })}
+                                                        </Fragment>
+                                                    );
                                                 })}
                                             </TableBody>
                                         </Table>
-                                        {hasMore && !isExpanded && (
+                                        {hasMore && !isGroupExpanded && (
                                             <div className="p-4 bg-white text-center border-t">
                                                 <Button
                                                     variant="secondary"
@@ -1146,25 +1194,39 @@ export function B2BPortal() {
                             {isFetchingNextPage && <Loader2 className="w-5 h-5 animate-spin text-gray-400" />}
                         </div>
                     </div>
-                    <div className="p-4 border-t border-gray-200 bg-white flex flex-col sm:flex-row justify-between items-center gap-4 z-20 relative shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-                        <div className="text-sm text-gray-500 font-medium bg-gray-100 px-3 py-1 rounded-full">
-                            {selectedProducts.length} products selected
+
+                    <DialogFooter className="p-4 border-t bg-gray-50/50 sm:justify-between items-center gap-4">
+                        <div className="flex items-center gap-4">
+                            <div className="flex -space-x-2">
+                                {selectedProducts.slice(0, 5).map((p, i) => (
+                                    <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-white overflow-hidden shadow-sm">
+                                        <img src={getFirstImage(p.variant?.images || p.images)} className="w-full h-full object-cover" />
+                                    </div>
+                                ))}
+                                {selectedProducts.length > 5 && (
+                                    <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-900 flex items-center justify-center text-[10px] font-black text-white shadow-sm">
+                                        +{selectedProducts.length - 5}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="text-sm">
+                                <span className="font-black text-gray-900">{selectedProducts.length}</span>
+                                <span className="ml-1 text-gray-500 font-bold uppercase text-[10px] tracking-widest">Items Selected</span>
+                            </div>
                         </div>
-                        <div className="flex gap-3 w-full sm:w-auto">
-                            <Button variant="outline" className="flex-1 sm:flex-initial px-6" onClick={() => setShowProductModal(false)}>
-                                Cancel
-                            </Button>
+                        <div className="flex items-center gap-3">
+                            <Button variant="ghost" className="font-bold text-xs uppercase tracking-widest" onClick={() => setSelectedProducts([])}>Clear</Button>
                             <Button
-                                className="flex-1 sm:flex-initial px-6 bg-[#1a1a1a] hover:bg-[#333] text-white"
+                                className="bg-black hover:bg-gray-800 text-white font-black px-8 h-10 uppercase tracking-wide shadow-lg shadow-black/10"
                                 disabled={selectedProducts.length === 0}
                                 onClick={addSelectedProducts}
                             >
-                                Add Selected
+                                Add to Order List
                             </Button>
                         </div>
-                    </div>
+                    </DialogFooter>
                 </DialogContent>
-            </Dialog >
-        </div >
+            </Dialog>
+        </div>
     )
 }
