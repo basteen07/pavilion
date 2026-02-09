@@ -1,0 +1,560 @@
+[
+  {
+    "id": 116,
+    "name": "Badminton Accessories",
+    "category_id": "69f8f0c1-69ac-48e8-a504-406f840a6436",
+    "tag_count": "0"
+  },
+  {
+    "id": 179,
+    "name": "Medals",
+    "category_id": "6739f292-da02-47d7-88ad-244a758d0cc8",
+    "tag_count": "0"
+  },
+  {
+    "id": 4,
+    "name": "Bats",
+    "category_id": "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+    "tag_count": "4"
+  },
+  {
+    "id": 138,
+    "name": "Weights - Dumbbells",
+    "category_id": "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+    "tag_count": "0"
+  },
+  {
+    "id": 181,
+    "name": "Shield",
+    "category_id": "6739f292-da02-47d7-88ad-244a758d0cc8",
+    "tag_count": "0"
+  },
+  {
+    "id": 96,
+    "name": "Ball",
+    "category_id": "8991c917-eec7-4f92-8b54-b7e8630a86ff",
+    "tag_count": "0"
+  },
+  {
+    "id": 146,
+    "name": "Dart",
+    "category_id": "bc2b304a-b5bc-4f97-8c25-8e0d0d351671",
+    "tag_count": "2"
+  },
+  {
+    "id": 162,
+    "name": "Trousers",
+    "category_id": "2c9fc528-6632-4f88-986d-eba317d4a00a",
+    "tag_count": "0"
+  },
+  {
+    "id": 90,
+    "name": "Pads",
+    "category_id": "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+    "tag_count": "2"
+  },
+  {
+    "id": 105,
+    "name": "Ball",
+    "category_id": "6c4d60e5-3bfb-47d8-be0d-6af7e364a055",
+    "tag_count": "0"
+  },
+  {
+    "id": 132,
+    "name": "Pickleball Paddle",
+    "category_id": "70416d08-b80b-40d0-98b0-0d3b0785f763",
+    "tag_count": "0"
+  },
+  {
+    "id": 174,
+    "name": "Boxing",
+    "category_id": "b36dcffb-3407-440a-9a3e-6fb6f2f0ea01",
+    "tag_count": "6"
+  },
+  {
+    "id": 107,
+    "name": "Ball",
+    "category_id": "1023866a-befa-4040-ac6b-fcafb0c44230",
+    "tag_count": "0"
+  },
+  {
+    "id": 134,
+    "name": "Ball Badminton Racket",
+    "category_id": "70416d08-b80b-40d0-98b0-0d3b0785f763",
+    "tag_count": "0"
+  },
+  {
+    "id": 144,
+    "name": "Carrom",
+    "category_id": "bc2b304a-b5bc-4f97-8c25-8e0d0d351671",
+    "tag_count": "5"
+  },
+  {
+    "id": 170,
+    "name": "Swimming Wear",
+    "category_id": "d4df70ea-bd6e-40c5-99b8-aa3b0b41fe09",
+    "tag_count": "0"
+  },
+  {
+    "id": 169,
+    "name": "Swimming Caps",
+    "category_id": "d4df70ea-bd6e-40c5-99b8-aa3b0b41fe09",
+    "tag_count": "0"
+  },
+  {
+    "id": 176,
+    "name": "Eyewear",
+    "category_id": "b36dcffb-3407-440a-9a3e-6fb6f2f0ea01",
+    "tag_count": "0"
+  },
+  {
+    "id": 163,
+    "name": "Sweater",
+    "category_id": "2c9fc528-6632-4f88-986d-eba317d4a00a",
+    "tag_count": "0"
+  },
+  {
+    "id": 168,
+    "name": "Swimming Goggles",
+    "category_id": "d4df70ea-bd6e-40c5-99b8-aa3b0b41fe09",
+    "tag_count": "0"
+  },
+  {
+    "id": 92,
+    "name": "Protective Gears",
+    "category_id": "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+    "tag_count": "8"
+  },
+  {
+    "id": 101,
+    "name": "Ball",
+    "category_id": "2da6fc64-c750-4b49-b9e8-2786745d2ee3",
+    "tag_count": "0"
+  },
+  {
+    "id": 93,
+    "name": "Practice",
+    "category_id": "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+    "tag_count": "3"
+  },
+  {
+    "id": 175,
+    "name": "Scoreboard",
+    "category_id": "b36dcffb-3407-440a-9a3e-6fb6f2f0ea01",
+    "tag_count": "0"
+  },
+  {
+    "id": 180,
+    "name": "Badges & Pins",
+    "category_id": "6739f292-da02-47d7-88ad-244a758d0cc8",
+    "tag_count": "0"
+  },
+  {
+    "id": 115,
+    "name": "Grip",
+    "category_id": "69f8f0c1-69ac-48e8-a504-406f840a6436",
+    "tag_count": "0"
+  },
+  {
+    "id": 114,
+    "name": "Strings",
+    "category_id": "69f8f0c1-69ac-48e8-a504-406f840a6436",
+    "tag_count": "0"
+  },
+  {
+    "id": 102,
+    "name": "Nets",
+    "category_id": "2da6fc64-c750-4b49-b9e8-2786745d2ee3",
+    "tag_count": "0"
+  },
+  {
+    "id": 97,
+    "name": "Nets",
+    "category_id": "8991c917-eec7-4f92-8b54-b7e8630a86ff",
+    "tag_count": "0"
+  },
+  {
+    "id": 167,
+    "name": "Clothing Accessories",
+    "category_id": "2c9fc528-6632-4f88-986d-eba317d4a00a",
+    "tag_count": "4"
+  },
+  {
+    "id": 108,
+    "name": "Balls",
+    "category_id": "04f8fd30-9fba-4595-a8ec-2f0ee544fc7f",
+    "tag_count": "0"
+  },
+  {
+    "id": 112,
+    "name": "Shuttlecock",
+    "category_id": "69f8f0c1-69ac-48e8-a504-406f840a6436",
+    "tag_count": "0"
+  },
+  {
+    "id": 109,
+    "name": "Nets",
+    "category_id": "04f8fd30-9fba-4595-a8ec-2f0ee544fc7f",
+    "tag_count": "0"
+  },
+  {
+    "id": 158,
+    "name": "Football Boot",
+    "category_id": "c5f032d2-47f0-4092-9508-9302807849fd",
+    "tag_count": "0"
+  },
+  {
+    "id": 156,
+    "name": "Jogging Shoe/Running Shoe",
+    "category_id": "c5f032d2-47f0-4092-9508-9302807849fd",
+    "tag_count": "0"
+  },
+  {
+    "id": 155,
+    "name": "Golf Shoes",
+    "category_id": "c5f032d2-47f0-4092-9508-9302807849fd",
+    "tag_count": "0"
+  },
+  {
+    "id": 118,
+    "name": "Rubber",
+    "category_id": "0d11b597-0290-4e21-b4a3-ac842d7e1698",
+    "tag_count": "0"
+  },
+  {
+    "id": 135,
+    "name": "Ball Badminton Accessories",
+    "category_id": "70416d08-b80b-40d0-98b0-0d3b0785f763",
+    "tag_count": "4"
+  },
+  {
+    "id": 133,
+    "name": "Pickleball Accessories",
+    "category_id": "70416d08-b80b-40d0-98b0-0d3b0785f763",
+    "tag_count": "0"
+  },
+  {
+    "id": 111,
+    "name": "Racket",
+    "category_id": "69f8f0c1-69ac-48e8-a504-406f840a6436",
+    "tag_count": "0"
+  },
+  {
+    "id": 127,
+    "name": "Tennis Ball",
+    "category_id": "4804a83b-a890-443c-9de3-f3d8fd686b66",
+    "tag_count": "0"
+  },
+  {
+    "id": 124,
+    "name": "Ball",
+    "category_id": "716d6d92-a299-4c1a-990e-23df701200fc",
+    "tag_count": "0"
+  },
+  {
+    "id": 123,
+    "name": "Squash Racket",
+    "category_id": "716d6d92-a299-4c1a-990e-23df701200fc",
+    "tag_count": "0"
+  },
+  {
+    "id": 128,
+    "name": "Strings",
+    "category_id": "4804a83b-a890-443c-9de3-f3d8fd686b66",
+    "tag_count": "0"
+  },
+  {
+    "id": 126,
+    "name": "Tennis Racket",
+    "category_id": "4804a83b-a890-443c-9de3-f3d8fd686b66",
+    "tag_count": "0"
+  },
+  {
+    "id": 98,
+    "name": "Accessories",
+    "category_id": "8991c917-eec7-4f92-8b54-b7e8630a86ff",
+    "tag_count": "2"
+  },
+  {
+    "id": 173,
+    "name": "Caps",
+    "category_id": "b36dcffb-3407-440a-9a3e-6fb6f2f0ea01",
+    "tag_count": "0"
+  },
+  {
+    "id": 149,
+    "name": "Wave Board",
+    "category_id": "173ed651-7bbc-4547-83a6-90e139a95b6f",
+    "tag_count": "0"
+  },
+  {
+    "id": 166,
+    "name": "Skin Fit",
+    "category_id": "2c9fc528-6632-4f88-986d-eba317d4a00a",
+    "tag_count": "0"
+  },
+  {
+    "id": 103,
+    "name": "Knee Pads",
+    "category_id": "2da6fc64-c750-4b49-b9e8-2786745d2ee3",
+    "tag_count": "0"
+  },
+  {
+    "id": 99,
+    "name": "Ball",
+    "category_id": "dc6d5409-457f-49ba-bf03-5d23a2a0b9b1",
+    "tag_count": "0"
+  },
+  {
+    "id": 161,
+    "name": "T-Shirts",
+    "category_id": "2c9fc528-6632-4f88-986d-eba317d4a00a",
+    "tag_count": "0"
+  },
+  {
+    "id": 121,
+    "name": "TT Table",
+    "category_id": "0d11b597-0290-4e21-b4a3-ac842d7e1698",
+    "tag_count": "0"
+  },
+  {
+    "id": 117,
+    "name": "Racket",
+    "category_id": "0d11b597-0290-4e21-b4a3-ac842d7e1698",
+    "tag_count": "0"
+  },
+  {
+    "id": 142,
+    "name": "Training Balls",
+    "category_id": "ecd0cc47-334c-421b-be16-c8ef925fd325",
+    "tag_count": "14"
+  },
+  {
+    "id": 152,
+    "name": "Recreational Games",
+    "category_id": "173ed651-7bbc-4547-83a6-90e139a95b6f",
+    "tag_count": "1"
+  },
+  {
+    "id": 113,
+    "name": "Nets",
+    "category_id": "69f8f0c1-69ac-48e8-a504-406f840a6436",
+    "tag_count": "0"
+  },
+  {
+    "id": 119,
+    "name": "Ply",
+    "category_id": "0d11b597-0290-4e21-b4a3-ac842d7e1698",
+    "tag_count": "0"
+  },
+  {
+    "id": 125,
+    "name": "Squash Accessories",
+    "category_id": "716d6d92-a299-4c1a-990e-23df701200fc",
+    "tag_count": "1"
+  },
+  {
+    "id": 153,
+    "name": "Cricket Shoes",
+    "category_id": "c5f032d2-47f0-4092-9508-9302807849fd",
+    "tag_count": "0"
+  },
+  {
+    "id": 157,
+    "name": "Basketball Shoe",
+    "category_id": "c5f032d2-47f0-4092-9508-9302807849fd",
+    "tag_count": "0"
+  },
+  {
+    "id": 147,
+    "name": "Fooseball Table",
+    "category_id": "bc2b304a-b5bc-4f97-8c25-8e0d0d351671",
+    "tag_count": "0"
+  },
+  {
+    "id": 120,
+    "name": "TT Ball",
+    "category_id": "0d11b597-0290-4e21-b4a3-ac842d7e1698",
+    "tag_count": "0"
+  },
+  {
+    "id": 100,
+    "name": "Accessories",
+    "category_id": "dc6d5409-457f-49ba-bf03-5d23a2a0b9b1",
+    "tag_count": "3"
+  },
+  {
+    "id": 136,
+    "name": "Fitness Accessories",
+    "category_id": "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+    "tag_count": "22"
+  },
+  {
+    "id": 150,
+    "name": "Foot Pump",
+    "category_id": "173ed651-7bbc-4547-83a6-90e139a95b6f",
+    "tag_count": "0"
+  },
+  {
+    "id": 139,
+    "name": "Yoga Mats",
+    "category_id": "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+    "tag_count": "0"
+  },
+  {
+    "id": 140,
+    "name": "Training Accessories",
+    "category_id": "ecd0cc47-334c-421b-be16-c8ef925fd325",
+    "tag_count": "13"
+  },
+  {
+    "id": 164,
+    "name": "Clothing T-shirt& Trousers set",
+    "category_id": "2c9fc528-6632-4f88-986d-eba317d4a00a",
+    "tag_count": "0"
+  },
+  {
+    "id": 137,
+    "name": "Fitness Balls",
+    "category_id": "06e3cfed-4d2b-42a6-bd7d-0862b83815f8",
+    "tag_count": "3"
+  },
+  {
+    "id": 95,
+    "name": "Cricket Kit",
+    "category_id": "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+    "tag_count": "1"
+  },
+  {
+    "id": 159,
+    "name": "Running Spikes",
+    "category_id": "c5f032d2-47f0-4092-9508-9302807849fd",
+    "tag_count": "0"
+  },
+  {
+    "id": 160,
+    "name": "Shoe Accessories",
+    "category_id": "c5f032d2-47f0-4092-9508-9302807849fd",
+    "tag_count": "2"
+  },
+  {
+    "id": 172,
+    "name": "Autograph Bats",
+    "category_id": "b36dcffb-3407-440a-9a3e-6fb6f2f0ea01",
+    "tag_count": "0"
+  },
+  {
+    "id": 141,
+    "name": "Practice Bats",
+    "category_id": "ecd0cc47-334c-421b-be16-c8ef925fd325",
+    "tag_count": "2"
+  },
+  {
+    "id": 122,
+    "name": "Table Tennis Accessories",
+    "category_id": "0d11b597-0290-4e21-b4a3-ac842d7e1698",
+    "tag_count": "1"
+  },
+  {
+    "id": 94,
+    "name": "Accessories",
+    "category_id": "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+    "tag_count": "4"
+  },
+  {
+    "id": 154,
+    "name": "Non Marking Shoes",
+    "category_id": "c5f032d2-47f0-4092-9508-9302807849fd",
+    "tag_count": "0"
+  },
+  {
+    "id": 131,
+    "name": "Kitbag",
+    "category_id": "70416d08-b80b-40d0-98b0-0d3b0785f763",
+    "tag_count": "3"
+  },
+  {
+    "id": 177,
+    "name": "Services",
+    "category_id": "b36dcffb-3407-440a-9a3e-6fb6f2f0ea01",
+    "tag_count": "0"
+  },
+  {
+    "id": 104,
+    "name": "Volleyball Accessories",
+    "category_id": "2da6fc64-c750-4b49-b9e8-2786745d2ee3",
+    "tag_count": "0"
+  },
+  {
+    "id": 106,
+    "name": "Nets",
+    "category_id": "6c4d60e5-3bfb-47d8-be0d-6af7e364a055",
+    "tag_count": "0"
+  },
+  {
+    "id": 5,
+    "name": "Gloves",
+    "category_id": "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+    "tag_count": "3"
+  },
+  {
+    "id": 171,
+    "name": "Swimming Accessories",
+    "category_id": "d4df70ea-bd6e-40c5-99b8-aa3b0b41fe09",
+    "tag_count": "14"
+  },
+  {
+    "id": 178,
+    "name": "Trophies",
+    "category_id": "6739f292-da02-47d7-88ad-244a758d0cc8",
+    "tag_count": "0"
+  },
+  {
+    "id": 145,
+    "name": "Chess",
+    "category_id": "bc2b304a-b5bc-4f97-8c25-8e0d0d351671",
+    "tag_count": "3"
+  },
+  {
+    "id": 129,
+    "name": "Grip",
+    "category_id": "4804a83b-a890-443c-9de3-f3d8fd686b66",
+    "tag_count": "0"
+  },
+  {
+    "id": 148,
+    "name": "Skates",
+    "category_id": "173ed651-7bbc-4547-83a6-90e139a95b6f",
+    "tag_count": "4"
+  },
+  {
+    "id": 130,
+    "name": "Tennis Accessories",
+    "category_id": "4804a83b-a890-443c-9de3-f3d8fd686b66",
+    "tag_count": "4"
+  },
+  {
+    "id": 165,
+    "name": "Shorts",
+    "category_id": "2c9fc528-6632-4f88-986d-eba317d4a00a",
+    "tag_count": "0"
+  },
+  {
+    "id": 143,
+    "name": "Support & Splints",
+    "category_id": "3bf0b879-941b-4dd3-9309-1369a90c8b5f",
+    "tag_count": "13"
+  },
+  {
+    "id": 151,
+    "name": "Track & Field Equipment",
+    "category_id": "173ed651-7bbc-4547-83a6-90e139a95b6f",
+    "tag_count": "11"
+  },
+  {
+    "id": 91,
+    "name": "Cricket Balls",
+    "category_id": "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+    "tag_count": "2"
+  }
+]

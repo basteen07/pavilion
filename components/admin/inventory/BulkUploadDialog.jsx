@@ -85,7 +85,7 @@ export function BulkUploadDialog({ open, onOpenChange }) {
 
             // Define Columns
             const columns = [
-                { header: 'Product Handle', key: 'handle', width: 25 },
+                { header: 'Product Handle (Optional)', key: 'handle', width: 25 },
                 { header: 'Product Name *', key: 'name', width: 40 },
                 { header: 'SKU *', key: 'sku', width: 20 },
                 { header: 'Option1 Name', key: 'opt1n', width: 15 },
@@ -100,10 +100,10 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                 { header: 'Recommended Price', key: 'rec', width: 15 },
                 { header: 'Shop Price', key: 'shop', width: 15 },
                 { header: 'Collection', key: 'coll', width: 20 },
-                { header: 'Category', key: 'cat', width: 20 },
+                { header: 'Category *', key: 'cat', width: 20 },
                 { header: 'Sub-Category', key: 'sub', width: 20 },
                 { header: 'Tag', key: 'tag', width: 20 },
-                { header: 'Brand', key: 'brand', width: 20 },
+                { header: 'Brand *', key: 'brand', width: 20 },
                 { header: 'Description', key: 'desc', width: 50 },
                 { header: 'Short Description', key: 'short_desc', width: 30 },
                 { header: 'HSN Code', key: 'hsn', width: 15 },
@@ -128,7 +128,8 @@ export function BulkUploadDialog({ open, onOpenChange }) {
             templateSheet.getCell('A1').note = {
                 texts: [
                     { font: { bold: true }, text: 'Variant Grouping:\n' },
-                    { text: 'Use the same "Product Handle" for multiple rows to group them as variants of the same product.' }
+                    { text: '1. (Recommended) Use the same "Product Handle" for variants.\n' },
+                    { text: '2. (Alternative) Use the same "Product Name" (rows must be together) to group variants automatically if handle is empty.' }
                 ]
             }
 
@@ -301,6 +302,10 @@ export function BulkUploadDialog({ open, onOpenChange }) {
             masterSheet.getColumn(32).values = ['Units', ...unitList] // Col AF
             workbook.definedNames.add(`MasterLists!$AF$2:$AF$${unitList.length + 1}`, 'UnitList')
 
+            // Empty List (for failed lookups)
+            masterSheet.getCell('AG2').value = '- No Matches -'
+            workbook.definedNames.add('MasterLists!$AG$2:$AG$2', 'EmptyList')
+
             // Apply Data Validation to 100 rows
             for (let i = 2; i <= 101; i++) {
                 // Collection (Column O)
@@ -313,41 +318,44 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                     error: 'Please select a collection from the list'
                 }
 
-                // Category (Column P) - Cascading with fallback and error handling
+                // Category (Column P) - Cascading
                 templateSheet.getCell(`P${i}`).dataValidation = {
                     type: 'list',
                     allowBlank: true,
-                    formulae: [`=IF(OR(O${i}="", ISERROR(VLOOKUP(O${i}, CollectionCategoryMap, 2, FALSE))), AllCategoryList, INDIRECT(VLOOKUP(O${i}, CollectionCategoryMap, 2, FALSE)))`],
+                    formulae: [`=IF(O${i}="", AllCategoryList, IF(ISERROR(VLOOKUP(O${i}, CollectionCategoryMap, 2, FALSE)), EmptyList, INDIRECT(VLOOKUP(O${i}, CollectionCategoryMap, 2, FALSE))))`],
                     showErrorMessage: true,
                     errorTitle: 'Invalid Category',
                     error: 'Please select a category from the list'
                 }
 
-                // Sub-Category (Column Q) - Cascading with fallback and error handling
+                // Sub-Category (Column Q) - Cascading
                 templateSheet.getCell(`Q${i}`).dataValidation = {
                     type: 'list',
                     allowBlank: true,
-                    formulae: [`=IF(OR(P${i}="", ISERROR(VLOOKUP(P${i}, CategorySubCategoryMap, 2, FALSE))), AllSubCategoryList, INDIRECT(VLOOKUP(P${i}, CategorySubCategoryMap, 2, FALSE)))`],
+                    formulae: [`=IF(P${i}="", AllSubCategoryList, IF(ISERROR(VLOOKUP(P${i}, CategorySubCategoryMap, 2, FALSE)), EmptyList, INDIRECT(VLOOKUP(P${i}, CategorySubCategoryMap, 2, FALSE))))`],
                     showErrorMessage: true,
                     errorTitle: 'Invalid Sub-Category',
                     error: 'Please select a sub-category from the list'
                 }
 
-                // Tag (Column R) - Cascading with fallback and error handling
+                // Tag (Column R) - Cascading
                 templateSheet.getCell(`R${i}`).dataValidation = {
                     type: 'list',
                     allowBlank: true,
-                    formulae: [`=IF(OR(Q${i}="", ISERROR(VLOOKUP(Q${i}, SubCategoryTagMap, 2, FALSE))), AllTagList, INDIRECT(VLOOKUP(Q${i}, SubCategoryTagMap, 2, FALSE)))`],
+                    formulae: [`=IF(Q${i}="", AllTagList, IF(ISERROR(VLOOKUP(Q${i}, SubCategoryTagMap, 2, FALSE)), EmptyList, INDIRECT(VLOOKUP(Q${i}, SubCategoryTagMap, 2, FALSE))))`],
                     showErrorMessage: true,
                     errorTitle: 'Invalid Tag',
                     error: 'Please select a tag from the list'
                 }
 
-                // Brand (Column S) - Cascading based on Sub-Category then Category
+                // Brand (Column S) - Cascading (Sub-Cat -> Cat -> All)
+                // If Sub-Cat selected: Must use Sub-Cat brands (or Empty)
+                // If Cat selected: Must use Cat brands (or Empty)
+                // If neither: All Brands
                 templateSheet.getCell(`S${i}`).dataValidation = {
                     type: 'list',
                     allowBlank: true,
-                    formulae: [`=IF(NOT(ISERROR(VLOOKUP(Q${i}, SubCategoryBrandMap, 2, FALSE))), INDIRECT(VLOOKUP(Q${i}, SubCategoryBrandMap, 2, FALSE)), IF(NOT(ISERROR(VLOOKUP(P${i}, CategoryBrandMap, 2, FALSE))), INDIRECT(VLOOKUP(P${i}, CategoryBrandMap, 2, FALSE)), BrandList))`],
+                    formulae: [`=IF(Q${i}<>"", IF(ISERROR(VLOOKUP(Q${i}, SubCategoryBrandMap, 2, FALSE)), EmptyList, INDIRECT(VLOOKUP(Q${i}, SubCategoryBrandMap, 2, FALSE))), IF(P${i}<>"", IF(ISERROR(VLOOKUP(P${i}, CategoryBrandMap, 2, FALSE)), EmptyList, INDIRECT(VLOOKUP(P${i}, CategoryBrandMap, 2, FALSE))), BrandList))`],
                     showErrorMessage: true,
                     errorTitle: 'Invalid Brand',
                     error: 'Please select a brand from the list'
@@ -405,10 +413,11 @@ export function BulkUploadDialog({ open, onOpenChange }) {
             updated: 0,
             variants_created: 0,
             variants_updated: 0,
+            skipped: 0,
             errors: []
         };
 
-        const BATCH_SIZE = 50;
+        const BATCH_SIZE = 500;
         const totalRows = gridData.length;
 
         try {
@@ -423,6 +432,7 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                 aggregateResults.updated += (response.updated || 0);
                 aggregateResults.variants_created += (response.variants_created || 0);
                 aggregateResults.variants_updated += (response.variants_updated || 0);
+                aggregateResults.skipped += (response.skipped || 0);
                 if (response.errors) {
                     aggregateResults.errors.push(...response.errors);
                 }
@@ -549,10 +559,11 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                         updated: 0,
                         variants_created: 0,
                         variants_updated: 0,
+                        skipped: 0,
                         errors: []
                     };
 
-                    const BATCH_SIZE = 50;
+                    const BATCH_SIZE = 500;
 
                     for (let i = 0; i < totalRows; i += BATCH_SIZE) {
                         const batch = mappedData.slice(i, i + BATCH_SIZE);
@@ -565,6 +576,7 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                         aggregateResults.updated += (response.updated || 0);
                         aggregateResults.variants_created += (response.variants_created || 0);
                         aggregateResults.variants_updated += (response.variants_updated || 0);
+                        aggregateResults.skipped += (response.skipped || 0);
                         if (response.errors) {
                             aggregateResults.errors.push(...response.errors);
                         }
@@ -627,8 +639,8 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                         <Info className="h-4 w-4 text-blue-600" />
                         <AlertTitle className="text-blue-800">Instructions</AlertTitle>
                         <AlertDescription className="text-blue-700 text-xs">
-                            <p><strong>Supports product variants!</strong> Group rows by Product Handle to create multi-variant products (e.g. same T-Shirt in different sizes/colors).</p>
-                            <p className="mt-1">Duplicate SKUs will update existing products & variants. Download template for format.</p>
+                            <p><strong>Auto Variant Grouping!</strong> Same Product Name rows are grouped. Duplicate SKUs are skipped for safety.</p>
+                            <p className="mt-1">Group variants by Name or Handle. Highly scalable batch processing.</p>
                         </AlertDescription>
                     </Alert>
 
@@ -673,13 +685,18 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                                 {uploading && (
                                     <div className="mt-8 space-y-3">
                                         <div className="flex justify-between text-xs font-medium text-gray-600">
-                                            <span>Processing products...</span>
-                                            <span>{uploadProgress}%</span>
+                                            <span>Processing...</span>
+                                            <span className="text-red-600">{uploadProgress}%</span>
                                         </div>
-                                        <Progress value={uploadProgress} className="h-2" />
-                                        <p className="text-[10px] text-gray-500 text-center italic">
-                                            Processed {processedTotal} rows...
-                                        </p>
+                                        <Progress value={uploadProgress} className="h-2 bg-gray-100" indicatorClassName="bg-red-600 transition-all duration-300" />
+                                        <div className="flex justify-between items-center px-1">
+                                            <p className="text-[10px] text-gray-500 italic">
+                                                Rows: {processedTotal}
+                                            </p>
+                                            <p className="text-[10px] font-bold text-gray-700">
+                                                {uploadProgress === 100 ? 'Finalizing...' : 'Please do not close'}
+                                            </p>
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -895,6 +912,10 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                                 <div className="bg-cyan-50 p-3 rounded-lg border border-cyan-100 text-center">
                                     <p className="text-xl font-bold text-cyan-700">{results.variants_updated || 0}</p>
                                     <p className="text-[10px] text-cyan-600 uppercase font-semibold">Updated Variants</p>
+                                </div>
+                                <div className="bg-amber-50 p-3 rounded-lg border border-amber-100 text-center col-span-2">
+                                    <p className="text-xl font-bold text-amber-700">{results.skipped || 0}</p>
+                                    <p className="text-[10px] text-amber-600 uppercase font-semibold">Skipped (Duplicate SKU)</p>
                                 </div>
                             </div>
 

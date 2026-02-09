@@ -1,0 +1,52 @@
+--- EXCEL HEADERS ---
+['Product Handle (Optional)', 'Product Name *', 'SKU *', 'Option1 Name', 'Option1 Value', 'Option2 Name', 'Option2 Value', 'Size', 'Color', 'MRP Price *', 'Dealer Price', 'Counter Price', 'Recommended Price', 'Shop Price', 'Collection', 'Category *', 'Sub-Category', 'Tag', 'Brand *', 'Description', 'Short Description', 'HSN Code', 'Tax Class', 'Buy URL', 'Unit/UoM', 'Images']
+
+First row of data:
+[{'Product Handle (Optional)': 'sample-product-1', 'Product Name *': 'Sample Product T-Shirt', 'SKU *': 'SKU-SAMPLE-001', 'Option1 Name': 'Size', 'Option1 Value': 'L', 'Option2 Name': 'Color', 'Option2 Value': 'Blue', 'Size': 'L', 'Color': 'Blue', 'MRP Price *': 1500, 'Dealer Price': 1000, 'Counter Price': 0, 'Recommended Price': 0, 'Shop Price': 0, 'Collection': 'FITNESS & TRAINING', 'Category *': 'Badminton', 'Sub-Category': nan, 'Tag': nan, 'Brand *': nan, 'Description': 'This is a sample description.', 'Short Description': 'Sample Short Desc', 'HSN Code': 999999, 'Tax Class': 18, 'Buy URL': nan, 'Unit/UoM': 1, 'Images': nan}]
+
+--- DOCX CONTENT ---
+Paragraphs:
+0: Product Description:
+1: Butterfly Diode V FL Table Tennis Ply is designed for heavy backspin play and powerful attacks.
+2: The all-wood construction provides a very reliable defense and it is recommended for the defensive-minded player who is looking for the opportunity to attack.
+3: This blade is designed to balance between heavy backspin play and powerful attacks
+4: The Diode V has the versatility to absorb attacks, execute heavy chops and end points with power.
+5: Type: Defensive Shakehand
+6: Reaction Property: 10.6
+7: Vibration Property: 7.9
+8: Structure: 5-ply wood
+9: Blade Thickness: 5.7 mm
+10: Head Size: 165×156 mm
+11: Handle size: FL: 100×24×34 mm
+12: Made in Japan.
+13: Product Features:
+14: Technical Details:
+15: *Dimensions mentioned are approximate values.
+16: Structure - Structure refers to the number of layers of wood/composite material in the blade.
+18: International Delivery:
+19: This product is available for international delivery. Add the product to the shopping cart, choose country and zip code to find out delivery charges.
+20: Please note that you are liable for all duties, taxes, CESS or any other charges levied (if any) by the destination country in which goods are shipped, to take delivery.
+21: Warranty and Support:
+22: No warranty is provided on the product by the manufacturer or Sportskhel.com as table tennis ply are subjected to wear & tear.
+23: Disclaimer:
+24: Product color may slightly vary due to photographic lighting sources or your monitor settings.
+25: TT ply handle color varies due to natural shade of wood.
+26: Lifespan of a table tennis ply depends upon usage.
+27: Return Policy:
+28: No return policy. Please refer terms & conditions for more information.
+
+Tables:
+Table 0:
+['Product name', 'Diode V FL']
+['Brand name', 'Butterfly']
+['Code/Model No', 'FL: 36961']
+['Blade type', 'Defensive Shakehand']
+['Handle grip', 'Flare']
+['Structure', '5-ply wood']
+['Head Shape', 'Round']
+Table 1:
+['Reaction Property', '10.6']
+['Vibration Property', '7.9']
+['Blade Thickness', '5.7 mm']
+['Head Size', '165×156 mm']
+['Handle Size', 'FL: 100×24×34 mm']

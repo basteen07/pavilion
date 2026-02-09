@@ -39,6 +39,16 @@ PRODUCTS TABLE COLUMNS:
   gst_percentage: numeric NULLABLE DEFAULT 18
   price_updated_at: timestamp without time zone NULLABLE 
   handle: text NULLABLE 
+  color: text NULLABLE 
+  option1_name: text NULLABLE 
+  option1_value: text NULLABLE 
+  option2_name: text NULLABLE 
+  option2_value: text NULLABLE 
+  mrp_updated_at: timestamp with time zone NULLABLE 
+  dealer_price_updated_at: timestamp with time zone NULLABLE 
+  counter_price_updated_at: timestamp with time zone NULLABLE 
+  recommended_price_updated_at: timestamp with time zone NULLABLE 
+  shop_price_updated_at: timestamp with time zone NULLABLE 
 
 PRODUCTS TABLE INDEXES:
 -----------------------
@@ -55,9 +65,9 @@ PRODUCTS TABLE INDEXES:
 
 VARIANT-RELATED TABLES:
 -----------------------
-  product_variants
   products_with_default_variant
   product_all_variants
+  product_variants
 
 OPTION-RELATED TABLES:
 ----------------------
@@ -71,4 +81,4 @@ SAMPLE PRODUCTS WITH VARIANTS:
 ------------------------------
   No products with variants found
 
-TOTAL PRODUCTS: 1001
+TOTAL PRODUCTS: 0

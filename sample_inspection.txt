@@ -1,0 +1,97 @@
+
+--- FILE: c:\Users\dfuser\Desktop\Pavilion Structure (Document & Images)\Fitness Training\Fitness Equipment\Fitness Accessories\Fitness Accessories.docx ---
+Paragraphs (first 10):
+0: Product Description:
+1: Triumph Pro KB 55 Sports Bag is made from high-quality, durable materials often a tough polyester or nylon blend to withstand wear and tear from heavy use.
+2: KB 55 sports bag is equipped with multiple pockets and compartments to keep your items organized, such as separate shoe compartments, zippered side pockets, and a main compartment for larger gear.
+3: Triumph Pro KB 55 Bag includes breathable mesh panels to reduce odor and moisture buildup, especially in the shoe compartment or wet gear sections.
+4: Adjustable, padded shoulder strap that reduces strain, allowing for easier carrying over long distances.
+5: Triumph Pro KB 55 Sports Bag offers the option to carry the bag by hand with strong, reinforced handles, or on your shoulder, depending on preference.
+6: Country of Origin:  India.
+7: Product Features:
+8: International Delivery:
+9: This product is available for international delivery. Add the product to the shopping cart, choose country and zip code to find out delivery charges.
+
+Tables:
+Table 0:
+['Product name', 'Pro KB 55']
+['Brand name', 'Triumph']
+['Product Type', 'Gym Bag or Sports Bag or Trainning Bag.']
+['Material', 'Polyester']
+['Carrying Type', 'Normal']
+
+--- FILE: c:\Users\dfuser\Desktop\Pavilion Structure (Document & Images)\Individual Games\Badminton\Shuttlecock\Shuttlecock.docx ---
+Paragraphs (first 10):
+0: Product Description:
+1: Yonex Mavis 600 Green Cap Nylon Shuttlecock (Yellow) gives an accurate and durable performance with a traditional feel.
+2: Yonex precision MAVIS Nylon shuttlecocks are the closest you can get to traditional feathers.
+3: The WING RIB design utilizes air flow through the shuttlecock to restore shape quickly on impact.
+4: Yonex Mavis 600 shuttlecock is based on flight dynamics, this original design grants stable flight, contrary to conventional models that restore shape via stiff construction.
+5: The color of the tube cap is green which is best suited for temperatures 22°c -33°c giving slow speed.
+6: Four to five times more durability than an ordinary nylon shuttlecock makes the Yonex Mavis series the most cost-effective choice for practice sessions.
+7: Each box contains 6 shuttlecocks.
+8: Type: Nylon.
+9: Color: Yellow.
+
+Tables:
+Table 0:
+['Product name', 'Mavis 600']
+['Brand name', 'Yonex']
+['Type', 'Nylon']
+['Color', 'Yellow']
+['Pack of', '6 - Pieces in a box']
+['Colour of tube cap', 'Green']
+['Speed', 'Slow']
+
+--- FILE: c:\Users\dfuser\Desktop\Pavilion Structure (Document & Images)\More\Shoes\Cricket Shoes\Cricket Shoes.docx ---
+Paragraphs (first 10):
+0: Product Description:
+1: Skechers 214205ID Cricket Shoes White Blue is specially developed for players who want to excel in their cricketing skills.
+2: Skechers shoes which are well know for lifestyle shoes models has now come up with Skechers cricket shoes.
+3: The upper is made with high-quality microfiber PU for long-lasting durability.
+4: Skechers 214205ID cricket shoes has strong upper construction ensures the shoes survive tough match conditions.
+5: A secure lace-up front design provides a better fit for confident footwork.
+6: The reinforced toe area adds extra protection during long batting sessions.
+7: Its supportive midsole improves energy return to help boost agility on the field.
+8: Players experience better stability and comfort even in extended innings.
+9: Skechers cricket shoes is an ideal choice for club-level and professional cricketers.
+
+Tables:
+Table 0:
+['Product name', '214205ID']
+['Brand name', 'Skechers']
+['Color option', 'White Blue']
+['Style', 'Rubber Stud']
+Table 1:
+['Size - UK Size (Indian)', '3, 4, 5, 6, 7, 8, 9, 10, 11']
+
+--- FILE: c:\Users\dfuser\Desktop\Pavilion Structure (Document & Images)\Team Sports\Ball Games\Football\Football (Ball)\Football (Ball).docx ---
+Paragraphs (first 10):
+0: Product Description:
+1: Cosco Platina football is FIFA Approved football.
+2: They pass 7 Rigorous Test under demanding conditions to ensure that ball retains its shape and size for the duration of a match to get FIFA approval.
+3: These Balls are made with Best Japanese P.U. material of 1.7mm.
+4: Cosco football size 5.
+5: Cosco football size 5 price is very economical.
+6: Panel: 32.
+7: Cosco platina football bladder: Latex.
+8: Backing: 4 Poly Cotton.
+9: Size: 68.5~69.5cm.
+
+Tables:
+Table 0:
+['<img - Cosco_Platino_Football_Features_1_E.jpg>', "CONSISTENT CIRCUMFERENCE:\nThe size of the Cosco football meet defined standards. To ensure the balls are the same size throughout the game. The ball's radius is measured at many points. The circumference is calculated to ensure the ball is consistent and within the limits at every point."]
+['<img - Cosco_Platino_Football_Features_2_E.jpg>', 'PERMANENT ROUNDNESS:\nIf a ball is not completely round, it will not roll along the ground in a natural way or fly through the air as expected. This implies that a shot, even if and when exactly targeted at the goal, may miss the goal. To check on the roundness, the ball is measured on 16 different spots, after which the average diameter is calculated.']
+['<img - Cosco_Platino_Football_Features_3_E.jpg>', 'UNIFORM REBOUND:\nConsistent rebound is essential for players to ensure the ball behaves as expected when trying to get the ball under control with chest, head or foot. The ball maintains its shape and has a good rebound quality while you play.']
+['<img - Cosco_Platino_Football_Features_4_E.jpg>', 'MINIMAL WATER ABSORPTION:\nIn order to ensure that the ball keeps the same playing performance in wet weather conditions as with dry conditions, there is a special FIFA Water Absorption Test. With this test the ball, whilst continuously being turned, is pressed 250 times in a water-filled container. The ball should not absorb more than 10% of the water to achieve a pass.']
+['<img - Cosco_Platino_Football_Features_5_E.jpg>', 'PERFECT WEIGHT:\nThe weight of a football is very important, too light and you cannot control it, too heavy and players take an increased risk of injury. The weight must fall within the specified range as\xa0420-445 grams.']
+['<img - Cosco_Platino_Football_Features_6_E.jpg>', 'MINIMAL PRESSURE LOSS:\nPressure in a football must stay constant throughout a match. Imagine if you had to keep stopping the game to re-inflate the match ball, it would take hours to complete a game. After 72 hours it must not have lost more than a specified percentage of its air as Max loss 20%.']
+['<img - Cosco_Platino_Football_Features_7_E.jpg>', 'SHAPE & SIZE RETENTION:\nEnsures the ball keeps it shape, pressure and circumference. The valve and seams must remain intact and undamaged.\xa0Only a minimum change in form, size and air pressure is permitted.']
+Table 1:
+['Product name', 'Platina']
+['Brand name', 'COSCO']
+['Color option', 'White-Red-Black']
+['Material', 'PU']
+Table 2:
+['Product size', 'Size 5']
+['No. of panel', '32']

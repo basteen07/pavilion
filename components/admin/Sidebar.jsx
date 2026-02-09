@@ -152,6 +152,18 @@ const data = {
                 },
             ],
         },
+        {
+            title: "Reports",
+            url: "#",
+            icon: FileText,
+            items: [
+                {
+                    title: "Price List",
+                    url: "/admin/reports/price-list",
+                    icon: FileText,
+                },
+            ],
+        },
     ],
     cms: [
         {
