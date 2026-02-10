@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { ImageUploader } from '@/components/ui/image-uploader'
+import { ImageUploader } from '@/components/admin/ImageUploader' // Changed import
 import { toast } from 'sonner'
 import { Plus, Edit, Trash2 } from 'lucide-react'
 
@@ -91,9 +91,16 @@ export function BrandManager() {
         setEditingBrand(brand)
         setSelectedCategoryId(brand?.category_id?.toString() || '')
         setSelectedSubCategoryId(brand?.sub_category_id?.toString() || '')
-        setBannerUrl(brand?.image_url || '')
-        setLogoUrl(brand?.logo_url || '')
+        setBannerUrl(brand?.image_url || null) // Changed from empty string to null/object
+        setLogoUrl(brand?.logo_url || null) // Changed from empty string to null/object
         setIsModalOpen(true)
+    }
+
+    // Helper to get image URL safely
+    const getImageUrl = (img) => {
+        if (!img) return ''
+        if (typeof img === 'object') return img.url || ''
+        return img
     }
 
     const handleSave = (e) => {
@@ -169,13 +176,21 @@ export function BrandManager() {
                     <Card key={brand.id} className="overflow-hidden group hover:shadow-md transition-shadow">
                         <div className="aspect-video bg-gray-100 relative">
                             {brand.image_url ? (
-                                <img src={brand.image_url} alt={brand.name} className="w-full h-full object-cover" />
+                                <img
+                                    src={getImageUrl(brand.image_url)}
+                                    alt={brand.name}
+                                    className="w-full h-full object-cover"
+                                />
                             ) : (
                                 <div className="flex items-center justify-center h-full text-gray-400">No Banner</div>
                             )}
                             {brand.logo_url && (
                                 <div className="absolute bottom-2 left-2 w-12 h-12 bg-white rounded-lg shadow p-1">
-                                    <img src={brand.logo_url} alt="" className="w-full h-full object-contain" />
+                                    <img
+                                        src={getImageUrl(brand.logo_url)}
+                                        alt=""
+                                        className="w-full h-full object-contain"
+                                    />
                                 </div>
                             )}
                         </div>

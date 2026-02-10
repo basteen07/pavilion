@@ -9,13 +9,13 @@ import TextAlign from '@tiptap/extension-text-align';
 import Color from '@tiptap/extension-color';
 import { TextStyle } from '@tiptap/extension-text-style';
 import Highlight from '@tiptap/extension-highlight';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import {
     Bold, Italic, Underline as UnderlineIcon,
     List, ListOrdered, Quote, Heading1, Heading2, Heading3,
     AlignLeft, AlignCenter, AlignRight, AlignJustify,
     Link as LinkIcon, Image as ImageIcon, Undo, Redo,
-    Code, Eraser, Type
+    Code, Eraser
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,37 +24,10 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import ImageUploader from '@/components/admin/ImageUploader';
 
-const MenuBar = ({ editor }) => {
-    const addImage = useCallback(() => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.onchange = async () => {
-            if (input.files?.length) {
-                const file = input.files[0];
-                const formData = new FormData();
-                formData.append('file', file);
-
-                try {
-                    const token = localStorage.getItem('token');
-                    const res = await fetch('/api/upload', {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${token}` },
-                        body: formData,
-                    });
-                    const data = await res.json();
-                    if (data.url) {
-                        editor.chain().focus().setImage({ src: data.url }).run();
-                    }
-                } catch (error) {
-                    console.error('Image upload failed', error);
-                }
-            }
-        };
-        input.click();
-    }, [editor]);
-
+const MenuBar = ({ editor, onImageClick }) => {
     const setLink = useCallback(() => {
         const previousUrl = editor.getAttributes('link').href;
         const url = window.prompt('URL', previousUrl);
@@ -89,7 +62,7 @@ const MenuBar = ({ editor }) => {
         { icon: AlignRight, label: 'Right', action: () => editor.chain().focus().setTextAlign('right').run(), active: { textAlign: 'right' } },
         { type: 'separator' },
         { icon: LinkIcon, label: 'Link', action: setLink, active: 'link' },
-        { icon: ImageIcon, label: 'Image', action: addImage },
+        { icon: ImageIcon, label: 'Image', action: onImageClick },
         { type: 'separator' },
         { icon: Undo, label: 'Undo', action: () => editor.chain().focus().undo().run() },
         { icon: Redo, label: 'Redo', action: () => editor.chain().focus().redo().run() },
@@ -125,6 +98,9 @@ const MenuBar = ({ editor }) => {
 };
 
 export default function TiptapEditor({ value, onChange, className }) {
+    const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+    const [uploadedImage, setUploadedImage] = useState(null);
+
     const editor = useEditor({
         immediatelyRender: false,
         extensions: [
@@ -148,10 +124,42 @@ export default function TiptapEditor({ value, onChange, className }) {
         },
     });
 
+    const handleInsertImage = () => {
+        if (uploadedImage) {
+            const url = typeof uploadedImage === 'object' ? uploadedImage.url : uploadedImage;
+            const alt = typeof uploadedImage === 'object' ? uploadedImage.alt : '';
+
+            if (url) {
+                editor.chain().focus().setImage({ src: url, alt }).run();
+            }
+            setUploadedImage(null);
+            setIsImageModalOpen(false);
+        }
+    };
+
     return (
         <div className={`border rounded-md overflow-hidden bg-white shadow-sm ring-1 ring-gray-200 ${className}`}>
-            <MenuBar editor={editor} />
+            <MenuBar editor={editor} onImageClick={() => setIsImageModalOpen(true)} />
             <EditorContent editor={editor} />
+
+            <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Insert Image</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <ImageUploader
+                            value={uploadedImage}
+                            onChange={setUploadedImage}
+                            label="Upload Image"
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsImageModalOpen(false)}>Cancel</Button>
+                        <Button onClick={handleInsertImage} disabled={!uploadedImage}>Insert</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import { apiCall } from '@/lib/api-client'
 import Image from 'next/image'
 import Link from 'next/link'
+import { getImageUrl } from '@/lib/utils'
 
 export function HeroScroller({ initialBanners = [] }) {
     const [current, setCurrent] = useState(0)
@@ -55,7 +56,7 @@ export function HeroScroller({ initialBanners = [] }) {
                 >
                     <div className="absolute inset-0">
                         <Image
-                            src={slide.desktop_image_url}
+                            src={getImageUrl(slide.desktop_image_url)}
                             alt={slide.title}
                             fill
                             className="object-cover hidden md:block"
@@ -63,7 +64,7 @@ export function HeroScroller({ initialBanners = [] }) {
                             sizes="100vw"
                         />
                         <Image
-                            src={slide.mobile_image_url || slide.desktop_image_url}
+                            src={getImageUrl(slide.mobile_image_url || slide.desktop_image_url)}
                             alt={slide.title}
                             fill
                             className="object-cover md:hidden"

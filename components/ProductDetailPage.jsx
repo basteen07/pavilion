@@ -23,6 +23,7 @@ import { apiCall } from '@/lib/api-client'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useB2BCart } from '@/components/providers/B2BCartProvider'
 import { EnquiryModal } from '@/components/product/EnquiryModal'
+import { getImageUrl } from '@/lib/utils'
 
 
 export default function ProductDetailPage({ productSlug }) {
@@ -104,8 +105,8 @@ export default function ProductDetailPage({ productSlug }) {
 
   // Normalize
   images = Array.isArray(images) ? images.map(img => {
-    if (typeof img === 'string') return { image_url: img }
-    return img
+    if (typeof img === 'string') return { image_url: getImageUrl(img) }
+    return { ...img, image_url: getImageUrl(img.image_url) }
   }).filter(img => img && img.image_url) : []
 
   if (images.length === 0) {
@@ -120,8 +121,8 @@ export default function ProductDetailPage({ productSlug }) {
       } catch (e) { }
 
       const normMain = Array.isArray(mainImages) ? mainImages.map(img => {
-        if (typeof img === 'string') return { image_url: img }
-        return img
+        if (typeof img === 'string') return { image_url: getImageUrl(img) }
+        return { ...img, image_url: getImageUrl(img.image_url) }
       }).filter(img => img && img.image_url) : []
 
       if (normMain.length > 0) images = normMain

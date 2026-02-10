@@ -92,6 +92,10 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                 { header: 'Option1 Value', key: 'opt1v', width: 15 },
                 { header: 'Option2 Name', key: 'opt2n', width: 15 },
                 { header: 'Option2 Value', key: 'opt2v', width: 15 },
+                { header: 'Option3 Name', key: 'opt3n', width: 15 },
+                { header: 'Option3 Value', key: 'opt3v', width: 15 },
+                { header: 'Option4 Name', key: 'opt4n', width: 15 },
+                { header: 'Option4 Value', key: 'opt4v', width: 15 },
                 { header: 'Size', key: 'size', width: 10 },
                 { header: 'Color', key: 'color', width: 15 },
                 { header: 'MRP Price *', key: 'mrp', width: 15 },
@@ -142,25 +146,29 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                 'L', // E (Opt1 Val)
                 'Color', // F (Opt2 Name)
                 'Blue', // G (Opt2 Val)
-                'L', // H (Size)
-                'Blue', // I (Color)
-                1500, // J (MRP)
-                1000, // K (Dealer)
-                0, // L (Counter)
-                0, // M (Rec)
-                0, // N (Shop)
-                masters.collections?.[0]?.name || '', // O (Coll)
-                masters.categories?.[0]?.name || '',  // P (Cat)
-                '', // Q (Sub)
-                '', // R (Tag)
-                '', // S (Brand)
-                'This is a sample description.', // T (Desc)
-                'Sample Short Desc', // U (Short Desc)
-                '999999', // V (HSN)
-                '18', // W (Tax Class)
-                '', // X (Buy URL)
-                '1', // Y (Unit)
-                '' // Z (Images)
+                '', // H (Opt3 Name)
+                '', // I (Opt3 Val)
+                '', // J (Opt4 Name)
+                '', // K (Opt4 Val)
+                'L', // L (Size)
+                'Blue', // M (Color)
+                1500, // N (MRP)
+                1000, // O (Dealer)
+                0, // P (Counter)
+                0, // Q (Rec)
+                0, // R (Shop)
+                masters.collections?.[0]?.name || '', // S (Coll)
+                masters.categories?.[0]?.name || '',  // T (Cat)
+                '', // U (Sub)
+                '', // V (Tag)
+                '', // W (Brand)
+                'This is a sample description.', // X (Desc)
+                'Sample Short Desc', // Y (Short Desc)
+                '999999', // Z (HSN)
+                '18', // AA (Tax Class)
+                '', // AB (Buy URL)
+                '1', // AC (Unit)
+                '' // AD (Images)
             ]
             templateSheet.addRow(sampleRow)
 
@@ -308,8 +316,8 @@ export function BulkUploadDialog({ open, onOpenChange }) {
 
             // Apply Data Validation to 100 rows
             for (let i = 2; i <= 101; i++) {
-                // Collection (Column O)
-                templateSheet.getCell(`O${i}`).dataValidation = {
+                // Collection (Column S)
+                templateSheet.getCell(`S${i}`).dataValidation = {
                     type: 'list',
                     allowBlank: true,
                     formulae: ['=CollectionList'],
@@ -318,51 +326,48 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                     error: 'Please select a collection from the list'
                 }
 
-                // Category (Column P) - Cascading
-                templateSheet.getCell(`P${i}`).dataValidation = {
+                // Category (Column T) - Cascading
+                templateSheet.getCell(`T${i}`).dataValidation = {
                     type: 'list',
                     allowBlank: true,
-                    formulae: [`=IF(O${i}="", AllCategoryList, IF(ISERROR(VLOOKUP(O${i}, CollectionCategoryMap, 2, FALSE)), EmptyList, INDIRECT(VLOOKUP(O${i}, CollectionCategoryMap, 2, FALSE))))`],
+                    formulae: [`=IF(S${i}="", AllCategoryList, IF(ISERROR(VLOOKUP(S${i}, CollectionCategoryMap, 2, FALSE)), EmptyList, INDIRECT(VLOOKUP(S${i}, CollectionCategoryMap, 2, FALSE))))`],
                     showErrorMessage: true,
                     errorTitle: 'Invalid Category',
                     error: 'Please select a category from the list'
                 }
 
-                // Sub-Category (Column Q) - Cascading
-                templateSheet.getCell(`Q${i}`).dataValidation = {
+                // Sub-Category (Column U) - Cascading
+                templateSheet.getCell(`U${i}`).dataValidation = {
                     type: 'list',
                     allowBlank: true,
-                    formulae: [`=IF(P${i}="", AllSubCategoryList, IF(ISERROR(VLOOKUP(P${i}, CategorySubCategoryMap, 2, FALSE)), EmptyList, INDIRECT(VLOOKUP(P${i}, CategorySubCategoryMap, 2, FALSE))))`],
+                    formulae: [`=IF(T${i}="", AllSubCategoryList, IF(ISERROR(VLOOKUP(T${i}, CategorySubCategoryMap, 2, FALSE)), EmptyList, INDIRECT(VLOOKUP(T${i}, CategorySubCategoryMap, 2, FALSE))))`],
                     showErrorMessage: true,
                     errorTitle: 'Invalid Sub-Category',
                     error: 'Please select a sub-category from the list'
                 }
 
-                // Tag (Column R) - Cascading
-                templateSheet.getCell(`R${i}`).dataValidation = {
+                // Tag (Column V) - Cascading
+                templateSheet.getCell(`V${i}`).dataValidation = {
                     type: 'list',
                     allowBlank: true,
-                    formulae: [`=IF(Q${i}="", AllTagList, IF(ISERROR(VLOOKUP(Q${i}, SubCategoryTagMap, 2, FALSE)), EmptyList, INDIRECT(VLOOKUP(Q${i}, SubCategoryTagMap, 2, FALSE))))`],
+                    formulae: [`=IF(U${i}="", AllTagList, IF(ISERROR(VLOOKUP(U${i}, SubCategoryTagMap, 2, FALSE)), EmptyList, INDIRECT(VLOOKUP(U${i}, SubCategoryTagMap, 2, FALSE))))`],
                     showErrorMessage: true,
                     errorTitle: 'Invalid Tag',
                     error: 'Please select a tag from the list'
                 }
 
-                // Brand (Column S) - Cascading (Sub-Cat -> Cat -> All)
-                // If Sub-Cat selected: Must use Sub-Cat brands (or Empty)
-                // If Cat selected: Must use Cat brands (or Empty)
-                // If neither: All Brands
-                templateSheet.getCell(`S${i}`).dataValidation = {
+                // Brand (Column W) - Cascading
+                templateSheet.getCell(`W${i}`).dataValidation = {
                     type: 'list',
                     allowBlank: true,
-                    formulae: [`=IF(Q${i}<>"", IF(ISERROR(VLOOKUP(Q${i}, SubCategoryBrandMap, 2, FALSE)), EmptyList, INDIRECT(VLOOKUP(Q${i}, SubCategoryBrandMap, 2, FALSE))), IF(P${i}<>"", IF(ISERROR(VLOOKUP(P${i}, CategoryBrandMap, 2, FALSE)), EmptyList, INDIRECT(VLOOKUP(P${i}, CategoryBrandMap, 2, FALSE))), BrandList))`],
+                    formulae: [`=IF(U${i}<>"", IF(ISERROR(VLOOKUP(U${i}, SubCategoryBrandMap, 2, FALSE)), EmptyList, INDIRECT(VLOOKUP(U${i}, SubCategoryBrandMap, 2, FALSE))), IF(T${i}<>"", IF(ISERROR(VLOOKUP(T${i}, CategoryBrandMap, 2, FALSE)), EmptyList, INDIRECT(VLOOKUP(T${i}, CategoryBrandMap, 2, FALSE))), BrandList))`],
                     showErrorMessage: true,
                     errorTitle: 'Invalid Brand',
                     error: 'Please select a brand from the list'
                 }
 
-                // Tax (Column W)
-                templateSheet.getCell(`W${i}`).dataValidation = {
+                // Tax (Column AA)
+                templateSheet.getCell(`AA${i}`).dataValidation = {
                     type: 'list',
                     allowBlank: true,
                     formulae: ['=TaxRateList'],
@@ -371,8 +376,8 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                     error: 'Please select a tax rate'
                 }
 
-                // Unit (Column Y)
-                templateSheet.getCell(`Y${i}`).dataValidation = {
+                // Unit (Column AC)
+                templateSheet.getCell(`AC${i}`).dataValidation = {
                     type: 'list',
                     allowBlank: true,
                     formulae: ['=UnitList'],
@@ -468,6 +473,14 @@ export function BulkUploadDialog({ open, onOpenChange }) {
             tag: '',
             brand: '',
             unit: '',
+            option1_name: 'Size',
+            option1_value: '',
+            option2_name: 'Color',
+            option2_value: '',
+            option3_name: '',
+            option3_value: '',
+            option4_name: '',
+            option4_value: '',
             _id: Math.random().toString(36).substr(2, 9)
         }]);
     }
@@ -527,6 +540,10 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                         option1_value: row['Option1 Value'] || row.option1_value,
                         option2_name: row['Option2 Name'] || row.option2_name,
                         option2_value: row['Option2 Value'] || row.option2_value,
+                        option3_name: row['Option3 Name'] || row.option3_name,
+                        option3_value: row['Option3 Value'] || row.option3_value,
+                        option4_name: row['Option4 Name'] || row.option4_name,
+                        option4_value: row['Option4 Value'] || row.option4_value,
                         size: row['Size'] || row.size,
                         color: row['Color'] || row.color,
                         mrp_price: row['MRP Price *'] || row['MRP Price'] || row.mrp_price,
@@ -708,6 +725,10 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                                             <tr className="bg-gray-100 sticky top-0 z-10">
                                                 <th className="px-3 py-2 border text-left text-[10px] font-bold text-gray-600 uppercase">Product Name *</th>
                                                 <th className="px-3 py-2 border text-left text-[10px] font-bold text-gray-600 uppercase">SKU *</th>
+                                                <th className="px-3 py-2 border text-left text-[10px] font-bold text-gray-600 uppercase">Opt 1 (Name:Val)</th>
+                                                <th className="px-3 py-2 border text-left text-[10px] font-bold text-gray-600 uppercase">Opt 2 (Name:Val)</th>
+                                                <th className="px-3 py-2 border text-left text-[10px] font-bold text-gray-600 uppercase">Opt 3 (Name:Val)</th>
+                                                <th className="px-3 py-2 border text-left text-[10px] font-bold text-gray-600 uppercase">Opt 4 (Name:Val)</th>
                                                 <th className="px-3 py-2 border text-right text-[10px] font-bold text-gray-600 uppercase">MRP *</th>
                                                 <th className="px-3 py-2 border text-right text-[10px] font-bold text-gray-600 uppercase">Dealer *</th>
                                                 <th className="px-3 py-2 border text-right text-[10px] font-bold text-gray-600 uppercase">Counter</th>
@@ -759,6 +780,34 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                                                                 onChange={(e) => updateGridRow(row._id, { sku: e.target.value })}
                                                                 placeholder="SKU"
                                                             />
+                                                        </td>
+                                                        <td className="p-1 border w-32">
+                                                            <div className="flex gap-1">
+                                                                <input className="w-1/2 text-[9px] p-0.5 border-none focus:ring-0" value={row.option1_name} onChange={(e) => updateGridRow(row._id, { option1_name: e.target.value })} placeholder="Name" />
+                                                                <span className="text-gray-300">:</span>
+                                                                <input className="w-1/2 text-[9px] p-0.5 border-none focus:ring-0" value={row.option1_value} onChange={(e) => updateGridRow(row._id, { option1_value: e.target.value })} placeholder="Value" />
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-1 border w-32">
+                                                            <div className="flex gap-1">
+                                                                <input className="w-1/2 text-[9px] p-0.5 border-none focus:ring-0" value={row.option2_name} onChange={(e) => updateGridRow(row._id, { option2_name: e.target.value })} placeholder="Name" />
+                                                                <span className="text-gray-300">:</span>
+                                                                <input className="w-1/2 text-[9px] p-0.5 border-none focus:ring-0" value={row.option2_value} onChange={(e) => updateGridRow(row._id, { option2_value: e.target.value })} placeholder="Value" />
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-1 border w-32">
+                                                            <div className="flex gap-1">
+                                                                <input className="w-1/2 text-[9px] p-0.5 border-none focus:ring-0" value={row.option3_name} onChange={(e) => updateGridRow(row._id, { option3_name: e.target.value })} placeholder="Name" />
+                                                                <span className="text-gray-300">:</span>
+                                                                <input className="w-1/2 text-[9px] p-0.5 border-none focus:ring-0" value={row.option3_value} onChange={(e) => updateGridRow(row._id, { option3_value: e.target.value })} placeholder="Value" />
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-1 border w-32">
+                                                            <div className="flex gap-1">
+                                                                <input className="w-1/2 text-[9px] p-0.5 border-none focus:ring-0" value={row.option4_name} onChange={(e) => updateGridRow(row._id, { option4_name: e.target.value })} placeholder="Name" />
+                                                                <span className="text-gray-300">:</span>
+                                                                <input className="w-1/2 text-[9px] p-0.5 border-none focus:ring-0" value={row.option4_value} onChange={(e) => updateGridRow(row._id, { option4_value: e.target.value })} placeholder="Value" />
+                                                            </div>
                                                         </td>
                                                         <td className="p-1 border w-20">
                                                             <input

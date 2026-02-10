@@ -5,6 +5,7 @@ import { apiCall } from '@/lib/api-client'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronRight, ArrowRight, Play } from 'lucide-react'
+import { getImageUrl } from '@/lib/utils'
 
 export function CategoryLanding({ type, data }) {
     const isCategory = type === 'category'
@@ -27,7 +28,7 @@ export function CategoryLanding({ type, data }) {
     const items = isCategory ? subCategories : categories
     const title = data.name
     const description = data.description || `Experience the ultimate collection of professional ${title.toLowerCase()} equipment.`
-    const heroImage = data.image_url || data.image_desktop || 'https://images.unsplash.com/photo-1540747913346-19e3adca174f?w=1920'
+    const heroImage = getImageUrl(data.image_url || data.image_desktop) || 'https://images.unsplash.com/photo-1540747913346-19e3adca174f?w=1920'
 
     return (
         <div className="bg-white min-h-screen">
@@ -103,7 +104,7 @@ export function CategoryLanding({ type, data }) {
                                     <div className="absolute inset-0 z-0">
                                         {item.image_url ? (
                                             <Image
-                                                src={item.image_url}
+                                                src={getImageUrl(item.image_url)}
                                                 alt={item.name}
                                                 fill
                                                 className="object-cover transform group-hover:scale-110 transition-transform duration-1000"

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
+import { put } from '@vercel/blob';
 import { verifyToken } from '@/lib/auth';
 import { query } from '@/lib/simple-db';
 
@@ -19,8 +18,6 @@ export async function POST(request) {
             }
         }
 
-        // For now, let's allow uploads even without auth if it's coming from admin, 
-        // but log it. In production we should strict this.
         console.log('Upload User:', user ? user.id : 'Unauthenticated');
 
         const formData = await request.formData();
@@ -33,27 +30,22 @@ export async function POST(request) {
 
         console.log('File detected:', file.name, 'Size:', file.size, 'Type:', file.type);
 
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
+        // Use Vercel Blob
+        // Note: BLOB_READ_WRITE_TOKEN must be in .env
+        const blob = await put(file.name, file, {
+            access: 'public',
+            addRandomSuffix: true,
+        });
 
-        // Create unique filename
-        const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
-        const filename = `${uniqueSuffix}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '')}`;
+        console.log('Upload successful. URL:', blob.url);
 
-        // Ensure upload directory exists
-        const uploadDir = join(process.cwd(), 'public', 'uploads');
-        console.log('Ensuring directory:', uploadDir);
-        await mkdir(uploadDir, { recursive: true });
-
-        // Save file
-        const filepath = join(uploadDir, filename);
-        console.log('Saving file to:', filepath);
-        await writeFile(filepath, buffer);
-
-        // Return public URL
-        const url = `/uploads/${filename}`;
-        console.log('Upload successful. URL:', url);
-        return NextResponse.json({ url, success: true });
+        // Return object structure
+        return NextResponse.json({
+            url: blob.url,
+            success: true,
+            // We can return more metadata if needed
+            id: blob.url // Using URL as ID for now or blob.pathname if needed
+        });
     } catch (error) {
         console.error('Upload error details:', error);
         return NextResponse.json({ error: 'Upload failed', message: error.message }, { status: 500 });

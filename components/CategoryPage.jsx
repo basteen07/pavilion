@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 import { useQuery } from '@tanstack/react-query'
 import { apiCall } from '@/lib/api-client'
 import { EnquiryModal } from '@/components/product/EnquiryModal'
+import { getImageUrl } from '@/lib/utils'
 
 
 
@@ -393,7 +394,7 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
                     <div className="w-6 h-6 rounded-full bg-blue-100 overflow-hidden flex-shrink-0 border border-blue-300">
                       {hasImage ? (
                         <Image
-                          src={subCat.image_url}
+                          src={getImageUrl(subCat.image_url)}
                           alt={subCat.name}
                           width={24}
                           height={24}
@@ -923,7 +924,7 @@ function ProductCard({ product, viewMode, onEnquire }) {
         {/* Image */}
         <div className="w-full md:w-48 aspect-square flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden relative">
           <img
-            src={product.images?.[0]?.image_url || 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=600'}
+            src={getImageUrl(product.images?.[0]?.image_url) || 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=600'}
             alt={product.name}
             className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out"
           />

@@ -65,7 +65,7 @@ export default async function RootLayout({ children }) {
       <head>
         {/* Manual font links removed in favor of next/font */}
         {settings.head_scripts && (
-          <div dangerouslySetInnerHTML={{ __html: settings.head_scripts }} />
+          <script dangerouslySetInnerHTML={{ __html: settings.head_scripts }} />
         )}
       </head>
       <body className={inter.className}>
@@ -101,7 +101,7 @@ export default async function RootLayout({ children }) {
 
         {/* Body Scripts */}
         {settings.body_scripts && (
-          <div dangerouslySetInnerHTML={{ __html: settings.body_scripts }} />
+          <div className="hidden" dangerouslySetInnerHTML={{ __html: settings.body_scripts }} />
         )}
       </body>
     </html>

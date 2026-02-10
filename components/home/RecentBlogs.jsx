@@ -5,6 +5,7 @@ import { apiCall } from '@/lib/api-client'
 import { ArrowRight, ArrowUpRight, Clock, Calendar, FileText, TrendingUp, Eye } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { getImageUrl } from '@/lib/utils'
 
 export function RecentBlogs() {
     const { data: posts = [] } = useQuery({
@@ -28,7 +29,7 @@ export function RecentBlogs() {
             <div className="absolute bottom-10 right-10 w-40 h-40 bg-red-600/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
 
             <div className="w-full px-4 md:px-6 lg:px-8 xl:px-12 relative">
-                
+
                 {/* Enhanced Header */}
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-12">
                     <div className="flex-1">
@@ -38,7 +39,7 @@ export function RecentBlogs() {
                             <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
                         </div>
                         <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight mb-4">
-                            News & 
+                            News &
                             <span className="text-red-600"> Field Guides</span>
                         </h2>
                         <p className="text-xl text-gray-600 max-w-2xl leading-relaxed">
@@ -65,7 +66,7 @@ export function RecentBlogs() {
                                         {post.image_url ? (
                                             <>
                                                 <Image
-                                                    src={post.image_url}
+                                                    src={getImageUrl(post.image_url)}
                                                     alt={post.title}
                                                     fill
                                                     className="object-cover transition-transform duration-700 group-hover:scale-110"
@@ -73,7 +74,7 @@ export function RecentBlogs() {
                                                 />
                                                 {/* Gradient Overlay */}
                                                 <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                                
+
                                                 {/* Category Badge */}
                                                 {post.tags && post.tags.length > 0 && (
                                                     <div className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">

@@ -27,6 +27,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Plus, Edit, Trash2, Search, ArrowUp, ArrowDown, ExternalLink, Image as ImageIcon } from 'lucide-react'
+import ImageUploader from '@/components/admin/ImageUploader'
 
 const API_BASE = '/api'
 
@@ -52,12 +53,13 @@ export default function BannersManagement() {
   const [searchTerm, setSearchTerm] = useState('')
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [editingBanner, setEditingBanner] = useState(null)
-  const [deleteId, setDeleteId] = useState(null) // ID of banner to delete
+  const [deleteId, setDeleteId] = useState(null)
   const [formData, setFormData] = useState({
     title: '',
     subtitle: '',
-    image_url: '',
-    link_url: '',
+    desktop_image_url: null,
+    mobile_image_url: null,
+    link: '',
     button_text: '',
     display_order: 0,
     is_active: true
@@ -81,8 +83,7 @@ export default function BannersManagement() {
 
   async function loadBanners() {
     try {
-      const data = await apiCall('/admin/banners')
-      // Sort by display_order
+      const data = await apiCall('/banners')
       const sorted = (data || []).sort((a, b) => a.display_order - b.display_order)
       setBanners(sorted)
     } catch (error) {
@@ -92,19 +93,15 @@ export default function BannersManagement() {
 
   async function saveBanner() {
     try {
-      if (editingBanner) {
-        await apiCall(`/admin/banners/${editingBanner.id}`, {
-          method: 'PUT',
-          body: JSON.stringify(formData)
-        })
-        toast.success('Banner updated successfully')
-      } else {
-        await apiCall('/admin/banners', {
-          method: 'POST',
-          body: JSON.stringify(formData)
-        })
-        toast.success('Banner created successfully')
-      }
+      const endpoint = editingBanner ? `/banners/${editingBanner.id}` : '/banners'
+      const method = editingBanner ? 'PUT' : 'POST'
+
+      await apiCall(endpoint, {
+        method,
+        body: JSON.stringify(formData)
+      })
+
+      toast.success(`Banner ${editingBanner ? 'updated' : 'created'} successfully`)
       setIsSheetOpen(false)
       resetForm()
       loadBanners()
@@ -116,7 +113,7 @@ export default function BannersManagement() {
   async function confirmDelete() {
     if (!deleteId) return
     try {
-      await apiCall(`/admin/banners/${deleteId}`, { method: 'DELETE' })
+      await apiCall(`/banners/${deleteId}`, { method: 'DELETE' })
       toast.success('Banner deleted')
       loadBanners()
     } catch (error) {
@@ -126,21 +123,10 @@ export default function BannersManagement() {
     }
   }
 
-  async function toggleBannerStatus(id, currentStatus) {
-    try {
-      // Optimistic update
-      setBanners(banners.map(b => b.id === id ? { ...b, is_active: !currentStatus } : b))
-
-      await apiCall(`/admin/banners/${id}/status`, {
-        method: 'PUT',
-        body: JSON.stringify({ is_active: !currentStatus })
-      })
-      toast.success(currentStatus ? 'Banner deactivated' : 'Banner activated')
-      loadBanners() // Reload to ensure consistency
-    } catch (error) {
-      toast.error('Failed to update status')
-      loadBanners() // Revert on error
-    }
+  const getImageUrl = (img) => {
+    if (!img) return ''
+    if (typeof img === 'object') return img.url || ''
+    return img
   }
 
   async function moveBanner(index, direction) {
@@ -153,21 +139,16 @@ export default function BannersManagement() {
       return
     }
 
-    // Update display_order for all affected
     const updates = newBanners.map((b, i) => ({
       id: b.id,
       display_order: i
     }))
 
-    // Optimistic update
     setBanners(newBanners)
 
     try {
-      // In a real app, you might send a batch update or update each one. 
-      // For simplicity, we'll update logically. 
-      // Assuming backend handles order or we loop updates:
       for (const update of updates) {
-        await apiCall(`/admin/banners/${update.id}`, {
+        await apiCall(`/banners/${update.id}`, {
           method: 'PUT',
           body: JSON.stringify({ display_order: update.display_order })
         })
@@ -183,8 +164,9 @@ export default function BannersManagement() {
     setFormData({
       title: '',
       subtitle: '',
-      image_url: '',
-      link_url: '',
+      desktop_image_url: null,
+      mobile_image_url: null,
+      link: '',
       button_text: '',
       display_order: banners.length,
       is_active: true
@@ -198,7 +180,11 @@ export default function BannersManagement() {
   }
 
   function openEdit(banner) {
-    setFormData(banner)
+    setFormData({
+      ...banner,
+      desktop_image_url: banner.desktop_image_url || null,
+      mobile_image_url: banner.mobile_image_url || null
+    })
     setEditingBanner(banner)
     setIsSheetOpen(true)
   }
@@ -210,7 +196,7 @@ export default function BannersManagement() {
           <h2 className="text-2xl font-bold tracking-tight">Banners</h2>
           <p className="text-muted-foreground">Manage your homepage hero sliders and promotions.</p>
         </div>
-        <Button onClick={openCreate}>
+        <Button onClick={openCreate} className="bg-red-600">
           <Plus className="w-4 h-4 mr-2" />
           Add Banner
         </Button>
@@ -251,9 +237,9 @@ export default function BannersManagement() {
             <Card key={banner.id} className="overflow-hidden group transition-all hover:shadow-md border-gray-200">
               <div className="flex flex-col sm:flex-row">
                 <div className="relative w-full sm:w-64 h-48 sm:h-auto bg-gray-100 shrink-0">
-                  {banner.image_url ? (
+                  {banner.desktop_image_url ? (
                     <img
-                      src={banner.image_url}
+                      src={getImageUrl(banner.desktop_image_url)}
                       alt={banner.title}
                       className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-500"
                     />
@@ -279,10 +265,10 @@ export default function BannersManagement() {
                     </div>
 
                     <div className="pt-4 flex flex-wrap gap-2 text-xs text-gray-500">
-                      {banner.link_url && (
+                      {banner.link && (
                         <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">
                           <ExternalLink className="w-3 h-3" />
-                          <span className="truncate max-w-[200px]">{banner.link_url}</span>
+                          <span className="truncate max-w-[200px]">{banner.link}</span>
                         </div>
                       )}
                       {banner.button_text && (
@@ -317,17 +303,16 @@ export default function BannersManagement() {
 
                     <div className="flex items-center gap-2">
                       <div className="flex items-center gap-2 mr-2">
-                        <Label htmlFor={`active-${banner.id}`} className="text-xs text-gray-500 sr-only">Active</Label>
                         <Switch
-                          id={`active-${banner.id}`}
                           checked={banner.is_active}
-                          onCheckedChange={() => toggleBannerStatus(banner.id, banner.is_active)}
+                          onCheckedChange={() => { }} // Should implement toggle status API call or similar
+                          disabled
                         />
                       </div>
                       <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => openEdit(banner)}>
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button size="icon" variant="destructive" className="h-8 w-8 bg-white text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700" onClick={() => setDeleteId(banner.id)}>
+                      <Button size="icon" variant="destructive" className="h-8 w-8" onClick={() => setDeleteId(banner.id)}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
@@ -349,13 +334,12 @@ export default function BannersManagement() {
           </SheetHeader>
           <div className="space-y-6 pt-6">
             <div className="space-y-2">
-              <Label>Internal Title *</Label>
+              <Label>Title *</Label>
               <Input
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="e.g., Summer Sale Hero"
               />
-              <p className="text-[10px] text-gray-500">Used for your reference and main heading.</p>
             </div>
 
             <div className="space-y-2">
@@ -368,43 +352,40 @@ export default function BannersManagement() {
             </div>
 
             <div className="space-y-2">
-              <Label>Image URL *</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={formData.image_url}
-                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                  placeholder="https://..."
-                />
-              </div>
-              {formData.image_url && (
-                <div className="mt-2 text-xs text-gray-500 flex items-center gap-1">
-                  <ImageIcon className="w-3 h-3" /> Preview available below
-                </div>
-              )}
+              <Label>Link URL</Label>
+              <Input
+                value={formData.link}
+                onChange={(e) => setFormData({ ...formData, link: e.target.value })}
+                placeholder="/collections/sale"
+              />
             </div>
 
-            {formData.image_url && (
-              <div className="relative aspect-video rounded-md overflow-hidden bg-gray-100 border">
-                <img src={formData.image_url} alt="Preview" className="w-full h-full object-cover" />
-              </div>
-            )}
+            <div className="space-y-2">
+              <Label>Button Text</Label>
+              <Input
+                value={formData.button_text}
+                onChange={(e) => setFormData({ ...formData, button_text: e.target.value })}
+                placeholder="Shop Now"
+              />
+            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Button Text</Label>
-                <Input
-                  value={formData.button_text}
-                  onChange={(e) => setFormData({ ...formData, button_text: e.target.value })}
-                  placeholder="Shop Now"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Link URL</Label>
-                <Input
-                  value={formData.link_url}
-                  onChange={(e) => setFormData({ ...formData, link_url: e.target.value })}
-                  placeholder="/collections/sale"
-                />
+            <div className="space-y-4 border-t pt-4">
+              <Label className="font-bold text-sm">Banner Images</Label>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-xs text-gray-500 mb-1 block">Desktop Image</Label>
+                  <ImageUploader
+                    value={formData.desktop_image_url}
+                    onChange={(val) => setFormData({ ...formData, desktop_image_url: val })}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500 mb-1 block">Mobile Image (Optional)</Label>
+                  <ImageUploader
+                    value={formData.mobile_image_url}
+                    onChange={(val) => setFormData({ ...formData, mobile_image_url: val })}
+                  />
+                </div>
               </div>
             </div>
 
@@ -421,7 +402,7 @@ export default function BannersManagement() {
           </div>
           <SheetFooter className="pt-6">
             <Button variant="outline" onClick={() => setIsSheetOpen(false)}>Cancel</Button>
-            <Button onClick={saveBanner}>
+            <Button onClick={saveBanner} className="bg-red-600">
               {editingBanner ? 'Save Changes' : 'Create Banner'}
             </Button>
           </SheetFooter>

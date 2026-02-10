@@ -28,6 +28,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Plus, Edit, Trash2, Search, Image as ImageIcon, Video, Folder, Upload, ChevronLeft, Link as LinkIcon } from 'lucide-react'
+import ImageUploader from '@/components/admin/ImageUploader'
 
 const API_BASE = '/api'
 
@@ -57,13 +58,14 @@ export default function GalleryManagement() {
     const [formData, setFormData] = useState({
         title: '',
         description: '',
-        cover_image: '',
+        cover_image: null,
         type: 'photo',
         display_order: 0,
         is_active: true
     })
 
     // New Item State
+    const [newItemImage, setNewItemImage] = useState(null)
     const [newItemUrl, setNewItemUrl] = useState('')
     const [newItemType, setNewItemType] = useState('image')
     const [isUploading, setIsUploading] = useState(false)
@@ -130,99 +132,28 @@ export default function GalleryManagement() {
         }
     }
 
-    async function handleFileUpload(e) {
-        const file = e.target.files[0]
-        if (!file) return
-
-        setIsUploading(true)
-        const uploadData = new FormData()
-        uploadData.append('file', file)
-
-        try {
-            const token = localStorage.getItem('token')
-            const res = await fetch('/api/upload', {
-                method: 'POST',
-                headers: {
-                    ...(token && { 'Authorization': `Bearer ${token}` })
-                },
-                body: uploadData
-            })
-            const data = await res.json()
-            if (data.url) {
-                setFormData({ ...formData, cover_image: data.url })
-                toast.success('Image uploaded')
-            }
-        } catch (err) {
-            toast.error('Upload failed')
-        } finally {
-            setIsUploading(false)
-        }
-    }
-
-    async function handleItemUpload(e) {
-        const files = Array.from(e.target.files)
-        if (files.length === 0) return
-
-        setIsUploading(true)
-        let successCount = 0
-        let failCount = 0
-
-        toast.message(`Uploading ${files.length} items...`)
-
-        for (const file of files) {
-            const uploadData = new FormData()
-            uploadData.append('file', file)
-
-            try {
-                const token = localStorage.getItem('token')
-                const res = await fetch('/api/upload', {
-                    method: 'POST',
-                    headers: {
-                        ...(token && { 'Authorization': `Bearer ${token}` })
-                    },
-                    body: uploadData
-                })
-                const data = await res.json()
-                if (data.url) {
-                    await addItemToAlbumWithUrl(data.url)
-                    successCount++
-                } else {
-                    failCount++
-                }
-            } catch (err) {
-                failCount++
-            }
-        }
-
-        setIsUploading(false)
-        if (successCount > 0) toast.success(`Successfully uploaded ${successCount} items`)
-        if (failCount > 0) toast.error(`Failed to upload ${failCount} items`)
-
-        // Clear value so same files can be selected again if needed
-        e.target.value = ''
-    }
-
     async function addItemToAlbum() {
-        if (!newItemUrl) return
-        await addItemToAlbumWithUrl(newItemUrl)
+        if (!newItemUrl && !newItemImage) return
+
+        const imageData = newItemImage || { url: newItemUrl, alt: '', id: null }
+        await addItemToAlbumWithData(imageData)
     }
 
-    async function addItemToAlbumWithUrl(url) {
+    async function addItemToAlbumWithData(imageData) {
         try {
-            // Basic width/height assumption or detection could happen here
-            // For now, we will just send defaults or let backend/frontend handle it
             await apiCall(`/admin/gallery/${selectedAlbum.id}/items`, {
                 method: 'POST',
                 body: JSON.stringify({
                     type: newItemType,
-                    url: url,
+                    url: imageData,
                     display_order: items.length,
-                    width: 800, // Default placeholder
+                    width: 800,
                     height: 600
                 })
             })
             toast.success('Item added')
             setNewItemUrl('')
+            setNewItemImage(null)
             loadItems(selectedAlbum.id)
         } catch (error) {
             toast.error('Failed to add item')
@@ -233,7 +164,7 @@ export default function GalleryManagement() {
         setFormData({
             title: '',
             description: '',
-            cover_image: '',
+            cover_image: null,
             type: 'photo',
             display_order: albums.length,
             is_active: true
@@ -247,9 +178,19 @@ export default function GalleryManagement() {
     }
 
     function openEdit(album) {
-        setFormData(album)
+        setFormData({
+            ...album,
+            cover_image: album.cover_image || null
+        })
         setEditingAlbum(album)
         setIsSheetOpen(true)
+    }
+
+    // Helper to get URL safely
+    const getImageUrl = (img) => {
+        if (!img) return ''
+        if (typeof img === 'object') return img.url || ''
+        return img
     }
 
     if (selectedAlbum) {
@@ -265,38 +206,50 @@ export default function GalleryManagement() {
                     </div>
                 </div>
 
-                <div className="flex gap-4 items-end bg-white p-4 rounded-lg border">
-                    <div className="flex-1 space-y-2">
-                        <Label>Add {newItemType === 'image' ? 'Image URL' : 'Video URL'}</Label>
-                        <div className="flex gap-2">
-                            <Input
-                                value={newItemUrl}
-                                onChange={(e) => setNewItemUrl(e.target.value)}
-                                placeholder="https://..."
-                            />
-                            <div className="relative">
-                                <input
-                                    type="file"
-                                    multiple
-                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                    onChange={handleItemUpload}
-                                    accept={newItemType === 'image' ? "image/*" : "video/*"}
-                                    disabled={isUploading}
-                                />
-                                <Button variant="secondary" disabled={isUploading}>
-                                    <Upload className="w-4 h-4 mr-2" /> Upload Multiple
-                                </Button>
-                            </div>
-                            <Button onClick={addItemToAlbum} disabled={!newItemUrl && !isUploading}>Add URL</Button>
-                        </div>
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Type</Label>
-                        <Tabs value={newItemType} onValueChange={setNewItemType} className="w-[200px]">
-                            <TabsList className="grid w-full grid-cols-2">
+                <div className="flex flex-col md:flex-row gap-6 bg-white p-6 rounded-lg border shadow-sm">
+                    <div className="flex-1 space-y-4">
+                        <Label className="text-base font-semibold">Add Content</Label>
+                        <Tabs value={newItemType} onValueChange={setNewItemType} className="w-full">
+                            <TabsList className="grid w-full max-w-[400px] grid-cols-2 mb-4">
                                 <TabsTrigger value="image"><ImageIcon className="w-4 h-4 mr-2" />Photo</TabsTrigger>
                                 <TabsTrigger value="video"><Video className="w-4 h-4 mr-2" />Video</TabsTrigger>
                             </TabsList>
+                            <TabsContent value="image" className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Image URL (Manual)</Label>
+                                        <Input
+                                            value={newItemUrl}
+                                            onChange={(e) => setNewItemUrl(e.target.value)}
+                                            placeholder="https://..."
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Direct Upload</Label>
+                                        <ImageUploader
+                                            value={newItemImage}
+                                            onChange={setNewItemImage}
+                                            label="Upload to Album"
+                                        />
+                                    </div>
+                                </div>
+                                <Button className="w-full md:w-auto px-8" onClick={addItemToAlbum} disabled={!newItemUrl && !newItemImage}>
+                                    Add to Album
+                                </Button>
+                            </TabsContent>
+                            <TabsContent value="video" className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label>Video URL</Label>
+                                    <Input
+                                        value={newItemUrl}
+                                        onChange={(e) => setNewItemUrl(e.target.value)}
+                                        placeholder="YouTube, Vimeo, or direct link..."
+                                    />
+                                </div>
+                                <Button className="w-full md:w-auto px-8" onClick={addItemToAlbum} disabled={!newItemUrl}>
+                                    Add Video
+                                </Button>
+                            </TabsContent>
                         </Tabs>
                     </div>
                 </div>
@@ -304,14 +257,15 @@ export default function GalleryManagement() {
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                     {items.map((item) => (
                         <div key={item.id} className="relative group aspect-square bg-gray-100 rounded-lg overflow-hidden border">
-                            {item.type === 'image' ? (
-                                <img src={item.url} alt="" className="w-full h-full object-cover" />
+                            {item.type === 'image' || item.type === 'photo' ? (
+                                <img src={getImageUrl(item.url)} alt={item.url?.alt || ''} className="w-full h-full object-cover" />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center bg-gray-900">
                                     <Video className="w-8 h-8 text-white" />
                                 </div>
                             )}
-                            <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex justify-end">
+                            <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex justify-between items-center">
+                                <span className="text-[10px] text-white truncate max-w-[100px]">{item.url?.alt || 'No Alt'}</span>
                                 <Button size="icon" variant="destructive" className="h-6 w-6" onClick={() => {
                                     /* In a real app we'd confirm deletion of item */
                                 }}>
@@ -332,7 +286,7 @@ export default function GalleryManagement() {
                     <h2 className="text-2xl font-bold tracking-tight">Gallery</h2>
                     <p className="text-muted-foreground">Manage photo and video albums.</p>
                 </div>
-                <Button onClick={openCreate}>
+                <Button onClick={openCreate} className="bg-red-600 hover:bg-red-700">
                     <Plus className="w-4 h-4 mr-2" />
                     Create Album
                 </Button>
@@ -343,7 +297,7 @@ export default function GalleryManagement() {
                     <Card key={album.id} className="overflow-hidden group hover:shadow-lg transition-all cursor-pointer" onClick={() => setSelectedAlbum(album)}>
                         <div className="relative aspect-video bg-gray-100">
                             {album.cover_image ? (
-                                <img src={album.cover_image} alt={album.title} className="w-full h-full object-cover" />
+                                <img src={getImageUrl(album.cover_image)} alt={album.title} className="w-full h-full object-cover" />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-gray-400">
                                     <Folder className="w-12 h-12" />
@@ -408,30 +362,11 @@ export default function GalleryManagement() {
 
                         <div className="space-y-2">
                             <Label>Cover Image</Label>
-                            <div className="flex gap-2">
-                                <Input
-                                    value={formData.cover_image}
-                                    onChange={(e) => setFormData({ ...formData, cover_image: e.target.value })}
-                                    placeholder="Image URL or upload"
-                                />
-                                <div className="relative">
-                                    <input
-                                        type="file"
-                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                        onChange={handleFileUpload}
-                                        accept="image/*"
-                                        disabled={isUploading}
-                                    />
-                                    <Button variant="outline" size="icon" disabled={isUploading}>
-                                        <Upload className="w-4 h-4" />
-                                    </Button>
-                                </div>
-                            </div>
-                            {formData.cover_image && (
-                                <div className="aspect-video bg-gray-100 rounded-md overflow-hidden mt-2 border">
-                                    <img src={formData.cover_image} alt="Preview" className="w-full h-full object-cover" />
-                                </div>
-                            )}
+                            <ImageUploader
+                                value={formData.cover_image}
+                                onChange={(val) => setFormData({ ...formData, cover_image: val })}
+                                label="Album Cover"
+                            />
                         </div>
 
                         <div className="space-y-2">
@@ -457,7 +392,7 @@ export default function GalleryManagement() {
                     </div>
                     <SheetFooter className="pt-6">
                         <Button variant="outline" onClick={() => setIsSheetOpen(false)}>Cancel</Button>
-                        <Button onClick={saveAlbum} disabled={!formData.title}>
+                        <Button onClick={saveAlbum} disabled={!formData.title} className="bg-red-600 hover:bg-red-700">
                             {editingAlbum ? 'Save Changes' : 'Create Album'}
                         </Button>
                     </SheetFooter>

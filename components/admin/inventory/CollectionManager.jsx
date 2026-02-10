@@ -9,7 +9,7 @@ import { Edit, Trash2, Plus, Image as ImageIcon, Search } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiCall } from '@/lib/api-client'
 import { toast } from 'sonner'
-import { ImageUploader } from '@/components/ui/image-uploader'
+import ImageUploader from '@/components/admin/ImageUploader'
 
 export function CollectionManager() {
     const [isInternalModalOpen, setIsInternalModalOpen] = useState(false)
@@ -20,8 +20,8 @@ export function CollectionManager() {
     // Form State
     const [formData, setFormData] = useState({
         name: '',
-        image_desktop: '',
-        image_mobile: ''
+        image_desktop: null,
+        image_mobile: null
     })
 
     const { data: collections = [], isLoading } = useQuery({
@@ -77,8 +77,8 @@ export function CollectionManager() {
         setEditingCollection(collection)
         setFormData({
             name: collection.name,
-            image_desktop: collection.image_desktop || '',
-            image_mobile: collection.image_mobile || ''
+            image_desktop: collection.image_desktop || null,
+            image_mobile: collection.image_mobile || null
         })
         setIsInternalModalOpen(true)
     }
@@ -91,7 +91,13 @@ export function CollectionManager() {
 
     function resetForm() {
         setEditingCollection(null)
-        setFormData({ name: '', image_desktop: '', image_mobile: '' })
+        setFormData({ name: '', image_desktop: null, image_mobile: null })
+    }
+
+    const getImageUrl = (img) => {
+        if (!img) return ''
+        if (typeof img === 'object') return img.url || ''
+        return img
     }
 
     // Modal Control wrappers
@@ -148,7 +154,7 @@ export function CollectionManager() {
                                     <TableRow key={collection.id}>
                                         <TableCell>
                                             {collection.image_desktop ? (
-                                                <img src={collection.image_desktop} alt={collection.name} className="w-16 h-10 object-cover rounded" />
+                                                <img src={getImageUrl(collection.image_desktop)} alt={collection.name} className="w-16 h-10 object-cover rounded" />
                                             ) : (
                                                 <div className="w-16 h-10 bg-gray-100 rounded flex items-center justify-center">
                                                     <ImageIcon className="w-4 h-4 text-gray-400" />
@@ -206,8 +212,8 @@ export function CollectionManager() {
                             <Label>Desktop Image</Label>
                             <ImageUploader
                                 value={formData.image_desktop}
-                                onChange={(url) => setFormData({ ...formData, image_desktop: url })}
-                                folder="collections"
+                                onChange={(val) => setFormData({ ...formData, image_desktop: val })}
+                                label="Desktop Image"
                             />
                             <p className="text-xs text-gray-500">Recommended: 1920x400px</p>
                         </div>
@@ -216,8 +222,8 @@ export function CollectionManager() {
                             <Label>Mobile Image</Label>
                             <ImageUploader
                                 value={formData.image_mobile}
-                                onChange={(url) => setFormData({ ...formData, image_mobile: url })}
-                                folder="collections"
+                                onChange={(val) => setFormData({ ...formData, image_mobile: val })}
+                                label="Mobile Image"
                             />
                             <p className="text-xs text-gray-500">Recommended: 800x600px</p>
                         </div>

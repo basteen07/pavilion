@@ -5,6 +5,7 @@ import { apiCall } from '@/lib/api-client'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, ArrowUpRight, Grid3X3, Sparkles } from 'lucide-react'
+import { getImageUrl } from '@/lib/utils'
 
 export function CategoryGrid({ initialCollections = [] }) {
     const { data: collections = initialCollections } = useQuery({
@@ -51,30 +52,30 @@ export function CategoryGrid({ initialCollections = [] }) {
                 {/* Enhanced Grid */}
                 {collections.length > 0 ? (
                     <div className={`grid gap-3 md:gap-4 ${collections.length === 1 ? 'grid-cols-1 max-w-md mx-auto' :
-                            collections.length === 2 ? 'grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto' :
-                                collections.length === 3 ? 'grid-cols-1 sm:grid-cols-3 max-w-4xl mx-auto' :
-                                    collections.length === 4 ? 'grid-cols-2 sm:grid-cols-4 max-w-5xl mx-auto' :
-                                        collections.length === 5 ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 max-w-6xl mx-auto' :
-                                            collections.length === 6 ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-6 max-w-7xl mx-auto' :
-                                                'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
+                        collections.length === 2 ? 'grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto' :
+                            collections.length === 3 ? 'grid-cols-1 sm:grid-cols-3 max-w-4xl mx-auto' :
+                                collections.length === 4 ? 'grid-cols-2 sm:grid-cols-4 max-w-5xl mx-auto' :
+                                    collections.length === 5 ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 max-w-6xl mx-auto' :
+                                        collections.length === 6 ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-6 max-w-7xl mx-auto' :
+                                            'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
                         }`}>
                         {collections.slice(0, 12).map((collection, idx) => (
                             <Link
                                 key={collection.id}
                                 href={`/${collection.slug}`}
                                 className={`group relative overflow-hidden rounded-xl bg-gray-100 transition-all duration-300 hover:shadow-xl hover:shadow-gray-900/10 hover:-translate-y-2 ${collections.length === 1 ? 'aspect-[16/9]' :
-                                        collections.length <= 3 ? 'aspect-[4/3]' :
-                                            'aspect-[4/3]'
+                                    collections.length <= 3 ? 'aspect-[4/3]' :
+                                        'aspect-[4/3]'
                                     }`}
                             >
                                 <div className={`relative ${collections.length === 1 ? 'aspect-[16/9]' :
-                                        collections.length <= 3 ? 'aspect-[4/3]' :
-                                            'aspect-[4/3]'
+                                    collections.length <= 3 ? 'aspect-[4/3]' :
+                                        'aspect-[4/3]'
                                     }`}>
                                     {collection.image_desktop || collection.image_mobile ? (
                                         <>
                                             <Image
-                                                src={collection.image_desktop || collection.image_mobile}
+                                                src={getImageUrl(collection.image_desktop || collection.image_mobile)}
                                                 alt={collection.name}
                                                 fill
                                                 className="object-cover transition-transform duration-700 group-hover:scale-115"

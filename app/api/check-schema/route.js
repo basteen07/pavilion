@@ -1,19 +1,22 @@
 import { query } from '@/lib/simple-db';
 import { NextResponse } from 'next/server';
 
-export async function GET() {
+export async function GET(request) {
     try {
-        // Check products table columns
+        const url = new URL(request.url);
+        const table = url.searchParams.get('table') || 'products';
+
+        // Check columns for specified table
         const result = await query(`
             SELECT column_name, data_type, is_nullable
             FROM information_schema.columns
-            WHERE table_name = 'products'
+            WHERE table_name = $1
             ORDER BY ordinal_position;
-        `);
+        `, [table]);
 
         return NextResponse.json({
             success: true,
-            table: 'products',
+            table: table,
             columns: result.rows
         });
     } catch (error) {

@@ -10,8 +10,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { Plus, Edit, Trash2, Search, Filter, FileUp } from 'lucide-react'
+import { Plus, Edit, Trash2, Search, Filter, FileUp, AlertTriangle } from 'lucide-react'
 import { BulkUploadDialog } from './BulkUploadDialog'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 
 // Helper to safely parse images
 const safeParseImages = (images) => {
@@ -36,6 +44,17 @@ export function ProductList({ onEdit, onCreate }) {
     const [subCategoryFilter, setSubCategoryFilter] = useState('')
     const [brandFilter, setBrandFilter] = useState('')
     const [bulkUploadOpen, setBulkUploadOpen] = useState(false)
+    const [deleteAllOpen, setDeleteAllOpen] = useState(false)
+    const [deletePassword, setDeletePassword] = useState('')
+    const [isDeletingAll, setIsDeletingAll] = useState(false)
+    const [currentUser, setCurrentUser] = useState(null)
+
+    useEffect(() => {
+        const userData = localStorage.getItem('user')
+        if (userData) {
+            setCurrentUser(JSON.parse(userData))
+        }
+    }, [])
 
     // Debounce search
     useEffect(() => {
@@ -88,6 +107,34 @@ export function ProductList({ onEdit, onCreate }) {
             toast.success('Product deleted')
         }
     })
+
+    const deleteAllMutation = useMutation({
+        mutationFn: (password) => apiCall('/products/delete-all', {
+            method: 'DELETE',
+            body: { password }
+        }),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['products'])
+            setDeleteAllOpen(false)
+            setDeletePassword('')
+            toast.success('All products deleted successfully')
+        },
+        onError: (error) => {
+            toast.error(error.message || 'Failed to delete all products')
+        },
+        onSettled: () => {
+            setIsDeletingAll(false)
+        }
+    })
+
+    const handleDeleteAll = () => {
+        if (!deletePassword) {
+            toast.error('Please enter your password')
+            return
+        }
+        setIsDeletingAll(true)
+        deleteAllMutation.mutate(deletePassword)
+    }
 
     const products = data?.products || []
     const totalPages = data?.totalPages || 1
@@ -157,6 +204,16 @@ export function ProductList({ onEdit, onCreate }) {
                     )}
                 </div>
                 <div className="flex gap-2">
+                    {currentUser?.role === 'superadmin' && (
+                        <Button
+                            variant="destructive"
+                            onClick={() => setDeleteAllOpen(true)}
+                            className="bg-orange-600 hover:bg-orange-700 font-bold"
+                        >
+                            <AlertTriangle className="w-4 h-4 mr-2" />
+                            Delete All
+                        </Button>
+                    )}
                     <Button variant="outline" onClick={() => setBulkUploadOpen(true)}>
                         <FileUp className="w-4 h-4 mr-2" />
                         Bulk Upload
@@ -274,6 +331,57 @@ export function ProductList({ onEdit, onCreate }) {
             </Card>
 
             <BulkUploadDialog open={bulkUploadOpen} onOpenChange={setBulkUploadOpen} />
+
+            {/* Delete All Confirmation Dialog */}
+            <Dialog open={deleteAllOpen} onOpenChange={(open) => {
+                if (!open) {
+                    setDeletePassword('')
+                }
+                setDeleteAllOpen(open)
+            }}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-red-600">
+                            <AlertTriangle className="h-5 w-5" />
+                            CRITICAL ACTION: Delete All Products
+                        </DialogTitle>
+                        <DialogDescription className="pt-2">
+                            This action will permanently delete <strong>EVERY SINGLE PRODUCT and VARIANT</strong> in the database.
+                            This cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4 uppercase font-bold text-xs text-gray-500">
+                        <p>To confirm, please enter your superadmin password:</p>
+                        <Input
+                            type="password"
+                            placeholder="Your password"
+                            value={deletePassword}
+                            onChange={(e) => setDeletePassword(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    handleDeleteAll()
+                                }
+                            }}
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setDeleteAllOpen(false)}
+                            disabled={isDeletingAll}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDeleteAll}
+                            disabled={isDeletingAll || !deletePassword}
+                        >
+                            {isDeletingAll ? 'Deleting...' : 'YES, DELETE EVERYTHING'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

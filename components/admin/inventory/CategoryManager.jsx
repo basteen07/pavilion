@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
-import { ImageUploader } from '@/components/ui/image-uploader'
+import ImageUploader from '@/components/admin/ImageUploader' // Changed import
 import { toast } from 'sonner'
 import { Plus, Edit, Trash2, FolderTree, ChevronRight } from 'lucide-react'
 
@@ -24,8 +24,8 @@ export function CategoryManager() {
     const [editingSubCategory, setEditingSubCategory] = useState(null)
 
     // Image State
-    const [categoryImage, setCategoryImage] = useState('')
-    const [subCategoryImage, setSubCategoryImage] = useState('')
+    const [categoryImage, setCategoryImage] = useState(null) // Initialize as null or object
+    const [subCategoryImage, setSubCategoryImage] = useState(null)
 
     // Parent Collection State (for new/edit category)
     const [selectedParentCollection, setSelectedParentCollection] = useState('')
@@ -108,15 +108,22 @@ export function CategoryManager() {
     // Handlers
     const openCategoryModal = (cat = null) => {
         setEditingCategory(cat)
-        setCategoryImage(cat?.image_url || '')
+        setCategoryImage(cat?.image_url || null)
         setSelectedParentCollection(cat?.parent_collection_id || '')
         setIsCategoryModalOpen(true)
     }
 
     const openSubCategoryModal = (sub = null) => {
         setEditingSubCategory(sub)
-        setSubCategoryImage(sub?.image_url || '')
+        setSubCategoryImage(sub?.image_url || null)
         setIsSubCategoryModalOpen(true)
+    }
+
+    // Helper to get image URL safely
+    const getImageUrl = (img) => {
+        if (!img) return ''
+        if (typeof img === 'object') return img.url || ''
+        return img
     }
 
     function handleSaveCategory(e) {
@@ -124,7 +131,7 @@ export function CategoryManager() {
         const formData = new FormData(e.target)
         const data = {
             name: formData.get('name'),
-            image_url: categoryImage,
+            image_url: categoryImage, // Pass the object or string directly
             parent_collection_id: selectedParentCollection || null,
             display_order: formData.get('display_order') ? parseInt(formData.get('display_order')) : 0
         }
@@ -142,7 +149,7 @@ export function CategoryManager() {
         const formData = new FormData(e.target)
         const data = {
             name: formData.get('name'),
-            image_url: subCategoryImage,
+            image_url: subCategoryImage, // Pass the object or string directly
             category_id: selectedCategory.id,
             display_order: formData.get('display_order') ? parseInt(formData.get('display_order')) : 0
         }
@@ -176,7 +183,9 @@ export function CategoryManager() {
                             >
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 bg-gray-100 rounded overflow-hidden">
-                                        {cat.image_url && <img src={cat.image_url} alt="" className="w-full h-full object-cover" />}
+                                        {cat.image_url ? (
+                                            <img src={getImageUrl(cat.image_url)} alt="" className="w-full h-full object-cover" />
+                                        ) : null}
                                     </div>
                                     <div className="flex flex-col">
                                         <div className="flex items-center gap-2">
@@ -238,7 +247,9 @@ export function CategoryManager() {
                                 <div key={sub.id} className="flex items-center justify-between p-3 rounded-lg border bg-white">
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 bg-gray-50 rounded overflow-hidden">
-                                            {sub.image_url && <img src={sub.image_url} alt="" className="w-full h-full object-cover" />}
+                                            {sub.image_url ? (
+                                                <img src={getImageUrl(sub.image_url)} alt="" className="w-full h-full object-cover" />
+                                            ) : null}
                                         </div>
                                         <div className="flex flex-col">
                                             <div className="flex items-center gap-2">

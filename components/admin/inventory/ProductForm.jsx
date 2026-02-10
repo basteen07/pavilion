@@ -13,7 +13,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { ImageUploader } from '@/components/ui/image-uploader'
+import ImageUploader from '@/components/admin/ImageUploader' // Changed to default import
 import { toast } from 'sonner'
 import { X, Plus, Loader2, Printer, QrCode, Clock } from 'lucide-react'
 import QRCode from 'qrcode'
@@ -24,9 +24,9 @@ import TiptapEditor from '@/components/admin/TiptapEditor'
 const productSchema = z.object({
     name: z.string().min(3, 'Name is required'),
     sku: z.string().min(2, 'SKU is required'),
-    mrp_price: z.coerce.number().min(0.01, 'MRP is required'),
+    mrp_price: z.coerce.number().min(0, 'MRP must be 0 or more'),
     shop_price: z.coerce.number().min(0).optional().default(0),
-    dealer_price: z.coerce.number().min(0.01, 'Dealer Price is required'),
+    dealer_price: z.coerce.number().min(0, 'Dealer Price must be 0 or more'),
     counter_price: z.coerce.number().min(0).optional(),
     recommended_price: z.coerce.number().min(0).optional(),
     category_id: z.string().min(1, 'Category is required'),
@@ -44,8 +44,22 @@ const productSchema = z.object({
     is_discontinued: z.boolean().default(false),
     is_quote_hidden: z.boolean().default(false),
     unit: z.string().default('1'),
-    images: z.array(z.string()).default([]),
-    videos: z.array(z.string()).default([]),
+    images: z.array(z.union([
+        z.string(),
+        z.object({
+            url: z.string(),
+            alt: z.string().optional().default(''),
+            id: z.any().optional().default(null)
+        })
+    ])).default([]),
+    videos: z.array(z.union([
+        z.string(),
+        z.object({
+            url: z.string(),
+            alt: z.string().optional().default(''),
+            id: z.any().optional().default(null)
+        })
+    ])).default([]),
     // Base Attributes (Optional)
     size: z.string().optional(),
     color: z.string().optional(),
@@ -53,6 +67,10 @@ const productSchema = z.object({
     option1_value: z.string().optional(),
     option2_name: z.string().optional(),
     option2_value: z.string().optional(),
+    option3_name: z.string().optional(),
+    option3_value: z.string().optional(),
+    option4_name: z.string().optional(),
+    option4_value: z.string().optional(),
     variants: z.array(z.object({
         id: z.string().optional(),
         sku: z.string().min(1, 'Variant SKU is required'),
@@ -62,6 +80,10 @@ const productSchema = z.object({
         option1_value: z.string().optional().default(''),
         option2_name: z.string().optional().default(''),
         option2_value: z.string().optional().default(''),
+        option3_name: z.string().optional().default(''),
+        option3_value: z.string().optional().default(''),
+        option4_name: z.string().optional().default(''),
+        option4_value: z.string().optional().default(''),
         mrp_price: z.coerce.number().min(0).default(0),
         dealer_price: z.coerce.number().min(0).default(0),
         counter_price: z.coerce.number().min(0).default(0),
@@ -69,7 +91,14 @@ const productSchema = z.object({
         shop_price: z.coerce.number().min(0).default(0),
         inventory: z.coerce.number().min(0).default(0),
         is_default: z.boolean().default(false),
-        images: z.array(z.string()).default([])
+        images: z.array(z.union([
+            z.string(),
+            z.object({
+                url: z.string(),
+                alt: z.string().optional().default(''),
+                id: z.any().optional().default(null)
+            })
+        ])).default([])
     })).default([])
 })
 
@@ -112,7 +141,11 @@ export function ProductForm({ product, onCancel, onSuccess }) {
             option1_name: product?.option1_name || '',
             option1_value: product?.option1_value || '',
             option2_name: product?.option2_name || '',
-            option2_value: product?.option2_value || ''
+            option2_value: product?.option2_value || '',
+            option3_name: product?.option3_name || '',
+            option3_value: product?.option3_value || '',
+            option4_name: product?.option4_name || '',
+            option4_value: product?.option4_value || ''
         }
     })
 
@@ -128,8 +161,15 @@ export function ProductForm({ product, onCancel, onSuccess }) {
         if (Array.isArray(value)) return value
         if (typeof value === 'object') return [value]
         try {
-            return JSON.parse(value)
+            const parsed = JSON.parse(value)
+            // Ensure parsed value is array/object and not just a string if it was legacy
+            if (Array.isArray(parsed)) return parsed
+            return [parsed]
         } catch (e) {
+            // If parse fails, it might be a raw string URL from legacy
+            if (typeof value === 'string' && value.startsWith('http')) {
+                return [{ url: value, alt: '', id: null }]
+            }
             console.error('JSON Parse error', e)
             return []
         }
@@ -244,7 +284,15 @@ export function ProductForm({ product, onCancel, onSuccess }) {
     }
 
     const onError = (errors) => {
-        console.error('Form Errors:', errors)
+        console.error('Form Validation Errors:', errors)
+
+        // Log deep errors for variants
+        if (errors.variants) {
+            errors.variants.forEach((vErr, idx) => {
+                if (vErr) console.error(`Variant ${idx + 1} Errors:`, vErr)
+            })
+        }
+
         toast.error('Please check the form for errors. Required fields might be missing.')
     }
 
@@ -571,22 +619,40 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                             <Input {...register('color')} placeholder="e.g. Red" />
                                         </div>
                                     </div>
-                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-                                        <div className="space-y-2">
-                                            <Label>Option 1 Name</Label>
-                                            <Input {...register('option1_name')} placeholder="e.g. Material" />
+                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4 text-xs font-medium">
+                                        <div className="space-y-1">
+                                            <Label className="text-[10px]">Option 1 Name</Label>
+                                            <Input {...register('option1_name')} placeholder="e.g. Material" className="h-8" />
                                         </div>
-                                        <div className="space-y-2">
-                                            <Label>Option 1 Value</Label>
-                                            <Input {...register('option1_value')} placeholder="e.g. Cotton" />
+                                        <div className="space-y-1">
+                                            <Label className="text-[10px]">Option 1 Value</Label>
+                                            <Input {...register('option1_value')} placeholder="e.g. Cotton" className="h-8" />
                                         </div>
-                                        <div className="space-y-2">
-                                            <Label>Option 2 Name</Label>
-                                            <Input {...register('option2_name')} placeholder="e.g. Style" />
+                                        <div className="space-y-1">
+                                            <Label className="text-[10px]">Option 2 Name</Label>
+                                            <Input {...register('option2_name')} placeholder="e.g. Style" className="h-8" />
                                         </div>
-                                        <div className="space-y-2">
-                                            <Label>Option 2 Value</Label>
-                                            <Input {...register('option2_value')} placeholder="e.g. Round Neck" />
+                                        <div className="space-y-1">
+                                            <Label className="text-[10px]">Option 2 Value</Label>
+                                            <Input {...register('option2_value')} placeholder="e.g. Round Neck" className="h-8" />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-2 text-xs font-medium">
+                                        <div className="space-y-1">
+                                            <Label className="text-[10px]">Option 3 Name</Label>
+                                            <Input {...register('option3_name')} placeholder="e.g. Pattern" className="h-8" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-[10px]">Option 3 Value</Label>
+                                            <Input {...register('option3_value')} placeholder="e.g. Printed" className="h-8" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-[10px]">Option 4 Name</Label>
+                                            <Input {...register('option4_name')} placeholder="e.g. Occasion" className="h-8" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-[10px]">Option 4 Value</Label>
+                                            <Input {...register('option4_value')} placeholder="e.g. Casual" className="h-8" />
                                         </div>
                                     </div>
                                 </div>
@@ -607,6 +673,7 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                                 )}
                                             </div>
                                             <Input type="number" {...register('dealer_price')} placeholder="0.00" />
+                                            {errors.dealer_price && <p className="text-red-500 text-xs">{errors.dealer_price.message}</p>}
                                         </div>
                                         <div className="space-y-2">
                                             <div className="flex items-center justify-between">
@@ -618,6 +685,7 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                                 )}
                                             </div>
                                             <Input type="number" {...register('counter_price')} placeholder="0.00" />
+                                            {errors.counter_price && <p className="text-red-500 text-xs">{errors.counter_price.message}</p>}
                                         </div>
                                         <div className="space-y-2">
                                             <div className="flex items-center justify-between">
@@ -641,6 +709,7 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                                 )}
                                             </div>
                                             <Input type="number" {...register('recommended_price')} placeholder="0.00" />
+                                            {errors.recommended_price && <p className="text-red-500 text-xs">{errors.recommended_price.message}</p>}
                                         </div>
                                     </div>
                                     <div className="mt-4 pt-4 border-t space-y-2">
@@ -678,6 +747,8 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                     counter_price: watch('counter_price') || 0,
                                     recommended_price: watch('recommended_price') || 0,
                                     shop_price: watch('shop_price') || 0,
+                                    option3_name: '', option3_value: '',
+                                    option4_name: '', option4_value: '',
                                     inventory: 0,
                                     is_default: variants.length === 0
                                 })}>
@@ -722,8 +793,7 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                             </div>
                                         </div>
 
-                                        {/* Size & Color */}
-                                        <div className="grid grid-cols-4 gap-3 mb-4">
+                                        <div className="grid grid-cols-4 xl:grid-cols-6 gap-3 mb-4">
                                             <div className="space-y-1">
                                                 <Label className="text-[10px] uppercase font-bold text-gray-400">Size</Label>
                                                 <Input placeholder="e.g. M, L, XL" {...register(`variants.${index}.size`)} />
@@ -734,11 +804,19 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                             </div>
                                             <div className="space-y-1">
                                                 <Label className="text-[10px] uppercase font-bold text-gray-400">Option 1</Label>
-                                                <Input placeholder="Name:Value" {...register(`variants.${index}.option1_value`)} />
+                                                <Input placeholder="Value" {...register(`variants.${index}.option1_value`)} />
                                             </div>
                                             <div className="space-y-1">
                                                 <Label className="text-[10px] uppercase font-bold text-gray-400">Option 2</Label>
-                                                <Input placeholder="Name:Value" {...register(`variants.${index}.option2_value`)} />
+                                                <Input placeholder="Value" {...register(`variants.${index}.option2_value`)} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-[10px] uppercase font-bold text-gray-400">Option 3</Label>
+                                                <Input placeholder="Value" {...register(`variants.${index}.option3_value`)} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-[10px] uppercase font-bold text-gray-400">Option 4</Label>
+                                                <Input placeholder="Value" {...register(`variants.${index}.option4_value`)} />
                                             </div>
                                         </div>
 
@@ -754,6 +832,7 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                                     )}
                                                 </div>
                                                 <Input type="number" step="0.01" {...register(`variants.${index}.dealer_price`)} />
+                                                {errors.variants?.[index]?.dealer_price && <p className="text-red-500 text-[10px]">{errors.variants[index].dealer_price.message}</p>}
                                             </div>
                                             <div className="space-y-1">
                                                 <div className="flex items-center justify-between">
@@ -765,6 +844,7 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                                     )}
                                                 </div>
                                                 <Input type="number" step="0.01" {...register(`variants.${index}.counter_price`)} />
+                                                {errors.variants?.[index]?.counter_price && <p className="text-red-500 text-[10px]">{errors.variants[index].counter_price.message}</p>}
                                             </div>
                                             <div className="space-y-1">
                                                 <div className="flex items-center justify-between">
@@ -776,6 +856,7 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                                     )}
                                                 </div>
                                                 <Input type="number" step="0.01" {...register(`variants.${index}.mrp_price`)} />
+                                                {errors.variants?.[index]?.mrp_price && <p className="text-red-500 text-[10px]">{errors.variants[index].mrp_price.message}</p>}
                                             </div>
                                             <div className="space-y-1">
                                                 <div className="flex items-center justify-between">
@@ -787,6 +868,7 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                                     )}
                                                 </div>
                                                 <Input type="number" step="0.01" {...register(`variants.${index}.recommended_price`)} />
+                                                {errors.variants?.[index]?.recommended_price && <p className="text-red-500 text-[10px]">{errors.variants[index].recommended_price.message}</p>}
                                             </div>
                                             <div className="space-y-1">
                                                 <div className="flex items-center justify-between">
@@ -798,6 +880,7 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                                     )}
                                                 </div>
                                                 <Input type="number" step="0.01" {...register(`variants.${index}.shop_price`)} />
+                                                {errors.variants?.[index]?.shop_price && <p className="text-red-500 text-[10px]">{errors.variants[index].shop_price.message}</p>}
                                             </div>
                                         </div>
 

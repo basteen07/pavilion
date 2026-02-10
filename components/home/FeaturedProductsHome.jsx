@@ -11,6 +11,7 @@ import Image from 'next/image'
 import { toast } from 'sonner'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useB2BCart } from '@/components/providers/B2BCartProvider'
+import { getImageUrl } from '@/lib/utils'
 
 export function FeaturedProductsHome() {
     const router = useRouter()
@@ -53,8 +54,9 @@ export function FeaturedProductsHome() {
                 // Check if it's a direct string URL or an object with image_url
                 if (typeof firstImage === 'string') {
                     return firstImage;
-                } else if (typeof firstImage === 'object' && firstImage.image_url) {
-                    return firstImage.image_url;
+                } else if (typeof firstImage === 'object') {
+                    // Use getImageUrl for the internal image_url field
+                    return getImageUrl(firstImage.image_url);
                 }
             }
             return null;

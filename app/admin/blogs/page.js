@@ -44,6 +44,13 @@ export default function BlogsPage() {
         }
     }
 
+    // Helper to extract URL from image data (string or object)
+    const getImageUrl = (img) => {
+        if (!img) return ''
+        if (typeof img === 'object') return img.url || ''
+        return img
+    }
+
     return (
         <div className="min-h-full">
             {view === "list" ? (
@@ -86,7 +93,7 @@ export default function BlogsPage() {
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 shrink-0 overflow-hidden">
                                                         {blog.image_url ? (
-                                                            <img src={blog.image_url} alt="" className="w-full h-full object-cover" />
+                                                            <img src={getImageUrl(blog.image_url)} alt="" className="w-full h-full object-cover" />
                                                         ) : (
                                                             <FileText className="w-5 h-5" />
                                                         )}

@@ -225,11 +225,45 @@ async function handleRoute(request, { params }) {
     }
 
     if (route === '/products/bulk' && method === 'POST') {
-      const user = await authenticateRequest(request);
-      if (!user || (user.role_name !== 'superadmin' && user.role_name !== 'admin')) {
-        return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
-      }
       return import('@/lib/api/products').then(async m => m.bulkUploadProducts(await request.json()));
+    }
+
+    if (route === '/products/delete-all' && method === 'DELETE') {
+      const user = await authenticateRequest(request);
+      if (!user || user.role_name !== 'superadmin') {
+        return handleCORS(NextResponse.json({ error: 'Unauthorized. Superadmin only.' }, { status: 401 }));
+      }
+
+      const { password } = await request.json();
+      if (!password) {
+        return handleCORS(NextResponse.json({ error: 'Password is required' }, { status: 400 }));
+      }
+
+      // Verify password
+      const userResult = await query('SELECT password_hash FROM users WHERE id = $1', [user.id]);
+      const isValid = await verifyPassword(password, userResult.rows[0].password_hash);
+
+      if (!isValid) {
+        await logActivity({
+          admin_id: user.id,
+          event_type: 'bulk_delete_failed',
+          description: `Failed bulk delete attempt (incorrect password) by ${user.email}`,
+          metadata: { email: user.email }
+        });
+        return handleCORS(NextResponse.json({ error: 'Incorrect password' }, { status: 403 }));
+      }
+
+      // Proceed with deletion
+      const response = await import('@/lib/api/products').then(m => m.deleteAllProducts());
+
+      await logActivity({
+        admin_id: user.id,
+        event_type: 'bulk_delete_products',
+        description: `Superadmin ${user.name || user.email} deleted ALL products and variants.`,
+        metadata: { email: user.email }
+      });
+
+      return handleCORS(response);
     }
 
     if (route === '/admin/bulk-template-masters' && method === 'GET') {
