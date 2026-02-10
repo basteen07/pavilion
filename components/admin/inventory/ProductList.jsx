@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
+import { cn, getProductImage } from '@/lib/utils'
 import { toast } from 'sonner'
 import { Plus, Edit, Trash2, Search, Filter, FileUp, AlertTriangle } from 'lucide-react'
 import { BulkUploadDialog } from './BulkUploadDialog'
@@ -20,20 +21,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-
-// Helper to safely parse images
-const safeParseImages = (images) => {
-    if (Array.isArray(images)) return images
-    if (!images) return []
-    try {
-        const parsed = JSON.parse(images)
-        if (Array.isArray(parsed)) return parsed
-        return [parsed] // If it parses to a single string/object
-    } catch (e) {
-        // If parsing fails, assuming it's a direct URL string
-        return typeof images === 'string' ? [images] : []
-    }
-}
 
 export function ProductList({ onEdit, onCreate }) {
     const queryClient = useQueryClient()
@@ -254,9 +241,9 @@ export function ProductList({ onEdit, onCreate }) {
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 bg-gray-100 rounded overflow-hidden">
                                                 {(() => {
-                                                    const imgs = safeParseImages(product.images)
-                                                    return imgs.length > 0 ? (
-                                                        <img src={imgs[0] || ''} alt="" className="w-full h-full object-cover" />
+                                                    const img = getProductImage(product)
+                                                    return img ? (
+                                                        <img src={img} alt="" className="w-full h-full object-cover" />
                                                     ) : null
                                                 })()}
                                             </div>

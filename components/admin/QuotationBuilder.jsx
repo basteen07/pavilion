@@ -21,7 +21,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Mail } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import { cn } from "@/lib/utils"
+import { cn, getProductImage, getImageUrl, getProductImages } from "@/lib/utils"
 import { useAuth } from '@/components/providers/AuthProvider'
 import { Switch } from '@/components/ui/switch'
 import { QuotationPreviewModal } from '@/components/admin/QuotationPreviewModal'
@@ -33,14 +33,7 @@ const EMPTY_OBJ = Object.freeze({});
 
 // --- Utility: Get Image ---
 const getFirstImage = (images) => {
-    if (!images) return '/placeholder.png';
-    try {
-        if (Array.isArray(images)) return images[0];
-        const parsed = JSON.parse(images);
-        return Array.isArray(parsed) ? parsed[0] : parsed;
-    } catch (e) {
-        return images;
-    }
+    return getProductImage({ images }) || '/placeholder.png';
 }
 
 export function QuotationBuilder({ onClose, onSuccess, id }) {
@@ -380,19 +373,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
 
                     // Detailed View: Images on Right
                     if (isDetailed) {
-                        let images = [];
-                        if (Array.isArray(item.images)) {
-                            images = item.images;
-                        } else if (typeof item.images === 'string') {
-                            try {
-                                const parsed = JSON.parse(item.images);
-                                images = Array.isArray(parsed) ? parsed : [parsed];
-                            } catch (e) {
-                                images = [item.images];
-                            }
-                        } else if (item.image_url || item.image) {
-                            images = [item.image_url || item.image];
-                        }
+                        const images = getProductImages({ images: item.images || item.image_url || item.image });
 
                         if (images.length > 0) {
                             const imgWidth = 9;
@@ -400,7 +381,9 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                             const imgGap = 2;
                             images.slice(0, 3).forEach((img, i) => {
                                 try {
-                                    doc.addImage(img, 'JPEG', 52 + (i * (imgWidth + imgGap)), currentY, imgWidth, imgHeight);
+                                    if (img) {
+                                        doc.addImage(img, 'JPEG', 52 + (i * (imgWidth + imgGap)), currentY, imgWidth, imgHeight);
+                                    }
                                 } catch (e) {
                                     console.error('PDF Image add error:', e);
                                 }

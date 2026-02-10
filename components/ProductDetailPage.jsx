@@ -23,7 +23,7 @@ import { apiCall } from '@/lib/api-client'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useB2BCart } from '@/components/providers/B2BCartProvider'
 import { EnquiryModal } from '@/components/product/EnquiryModal'
-import { getImageUrl } from '@/lib/utils'
+import { getImageUrl, getProductImage } from '@/lib/utils'
 
 
 export default function ProductDetailPage({ productSlug }) {
@@ -79,60 +79,36 @@ export default function ProductDetailPage({ productSlug }) {
   }
 
   // MODIFIED: Image Resolution Logic
-  // If selectedVariant has images => use them
-  // Else if product has images => use them
-  // This allows logic: Main Product selected -> shows main images. Variant selected -> shows variant images (or fallback to main).
+  let rawImages = (selectedVariant?.images &&
+    (Array.isArray(selectedVariant.images) ? selectedVariant.images.length > 0 : selectedVariant.images !== '[]'))
+    ? selectedVariant.images
+    : product.images
 
-  const hasVariantImages = selectedVariant?.images &&
-    (Array.isArray(selectedVariant.images) ? selectedVariant.images.length > 0 : selectedVariant.images !== '[]')
-
-  let rawImages = hasVariantImages ? selectedVariant.images : product.images
-
-  let images = []
+  let imagesList = []
   try {
     if (Array.isArray(rawImages)) {
-      images = rawImages
+      imagesList = rawImages
     } else if (typeof rawImages === 'string') {
       try {
-        images = JSON.parse(rawImages)
+        imagesList = JSON.parse(rawImages)
       } catch (e) {
-        console.error("Failed to parse images JSON string", e)
+        // Not JSON, maybe a single URL
+        if (rawImages) imagesList = [rawImages]
       }
     }
   } catch (e) {
     console.error("General error processing images", e)
   }
 
-  // Normalize
-  images = Array.isArray(images) ? images.map(img => {
-    if (typeof img === 'string') return { image_url: getImageUrl(img) }
-    return { ...img, image_url: getImageUrl(img.image_url) }
+  // Normalize all images in the list
+  let images = Array.isArray(imagesList) ? imagesList.map(img => {
+    return { image_url: getImageUrl(img) }
   }).filter(img => img && img.image_url) : []
 
+  // Fallback if no images found for current selection
   if (images.length === 0) {
-    // If we are on a variant but it has no images, fallback to main product images specifically
-    // (Though logic above mostly covers this, ensures we always have something if main has it)
-    if (selectedVariant) {
-      let mainRaw = product.images
-      let mainImages = []
-      try {
-        if (Array.isArray(mainRaw)) mainImages = mainRaw
-        else if (typeof mainRaw === 'string') mainImages = JSON.parse(mainRaw)
-      } catch (e) { }
-
-      const normMain = Array.isArray(mainImages) ? mainImages.map(img => {
-        if (typeof img === 'string') return { image_url: getImageUrl(img) }
-        return { ...img, image_url: getImageUrl(img.image_url) }
-      }).filter(img => img && img.image_url) : []
-
-      if (normMain.length > 0) images = normMain
-    }
-  }
-
-  if (images.length === 0) {
-    images = [
-      { image_url: 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=1200' }
-    ]
+    const fallbackImage = getProductImage(product) || 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=1200'
+    images = [{ image_url: fallbackImage }]
   }
 
   // Determine current display values (Variant or Main Product)

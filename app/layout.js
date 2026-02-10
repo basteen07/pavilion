@@ -92,17 +92,20 @@ export default async function RootLayout({ children }) {
             <B2BCartProvider>
               <SiteLayout>
                 {children}
+
+                <Toaster richColors closeButton />
+
+                {/* Body Scripts */}
+                {settings.body_scripts && (
+                  <div
+                    style={{ display: 'none', visibility: 'hidden', height: 0, width: 0, overflow: 'hidden' }}
+                    dangerouslySetInnerHTML={{ __html: settings.body_scripts }}
+                  />
+                )}
               </SiteLayout>
             </B2BCartProvider>
           </AuthProvider>
         </QueryProvider>
-
-        <Toaster richColors closeButton />
-
-        {/* Body Scripts */}
-        {settings.body_scripts && (
-          <div className="hidden" dangerouslySetInnerHTML={{ __html: settings.body_scripts }} />
-        )}
       </body>
     </html>
   )

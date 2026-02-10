@@ -76,7 +76,7 @@ import {
 import { apiCall } from '@/lib/api-client'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
-import { cn } from '@/lib/utils'
+import { cn, getProductImage } from '@/lib/utils'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useB2BCart } from '@/components/providers/B2BCartProvider'
 
@@ -369,17 +369,7 @@ export default function B2BPortal() {
     }
 
     function getFirstImage(images) {
-        if (!images) return '/placeholder-product.png';
-        if (Array.isArray(images) && images.length > 0) return images[0];
-        if (typeof images === 'string') {
-            try {
-                const parsed = JSON.parse(images);
-                return Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : (typeof parsed === 'string' ? parsed : '/placeholder-product.png');
-            } catch (e) {
-                return images;
-            }
-        }
-        return '/placeholder-product.png';
+        return getProductImage({ images }) || '/placeholder-product.png';
     }
 
     if (!user) return null

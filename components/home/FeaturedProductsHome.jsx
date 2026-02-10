@@ -34,37 +34,6 @@ export function FeaturedProductsHome() {
         )
     }
 
-    const getProductImage = (product) => {
-        try {
-            if (!product.images) return null;
-            let images = product.images;
-
-            // Handle stringified JSON
-            if (typeof images === 'string') {
-                try {
-                    images = JSON.parse(images);
-                } catch (e) {
-                    console.error('Failed to parse image string', e);
-                    return null;
-                }
-            }
-
-            if (Array.isArray(images) && images.length > 0) {
-                const firstImage = images[0];
-                // Check if it's a direct string URL or an object with image_url
-                if (typeof firstImage === 'string') {
-                    return firstImage;
-                } else if (typeof firstImage === 'object') {
-                    // Use getImageUrl for the internal image_url field
-                    return getImageUrl(firstImage.image_url);
-                }
-            }
-            return null;
-        } catch (e) {
-            console.error('Error parsing product images:', e);
-            return null;
-        }
-    }
 
     return (
         <section className="py-24 bg-white">

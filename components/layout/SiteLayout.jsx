@@ -46,7 +46,7 @@ export function SiteLayout({ children }) {
     }
 
     return (
-        <div className="flex flex-col min-h-screen">
+        <div className="flex flex-col min-h-screen bg-white">
             <SiteHeader
                 categories={categories}
                 brands={brands}
@@ -54,7 +54,7 @@ export function SiteLayout({ children }) {
                 subCategories={subCategories}
                 tags={tags}
             />
-            <main className="flex-grow">
+            <main className="flex-grow bg-white">
                 {children}
             </main>
             <SiteFooter categories={categories} />

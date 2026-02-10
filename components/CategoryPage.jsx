@@ -18,7 +18,7 @@ import { toast } from 'sonner'
 import { useQuery } from '@tanstack/react-query'
 import { apiCall } from '@/lib/api-client'
 import { EnquiryModal } from '@/components/product/EnquiryModal'
-import { getImageUrl } from '@/lib/utils'
+import { getImageUrl, getProductImage } from '@/lib/utils'
 
 
 
@@ -924,7 +924,7 @@ function ProductCard({ product, viewMode, onEnquire }) {
         {/* Image */}
         <div className="w-full md:w-48 aspect-square flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden relative">
           <img
-            src={getImageUrl(product.images?.[0]?.image_url) || 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=600'}
+            src={getProductImage(product) || 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=600'}
             alt={product.name}
             className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out"
           />
@@ -1014,7 +1014,7 @@ function ProductCard({ product, viewMode, onEnquire }) {
     <div className="group bg-white rounded-2xl p-4 hover:shadow-xl transition-shadow border border-gray-100">
       <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-50 mb-4 cursor-pointer" onClick={() => router.push(`/product/${product.slug}`)}>
         <img
-          src={product.images?.[0]?.image_url || 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=600'}
+          src={getProductImage(product) || 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=600'}
           alt={product.name}
           className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
         />
