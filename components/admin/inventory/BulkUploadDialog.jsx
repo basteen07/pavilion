@@ -186,14 +186,14 @@ export function BulkUploadDialog({ open, onOpenChange }) {
 
             // MasterLists Populating
             // 1. Collections (Column A)
-            const colList = masters.collections.length > 0 ? masters.collections.map(c => c.name) : ['No Collections']
+            const colList = (masters?.collections?.length || 0) > 0 ? masters.collections.map(c => c.name) : ['No Collections']
             masterSheet.getColumn(1).values = ['Collections', ...colList]
             workbook.definedNames.add(`MasterLists!$A$2:$A$${colList.length + 1}`, 'CollectionList')
 
             // 2. Global Lists (all items for fallback)
-            const allCats = masters.categories.length > 0 ? masters.categories.map(c => c.name) : ['No Categories']
-            const allSubs = masters.subCategories.length > 0 ? masters.subCategories.map(s => s.name) : ['No Sub-Categories']
-            const allTgs = masters.tags.length > 0 ? masters.tags.map(t => t.name) : ['No Tags']
+            const allCats = (masters?.categories?.length || 0) > 0 ? masters.categories.map(c => c.name) : ['No Categories']
+            const allSubs = (masters?.subCategories?.length || 0) > 0 ? masters.subCategories.map(s => s.name) : ['No Sub-Categories']
+            const allTgs = (masters?.tags?.length || 0) > 0 ? masters.tags.map(t => t.name) : ['No Tags']
 
             masterSheet.getColumn(8).values = ['AllCategories', ...allCats]
             workbook.definedNames.add(`MasterLists!$H$2:$H$${allCats.length + 1}`, 'AllCategoryList')
@@ -206,25 +206,25 @@ export function BulkUploadDialog({ open, onOpenChange }) {
 
             // 3. Mapping Tables for VLOOKUP
             // Collection -> Category Mapping (Cols B & C)
-            const collCatMap = masters.collections.map(coll => [coll.name, sanitize('cat_' + coll.name)])
+            const collCatMap = (masters?.collections || []).map(coll => [coll.name, sanitize('cat_' + coll.name)])
             masterSheet.getColumn(2).values = ['Collection', ...collCatMap.map(r => r[0])]
             masterSheet.getColumn(3).values = ['RangeName', ...collCatMap.map(r => r[1])]
             workbook.definedNames.add(`MasterLists!$B$2:$C$${Math.max(2, collCatMap.length + 1)}`, 'CollectionCategoryMap')
 
             // Category -> Sub-Category Mapping (Cols D & E)
-            const catSubMap = masters.categories.map(cat => [cat.name, sanitize('sub_' + cat.name)])
+            const catSubMap = (masters?.categories || []).map(cat => [cat.name, sanitize('sub_' + cat.name)])
             masterSheet.getColumn(4).values = ['Category', ...catSubMap.map(r => r[0])]
             masterSheet.getColumn(5).values = ['RangeName', ...catSubMap.map(r => r[1])]
             workbook.definedNames.add(`MasterLists!$D$2:$E$${Math.max(2, catSubMap.length + 1)}`, 'CategorySubCategoryMap')
 
             // Sub-Category -> Tag Mapping (Cols F & G)
-            const subTagMap = masters.subCategories.map(sub => [sub.name, sanitize('tag_' + sub.name)])
+            const subTagMap = (masters?.subCategories || []).map(sub => [sub.name, sanitize('tag_' + sub.name)])
             masterSheet.getColumn(6).values = ['SubCategory', ...subTagMap.map(r => r[0])]
             masterSheet.getColumn(7).values = ['RangeName', ...subTagMap.map(r => r[1])]
             workbook.definedNames.add(`MasterLists!$F$2:$G$${Math.max(2, subTagMap.length + 1)}`, 'SubCategoryTagMap')
 
             // 4. Brands (Column K)
-            const brandList = masters.brands.length > 0 ? masters.brands.map(b => b.name) : ['Generic']
+            const brandList = (masters?.brands?.length || 0) > 0 ? masters.brands.map(b => b.name) : ['Generic']
             masterSheet.getColumn(11).values = ['Brands', ...brandList]
             workbook.definedNames.add(`MasterLists!$K$2:$K$${brandList.length + 1}`, 'BrandList')
 
@@ -238,66 +238,67 @@ export function BulkUploadDialog({ open, onOpenChange }) {
             workbook.definedNames.add(`MasterLists!$AE$2:$AE$${bools.length + 1}`, 'BooleanList')
 
             // 6. Child Ranges (Start from Col M)
-            let currentCol = 13
+            let currentCol = 13;
 
             // Categories by Collection
-            masters.collections.forEach(coll => {
-                const cats = masters.categories.filter(c => c.parent_collection_id === coll.id).map(c => c.name)
-                const list = cats.length > 0 ? cats : ['No Categories']
-                masterSheet.getColumn(currentCol).values = [coll.name, ...list]
-                workbook.definedNames.add(`MasterLists!$${masterSheet.getColumn(currentCol).letter}$2:$${masterSheet.getColumn(currentCol).letter}$${list.length + 1}`, sanitize('cat_' + coll.name))
-                currentCol++
-            })
+            (masters?.collections || []).forEach(coll => {
+                const cats = (masters?.categories || []).filter(c => c.parent_collection_id === coll.id).map(c => c.name);
+                const list = cats.length > 0 ? cats : ['No Categories'];
+                masterSheet.getColumn(currentCol).values = [coll.name, ...list];
+                workbook.definedNames.add(`MasterLists!$${masterSheet.getColumn(currentCol).letter}$2:$${masterSheet.getColumn(currentCol).letter}$${list.length + 1}`, sanitize('cat_' + coll.name));
+                currentCol++;
+            });
 
             // Sub-Categories by Category
-            masters.categories.forEach(cat => {
-                const subs = masters.subCategories.filter(s => s.category_id === cat.id).map(s => s.name)
-                const list = subs.length > 0 ? subs : ['No Sub-Categories']
-                masterSheet.getColumn(currentCol).values = [cat.name, ...list]
-                workbook.definedNames.add(`MasterLists!$${masterSheet.getColumn(currentCol).letter}$2:$${masterSheet.getColumn(currentCol).letter}$${list.length + 1}`, sanitize('sub_' + cat.name))
-                currentCol++
-            })
+            (masters?.categories || []).forEach(cat => {
+                const subs = (masters?.subCategories || []).filter(s => s.category_id === cat.id).map(s => s.name);
+                const list = subs.length > 0 ? subs : ['No Sub-Categories'];
+                masterSheet.getColumn(currentCol).values = [cat.name, ...list];
+                workbook.definedNames.add(`MasterLists!$${masterSheet.getColumn(currentCol).letter}$2:$${masterSheet.getColumn(currentCol).letter}$${list.length + 1}`, sanitize('sub_' + cat.name));
+                currentCol++;
+            });
 
             // Tags by Sub-Category
-            masters.subCategories.forEach(sub => {
-                const tgs = masters.tags.filter(t => t.sub_category_id === sub.id).map(t => t.name)
-                const list = tgs.length > 0 ? tgs : ['No Tags']
-                masterSheet.getColumn(currentCol).values = [sub.name, ...list]
-                workbook.definedNames.add(`MasterLists!$${masterSheet.getColumn(currentCol).letter}$2:$${masterSheet.getColumn(currentCol).letter}$${list.length + 1}`, sanitize('tag_' + sub.name))
-                currentCol++
-            })
+            (masters?.subCategories || []).forEach(sub => {
+                const tgs = (masters?.tags || []).filter(t => t.sub_category_id === sub.id).map(t => t.name);
+                const list = tgs.length > 0 ? tgs : ['No Tags'];
+                masterSheet.getColumn(currentCol).values = [sub.name, ...list];
+                workbook.definedNames.add(`MasterLists!$${masterSheet.getColumn(currentCol).letter}$2:$${masterSheet.getColumn(currentCol).letter}$${list.length + 1}`, sanitize('tag_' + sub.name));
+                currentCol++;
+            });
 
             // Brands by Category
-            const catBrandMapping = []
-            masters.categories.forEach(cat => {
-                const brs = masters.brands.filter(b => b.category_id === cat.id).map(b => b.name)
+            const catBrandMapping = [];
+            (masters?.categories || []).forEach(cat => {
+                const brs = (masters?.brands || []).filter(b => b.category_id === cat.id).map(b => b.name);
                 if (brs.length > 0) {
-                    const rangeName = sanitize('br_cat_' + cat.name)
-                    masterSheet.getColumn(currentCol).values = [cat.name, ...brs]
-                    workbook.definedNames.add(`MasterLists!$${masterSheet.getColumn(currentCol).letter}$2:$${masterSheet.getColumn(currentCol).letter}$${brs.length + 1}`, rangeName)
-                    catBrandMapping.push([cat.name, rangeName])
-                    currentCol++
+                    const rangeName = sanitize('br_cat_' + cat.name);
+                    masterSheet.getColumn(currentCol).values = [cat.name, ...brs];
+                    workbook.definedNames.add(`MasterLists!$${masterSheet.getColumn(currentCol).letter}$2:$${masterSheet.getColumn(currentCol).letter}$${brs.length + 1}`, rangeName);
+                    catBrandMapping.push([cat.name, rangeName]);
+                    currentCol++;
                 }
-            })
+            });
+
             // Category -> Brand Mapping Table (New Cols)
-            const catBrMapStartCol = currentCol
-            masterSheet.getColumn(catBrMapStartCol).values = ['Category', ...catBrandMapping.map(r => r[0])]
-            masterSheet.getColumn(catBrMapStartCol + 1).values = ['RangeName', ...catBrandMapping.map(r => r[1])]
-            workbook.definedNames.add(`MasterLists!$${masterSheet.getColumn(catBrMapStartCol).letter}$2:$${masterSheet.getColumn(catBrMapStartCol + 1).letter}$${Math.max(2, catBrandMapping.length + 1)}`, 'CategoryBrandMap')
-            currentCol += 2
+            const catBrMapStartCol = currentCol;
+            masterSheet.getColumn(catBrMapStartCol).values = ['Category', ...catBrandMapping.map(r => r[0])];
+            masterSheet.getColumn(catBrMapStartCol + 1).values = ['RangeName', ...catBrandMapping.map(r => r[1])];
+            workbook.definedNames.add(`MasterLists!$${masterSheet.getColumn(catBrMapStartCol).letter}$2:$${masterSheet.getColumn(catBrMapStartCol + 1).letter}$${Math.max(2, catBrandMapping.length + 1)}`, 'CategoryBrandMap');
+            currentCol += 2;
 
             // Brands by Sub-Category
-            const subBrandMapping = []
-            masters.subCategories.forEach(sub => {
-                const brs = masters.brands.filter(b => b.sub_category_id === sub.id).map(b => b.name)
+            const subBrandMapping = [];
+            (masters?.subCategories || []).forEach(sub => {
+                const brs = (masters?.brands || []).filter(b => b.sub_category_id === sub.id).map(b => b.name);
                 if (brs.length > 0) {
-                    const rangeName = sanitize('br_sub_' + sub.name)
-                    masterSheet.getColumn(currentCol).values = [sub.name, ...brs]
-                    workbook.definedNames.add(`MasterLists!$${masterSheet.getColumn(currentCol).letter}$2:$${masterSheet.getColumn(currentCol).letter}$${brs.length + 1}`, rangeName)
-                    subBrandMapping.push([sub.name, rangeName])
-                    currentCol++
+                    const rangeName = sanitize('br_sub_' + sub.name);
+                    masterSheet.getColumn(currentCol).values = [sub.name, ...brs];
+                    workbook.definedNames.add(`MasterLists!$${masterSheet.getColumn(currentCol).letter}$2:$${masterSheet.getColumn(currentCol).letter}$${brs.length + 1}`, rangeName);
+                    subBrandMapping.push([sub.name, rangeName]);
+                    currentCol++;
                 }
-            })
+            });
             // Sub-Category -> Brand Mapping Table
             const subBrMapStartCol = currentCol
             masterSheet.getColumn(subBrMapStartCol).values = ['SubCategory', ...subBrandMapping.map(r => r[0])]
