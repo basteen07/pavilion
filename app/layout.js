@@ -42,12 +42,46 @@ export default async function RootLayout({ children }) {
         {/* Manual font links removed in favor of next/font */}
 
         {/* Organization Schema */}
-        {settings.organization_schema && (
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: settings.organization_schema }}
-          />
-        )}
+        {/* Organization Schema */}
+        {(() => {
+          if (!settings.organization_schema) return null;
+          try {
+            let info = settings.organization_schema;
+
+            // Handle case where user pasted full <script> tag
+            if (typeof info === 'string') {
+              info = info.trim();
+              if (info.startsWith('<script')) {
+                info = info.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, '$1').trim();
+              }
+            }
+
+            // Ensure schema is valid JSON and has an @id
+            const schema = typeof info === 'string'
+              ? JSON.parse(info)
+              : info;
+
+            // Validate/Fix URL (Handle missing or empty string)
+            if (!schema.url) {
+              schema.url = 'https://pavilion-sports.com';
+            }
+
+            // Standardize @id if missing to allow linking from other schemas
+            if (!schema['@id']) {
+              schema['@id'] = schema.url + '#organization';
+            }
+
+            return (
+              <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+              />
+            );
+          } catch (e) {
+            console.error('Invalid Organization Schema JSON:', e);
+            return null;
+          }
+        })()}
 
         {settings.head_scripts && (
           <script dangerouslySetInnerHTML={{ __html: settings.head_scripts }} />

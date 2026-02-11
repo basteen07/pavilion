@@ -25,8 +25,24 @@ export default async function Home() {
     fetchBrands().catch(() => [])
   ]);
 
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Pavilion Sports",
+    "url": "https://pavilion-sports.com",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://pavilion-sports.com/search?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+      />
       <HeroScroller initialBanners={banners} />
       <BrandsCarousel initialBrands={brands} />
       <CategoryGrid initialCollections={collections} />
