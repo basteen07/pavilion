@@ -5,9 +5,8 @@ import { AuthProvider } from '@/components/providers/AuthProvider'
 import { B2BCartProvider } from '@/components/providers/B2BCartProvider'
 import { SiteLayout } from '@/components/layout/SiteLayout'
 import { Inter, Manrope } from 'next/font/google'
-
-import { query } from '@/lib/simple-db'
 import Script from 'next/script'
+import { getSettings } from '@/lib/api/settings'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -22,34 +21,10 @@ const manrope = Manrope({
   display: 'swap',
 })
 
-
-async function getSiteSettings() {
-  try {
-    // Check if table exists first (in case migration hasn't run via API)
-    // We can't easily check existence without erroring if we select from it and it doesn't exist.
-    // So ensuring table exists here is safe.
-    await query(`
-      CREATE TABLE IF NOT EXISTS site_settings (
-        id SERIAL PRIMARY KEY,
-        meta_title TEXT,
-        meta_description TEXT,
-        head_scripts TEXT,
-        body_scripts TEXT,
-        google_analytics_id TEXT,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
-    const res = await query('SELECT * FROM site_settings LIMIT 1');
-    return res.rows[0] || {};
-  } catch (e) {
-    console.error('Failed to fetch site settings', e);
-    return {};
-  }
-}
-
 export async function generateMetadata() {
-  const settings = await getSiteSettings();
+  const settingsResponse = await getSettings(['meta_title', 'meta_description']);
+  const settings = await settingsResponse.json();
+
   return {
     title: settings.meta_title || 'Pavilion Sports - B2B Sports Equipment',
     description: settings.meta_description || 'India\'s Premier B2B Sports Equipment Supplier',
@@ -57,13 +32,23 @@ export async function generateMetadata() {
 }
 
 export default async function RootLayout({ children }) {
-  const settings = await getSiteSettings();
+  const settingsResponse = await getSettings(['google_analytics_id', 'organization_schema', 'head_scripts', 'body_scripts']);
+  const settings = await settingsResponse.json();
 
   return (
     <html lang="en" className={`${inter.variable} ${manrope.variable}`}>
 
       <head>
         {/* Manual font links removed in favor of next/font */}
+
+        {/* Organization Schema */}
+        {settings.organization_schema && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: settings.organization_schema }}
+          />
+        )}
+
         {settings.head_scripts && (
           <script dangerouslySetInnerHTML={{ __html: settings.head_scripts }} />
         )}

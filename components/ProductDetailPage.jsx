@@ -26,7 +26,7 @@ import { EnquiryModal } from '@/components/product/EnquiryModal'
 import { getImageUrl, getProductImage } from '@/lib/utils'
 
 
-export default function ProductDetailPage({ productSlug }) {
+export default function ProductDetailPage({ productSlug, initialProduct }) {
   const router = useRouter()
   const { user } = useAuth()
   const { addToCart } = useB2BCart()
@@ -37,17 +37,17 @@ export default function ProductDetailPage({ productSlug }) {
 
   const { data: product, isLoading: productLoading } = useQuery({
     queryKey: ['product', productSlug],
-    queryFn: () => apiCall(`/products/${productSlug}`)
+    queryFn: () => apiCall(`/products/${productSlug}`),
+    initialData: initialProduct
   })
 
   // Set default variant on load - MODIFIED: Prioritize main product if it has attributes
   const variants = product?.product_variants || []
   if (product && variants.length > 0 && !selectedVariant) {
-    // Only auto-select if main product DOES NOT have defining attributes
-    // If main product has size/color, we want to show that by default (selectedVariant = null)
     if (!product.size && !product.color) {
       const defaultVar = variants.find(v => v.is_default) || variants[0]
-      setSelectedVariant(defaultVar)
+      // Only set if not already set (React strict mode safety)
+      if (!selectedVariant) setSelectedVariant(defaultVar)
     }
   }
 
@@ -59,7 +59,7 @@ export default function ProductDetailPage({ productSlug }) {
 
   const similarProducts = similarProductsData?.products?.filter(p => p.id !== product?.id) || []
 
-  if (productLoading) {
+  if (productLoading && !product) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
         <div className="w-12 h-12 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
@@ -92,7 +92,6 @@ export default function ProductDetailPage({ productSlug }) {
       try {
         imagesList = JSON.parse(rawImages)
       } catch (e) {
-        // Not JSON, maybe a single URL
         if (rawImages) imagesList = [rawImages]
       }
     }
@@ -105,7 +104,6 @@ export default function ProductDetailPage({ productSlug }) {
     return { image_url: getImageUrl(img) }
   }).filter(img => img && img.image_url) : []
 
-  // Fallback if no images found for current selection
   if (images.length === 0) {
     const fallbackImage = getProductImage(product) || 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=1200'
     images = [{ image_url: fallbackImage }]
@@ -135,7 +133,6 @@ export default function ProductDetailPage({ productSlug }) {
     : 0
 
   // Extract unique options for UI
-  // MODIFIED: Include Main Product attributes in the list of options
   const allSizes = variants.map(v => v.size).filter(Boolean)
   if (product.size) allSizes.push(product.size)
   const uniqueSizes = [...new Set(allSizes)]
@@ -144,13 +141,44 @@ export default function ProductDetailPage({ productSlug }) {
   if (product.color) allColors.push(product.color)
   const uniqueColors = [...new Set(allColors)]
 
-  // Current Size/Color being viewed (from Variant OR Main Product)
   const currentSize = selectedVariant ? selectedVariant.size : product.size;
   const currentColor = selectedVariant ? selectedVariant.color : product.color;
 
+  // JSON-LD Schema Generation
+  const jsonLd = {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": product.name,
+    "image": images.map(img => img.image_url),
+    "description": product.short_description || product.description?.replace(/<[^>]*>?/gm, "")?.slice(0, 160) || "",
+    "sku": currentSku,
+    "brand": {
+      "@type": "Brand",
+      "name": product.brand_name || "Pavilion"
+    },
+    // "itemCondition": "https://schema.org/NewCondition", // Removed as per request (optional but good practice)
+    "offers": {
+      "@type": "Offer",
+      "url": typeof window !== 'undefined' ? window.location.href : '',
+      "priceCurrency": "INR",
+      "price": currentPrice,
+      "priceValidUntil": new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
+      "itemCondition": "https://schema.org/NewCondition",
+      "availability": (product.is_active && !product.is_discontinued) ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      "seller": {
+        "@type": "Organization",
+        "name": "Pavilion"
+      }
+    }
+  };
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       <div className="bg-white min-h-screen pt-4 pb-20">
         <div className="container max-w-[1400px] mx-auto px-4 lg:px-6">
 
@@ -158,7 +186,7 @@ export default function ProductDetailPage({ productSlug }) {
           <div className="flex items-center gap-2 text-xs font-medium text-slate-500 mb-6 font-sans">
             <Link href="/" className="hover:text-slate-900 transition">Home</Link>
             <span className="text-slate-300">/</span>
-            <Link href={`/${product.category_slug}`} className="hover:text-slate-900 transition capitalize">{product.category_brand || 'Category'}</Link>
+            <Link href={product.category_slug ? `/${product.category_slug}` : '#'} className="hover:text-slate-900 transition capitalize">{product.category_name || 'Category'}</Link>
             <span className="text-slate-300">/</span>
             <span className="text-slate-900 font-semibold truncate max-w-[200px]">{product.name}</span>
           </div>
@@ -231,44 +259,44 @@ export default function ProductDetailPage({ productSlug }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 text-sm">
                   {/* Description - spanning full width if long */}
                   {product.description && (
-                    <div className="md:col-span-2 mb-6 prose prose-slate max-w-none text-slate-600">
-                      <p>{product.description}</p>
+                    <div className="md:col-span-2 mb-8">
+                      <div className="prose prose-slate max-w-none text-slate-700 leading-relaxed space-y-4" dangerouslySetInnerHTML={{ __html: product.description.replace(/\n/g, '<br />') }} />
                     </div>
                   )}
 
                   {/* Specs Table */}
-                  <div className="md:col-span-2 border rounded-sm overflow-hidden">
+                  <div className="md:col-span-2 border rounded-sm overflow-hidden shadow-sm">
                     <table className="w-full text-left border-collapse">
                       <tbody>
-                        <tr className="border-b border-slate-100 hover:bg-slate-50">
-                          <td className="p-4 bg-slate-50/50 w-1/3 font-semibold text-slate-500 uppercase text-xs tracking-wider">Brand</td>
-                          <td className="p-4 font-medium text-slate-900">{product.brand_name}</td>
+                        <tr className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                          <td className="p-4 bg-slate-50/80 w-1/3 font-semibold text-slate-600 uppercase text-xs tracking-wider border-r border-slate-100">Brand</td>
+                          <td className="p-4 font-medium text-slate-900">{product.brand_name || 'N/A'}</td>
                         </tr>
-                        <tr className="border-b border-slate-100 hover:bg-slate-50">
-                          <td className="p-4 bg-slate-50/50 w-1/3 font-semibold text-slate-500 uppercase text-xs tracking-wider">Category</td>
-                          <td className="p-4 font-medium text-slate-900">{product.category_name}</td>
+                        <tr className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                          <td className="p-4 bg-slate-50/80 w-1/3 font-semibold text-slate-600 uppercase text-xs tracking-wider border-r border-slate-100">Category</td>
+                          <td className="p-4 font-medium text-slate-900">{product.category_name || 'N/A'}</td>
                         </tr>
                         {/* SKU tracks currently selected */}
-                        <tr className="border-b border-slate-100 hover:bg-slate-50">
-                          <td className="p-4 bg-slate-50/50 w-1/3 font-semibold text-slate-500 uppercase text-xs tracking-wider">SKU</td>
-                          <td className="p-4 font-medium text-slate-900">{currentSku}</td>
+                        <tr className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                          <td className="p-4 bg-slate-50/80 w-1/3 font-semibold text-slate-600 uppercase text-xs tracking-wider border-r border-slate-100">SKU</td>
+                          <td className="p-4 font-medium text-slate-900 font-mono text-xs">{currentSku}</td>
                         </tr>
                         {product.hsn_code && (
-                          <tr className="border-b border-slate-100 hover:bg-slate-50">
-                            <td className="p-4 bg-slate-50/50 w-1/3 font-semibold text-slate-500 uppercase text-xs tracking-wider">HSN Code</td>
+                          <tr className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                            <td className="p-4 bg-slate-50/80 w-1/3 font-semibold text-slate-600 uppercase text-xs tracking-wider border-r border-slate-100">HSN Code</td>
                             <td className="p-4 font-medium text-slate-900">{product.hsn_code}</td>
                           </tr>
                         )}
                         {/* MODIFIED: Show Size/Color if they exist on selected variant OR main product */}
                         {currentSize && (
-                          <tr className="border-b border-slate-100 hover:bg-slate-50">
-                            <td className="p-4 bg-slate-50/50 w-1/3 font-semibold text-slate-500 uppercase text-xs tracking-wider">Size</td>
+                          <tr className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                            <td className="p-4 bg-slate-50/80 w-1/3 font-semibold text-slate-600 uppercase text-xs tracking-wider border-r border-slate-100">Size</td>
                             <td className="p-4 font-medium text-slate-900">{currentSize}</td>
                           </tr>
                         )}
                         {currentColor && (
-                          <tr className="border-b border-slate-100 hover:bg-slate-50">
-                            <td className="p-4 bg-slate-50/50 w-1/3 font-semibold text-slate-500 uppercase text-xs tracking-wider">Color</td>
+                          <tr className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                            <td className="p-4 bg-slate-50/80 w-1/3 font-semibold text-slate-600 uppercase text-xs tracking-wider border-r border-slate-100">Color</td>
                             <td className="p-4 font-medium text-slate-900">{currentColor}</td>
                           </tr>
                         )}
@@ -292,8 +320,8 @@ export default function ProductDetailPage({ productSlug }) {
             <div className="lg:w-[40%] xl:w-[35%] relative order-first lg:order-last">
               <div className="sticky top-24 pt-2">
 
-                <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-2 leading-tight">
-                  {product.brand_name && <span className="block text-xl font-semibold text-slate-500 mb-1 uppercase tracking-wider">{product.brand_name}</span>}
+                <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-2 leading-tight font-serif">
+                  {product.brand_name && <span className="block text-sm font-bold text-slate-500 mb-2 uppercase tracking-widest">{product.brand_name}</span>}
                   {product.name}
                 </h1>
 
@@ -329,24 +357,18 @@ export default function ProductDetailPage({ productSlug }) {
                 {/* --- VARIANT SELECTORS --- */}
                 {/* Display if we have variants OR if main product has attributes that effectively creates 'options' */}
                 {((variants && variants.length > 0) || (uniqueSizes.length > 1 || uniqueColors.length > 1)) && (
-                  <div className="mb-8 space-y-4">
+                  <div className="mb-8 space-y-6 bg-slate-50 p-6 rounded-lg border border-slate-100">
                     {uniqueSizes.length > 0 && (
                       <div>
-                        <label className="block text-xs font-bold text-slate-900 uppercase mb-2">Size</label>
+                        <label className="block text-xs font-bold text-slate-900 uppercase mb-3">Size</label>
                         <div className="flex flex-wrap gap-2">
                           {uniqueSizes.map(size => {
                             const isSelected = currentSize === size
 
-                            // Check if this size is MAIN product's or one of variants
-                            // Simplified availability assumption
                             return (
                               <button
                                 key={size}
                                 onClick={() => {
-                                  // Logic:
-                                  // 1. Check if MAIN product matches this size (and potentially current color)
-                                  // 2. Check if a VARIANT matches
-
                                   const isMainMatch = product.size === size && (uniqueColors.length > 0 ? (product.color === currentColor) : true);
 
                                   if (isMainMatch) {
@@ -354,18 +376,16 @@ export default function ProductDetailPage({ productSlug }) {
                                     return;
                                   }
 
-                                  // Find best variant match
-                                  // Try to keep current Color if possible
                                   const match = variants.find(v => v.size === size && (uniqueColors.length > 0 ? v.color === currentColor : true))
                                     || variants.find(v => v.size === size)
 
                                   if (match) setSelectedVariant(match)
-                                  else if (product.size === size) setSelectedVariant(null) // Fallback to main if simplified find failed
+                                  else if (product.size === size) setSelectedVariant(null)
                                 }}
-                                className={`h-10 px-4 rounded border text-sm font-medium transition-all
+                                className={`h-10 px-4 min-w-[3rem] rounded border text-sm font-semibold transition-all relative overflow-hidden
                                    ${isSelected
-                                    ? 'border-slate-900 bg-slate-900 text-white'
-                                    : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400'
+                                    ? 'border-slate-900 bg-slate-900 text-white shadow-md'
+                                    : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50'
                                   }
                                  `}
                               >
@@ -379,7 +399,7 @@ export default function ProductDetailPage({ productSlug }) {
 
                     {uniqueColors.length > 0 && (
                       <div>
-                        <label className="block text-xs font-bold text-slate-900 uppercase mb-2">Color</label>
+                        <label className="block text-xs font-bold text-slate-900 uppercase mb-3">Color</label>
                         <div className="flex flex-wrap gap-2">
                           {uniqueColors.map(color => {
                             const isSelected = currentColor === color
@@ -387,8 +407,6 @@ export default function ProductDetailPage({ productSlug }) {
                               <button
                                 key={color}
                                 onClick={() => {
-                                  // Logic:
-                                  // 1. Check if MAIN product matches
                                   const isMainMatch = product.color === color && (uniqueSizes.length > 0 ? (product.size === currentSize) : true);
 
                                   if (isMainMatch) {
@@ -402,10 +420,10 @@ export default function ProductDetailPage({ productSlug }) {
                                   if (match) setSelectedVariant(match)
                                   else if (product.color === color) setSelectedVariant(null)
                                 }}
-                                className={`h-10 px-4 rounded border text-sm font-medium transition-all
+                                className={`h-10 px-4 rounded border text-sm font-semibold transition-all
                                    ${isSelected
-                                    ? 'border-slate-900 bg-slate-900 text-white'
-                                    : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400'
+                                    ? 'border-slate-900 bg-slate-900 text-white shadow-md'
+                                    : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50'
                                   }
                                  `}
                               >
@@ -420,14 +438,14 @@ export default function ProductDetailPage({ productSlug }) {
                     {/* Fallback for named variants if no size/color structure */}
                     {uniqueSizes.length === 0 && uniqueColors.length === 0 && variants.length > 0 && (
                       <div>
-                        <label className="block text-xs font-bold text-slate-900 uppercase mb-2">Options</label>
+                        <label className="block text-xs font-bold text-slate-900 uppercase mb-3">Options</label>
                         <div className="flex flex-wrap gap-2">
                           {/* Main Product Option if applicable (e.g. Default) */}
                           <button
                             onClick={() => setSelectedVariant(null)}
                             className={`h-10 px-4 rounded border text-sm font-medium transition-all
                                     ${!selectedVariant
-                                ? 'border-slate-900 bg-slate-900 text-white'
+                                ? 'border-slate-900 bg-slate-900 text-white shadow-md'
                                 : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400'
                               }
                                 `}
@@ -440,7 +458,7 @@ export default function ProductDetailPage({ productSlug }) {
                               onClick={() => setSelectedVariant(v)}
                               className={`h-10 px-4 rounded border text-sm font-medium transition-all
                                    ${selectedVariant?.id === v.id
-                                  ? 'border-slate-900 bg-slate-900 text-white'
+                                  ? 'border-slate-900 bg-slate-900 text-white shadow-md'
                                   : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400'
                                 }
                                  `}
@@ -462,7 +480,7 @@ export default function ProductDetailPage({ productSlug }) {
                     {user?.role === 'b2b_user' ? (
                       user.b2b_status === 'approved' ? (
                         <Button
-                          className="flex-1 h-14 bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-wider text-sm rounded-sm"
+                          className="flex-1 h-14 bg-slate-900 hover:bg-slate-800 text-white font-bold uppercase tracking-wider text-sm rounded-sm transition-all shadow-lg hover:shadow-xl"
                           onClick={() => addToCart({ ...product, ...selectedVariant }, quantity)}
                         >
                           <ShoppingCart className="w-4 h-4 mr-2" /> Add to Order
@@ -475,7 +493,7 @@ export default function ProductDetailPage({ productSlug }) {
                     ) : (
                       <div className="flex gap-2 w-full">
                         <Button
-                          className="w-full h-14 bg-rose-500 hover:bg-rose-600 text-white font-bold uppercase tracking-wider text-sm rounded-[4px] shadow-sm transform active:scale-95 transition-all"
+                          className="w-full h-14 bg-slate-900 hover:bg-slate-800 text-white font-bold uppercase tracking-wider text-sm rounded-[4px] shadow-lg transform active:scale-[0.98] transition-all hover:shadow-xl"
                           onClick={() => setEnquiryOpen(true)}
                         >
                           <PhoneForwarded className="w-4 h-4 mr-2" /> Enquire Now

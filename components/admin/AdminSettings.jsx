@@ -107,22 +107,53 @@ export function AdminSettings() {
         }
     })
 
-    const handleProfileSubmit = (e) => {
-        e.preventDefault()
-        profileMutation.mutate({ name })
-    }
+    // --- NEW: Site Settings State ---
+    const [siteSettings, setSiteSettings] = useState({
+        google_analytics_id: '',
+        organization_schema: '',
+        head_scripts: '',
+        body_scripts: ''
+    })
+    const [isSettingsLoading, setIsSettingsLoading] = useState(false)
 
-    const handlePasswordSubmit = (e) => {
+    // Fetch Site Settings
+    useEffect(() => {
+        const fetchSettings = async () => {
+            setIsSettingsLoading(true)
+            try {
+                // We ask for keys we need. If empty, it might return all, but good to be specific or handled by API
+                const res = await apiCall('/settings?keys=google_analytics_id,organization_schema,head_scripts,body_scripts')
+                setSiteSettings(prev => ({ ...prev, ...res }))
+            } catch (err) {
+                console.error("Failed to fetch site settings", err)
+            } finally {
+                setIsSettingsLoading(false)
+            }
+        }
+
+        if (user?.role === 'superadmin' || user?.role === 'admin') {
+            fetchSettings()
+        }
+    }, [user])
+
+    const siteSettingsMutation = useMutation({
+        mutationFn: async (data) => {
+            return await apiCall('/settings', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            })
+        },
+        onSuccess: () => {
+            toast.success('Site settings updated successfully')
+        },
+        onError: (err) => {
+            toast.error(err.message || 'Failed to update site settings')
+        }
+    })
+
+    const handleSiteSettingsSubmit = (e) => {
         e.preventDefault()
-        if (newPassword !== confirmPassword) {
-            toast.error("New passwords don't match")
-            return
-        }
-        if (newPassword.length < 6) {
-            toast.error("Password must be at least 6 characters")
-            return
-        }
-        passwordMutation.mutate({ currentPassword, newPassword })
+        siteSettingsMutation.mutate(siteSettings)
     }
 
     if (!user) return null
@@ -138,6 +169,9 @@ export function AdminSettings() {
                 <TabsList>
                     <TabsTrigger value="profile">Profile</TabsTrigger>
                     <TabsTrigger value="password">Security</TabsTrigger>
+                    {(user.role === 'superadmin' || user.role === 'admin') && (
+                        <TabsTrigger value="site-config">Site Config</TabsTrigger>
+                    )}
                 </TabsList>
 
                 <TabsContent value="profile">
@@ -277,6 +311,76 @@ export function AdminSettings() {
                         </DialogContent>
                     </Dialog>
                 </TabsContent>
+
+                {/* Site Config Tab */}
+                {(user.role === 'superadmin' || user.role === 'admin') && (
+                    <TabsContent value="site-config">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Site Configuration</CardTitle>
+                                <CardDescription>Manage global site settings, analytics, and SEO schema.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <form onSubmit={handleSiteSettingsSubmit} className="space-y-6">
+                                    <div className="space-y-2">
+                                        <Label>Google Analytics ID</Label>
+                                        <Input
+                                            placeholder="G-XXXXXXXXXX"
+                                            value={siteSettings.google_analytics_id || ''}
+                                            onChange={(e) => setSiteSettings({ ...siteSettings, google_analytics_id: e.target.value })}
+                                        />
+                                        <p className="text-[10px] text-muted-foreground">Enter your GA4 Measurement ID.</p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label>Organization Schema (JSON)</Label>
+                                        <div className="relative">
+                                            <textarea
+                                                className="flex min-h-[150px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 font-mono"
+                                                placeholder='{ "@context": "https://schema.org", "@type": "Organization", ... }'
+                                                value={siteSettings.organization_schema || ''}
+                                                onChange={(e) => setSiteSettings({ ...siteSettings, organization_schema: e.target.value })}
+                                            />
+                                        </div>
+                                        <p className="text-[10px] text-muted-foreground">
+                                            Paste valid JSON-LD for your Organization schema. This will be injected into the homepage head.
+                                        </p>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <Label>Head Scripts</Label>
+                                            <textarea
+                                                className="flex min-h-[100px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 font-mono"
+                                                placeholder="<script>...</script>"
+                                                value={siteSettings.head_scripts || ''}
+                                                onChange={(e) => setSiteSettings({ ...siteSettings, head_scripts: e.target.value })}
+                                            />
+                                            <p className="text-[10px] text-muted-foreground">Additional scripts to inject in &lt;head&gt;.</p>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Body Scripts</Label>
+                                            <textarea
+                                                className="flex min-h-[100px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 font-mono"
+                                                placeholder="<script>...</script>"
+                                                value={siteSettings.body_scripts || ''}
+                                                onChange={(e) => setSiteSettings({ ...siteSettings, body_scripts: e.target.value })}
+                                            />
+                                            <p className="text-[10px] text-muted-foreground">Additional scripts to inject at end of &lt;body&gt;.</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-4">
+                                        <Button type="submit" disabled={siteSettingsMutation.isPending || isSettingsLoading} className="gap-2">
+                                            {siteSettingsMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                            Save Configuration
+                                        </Button>
+                                    </div>
+                                </form>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                )}
             </Tabs>
         </div>
     )
