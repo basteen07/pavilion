@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -33,6 +33,11 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
   const [quantity, setQuantity] = useState(1)
   const [enquiryOpen, setEnquiryOpen] = useState(false)
   const [selectedVariant, setSelectedVariant] = useState(null)
+  const [pageUrl, setPageUrl] = useState('')
+
+  useEffect(() => {
+    setPageUrl(window.location.href)
+  }, [])
 
 
   const { data: product, isLoading: productLoading } = useQuery({
@@ -159,7 +164,7 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
     // "itemCondition": "https://schema.org/NewCondition", // Removed as per request (optional but good practice)
     "offers": {
       "@type": "Offer",
-      "url": typeof window !== 'undefined' ? window.location.href : '',
+      "url": pageUrl,
       "priceCurrency": "INR",
       "price": currentPrice,
       "priceValidUntil": new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
@@ -300,6 +305,51 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
                             <td className="p-4 font-medium text-slate-900">{currentColor}</td>
                           </tr>
                         )}
+
+                        {/* Dynamic Options 1-4 with Smart Mapping */}
+                        {[1, 2, 3, 4].map(idx => {
+                          const nameKey = `option${idx}_name`;
+                          const valueKey = `option${idx}_value`;
+
+                          // 1. Get the Product's Option Name (The Source of Truth for the Row Label)
+                          const productName = product[nameKey];
+                          if (!productName) return null;
+
+                          // 2. Find the corresponding value
+                          let displayValue = product[valueKey]; // Default to product value
+
+                          if (selectedVariant) {
+                            // Smart Match: Look for this option name in the variant's slots (1-4)
+                            // This handles cases where Product Option 1 might be Variant Option 2
+                            const variantMatch = [1, 2, 3, 4].find(vIdx =>
+                              selectedVariant[`option${vIdx}_name`]?.toLowerCase() === productName.toLowerCase()
+                            );
+
+                            if (variantMatch) {
+                              displayValue = selectedVariant[`option${variantMatch}_value`];
+                            } else {
+                              // Fallback: If strict name match fails, check if the *index* matches 
+                              // (Classic behavior, in case names are slightly different or missing on variant)
+                              if (selectedVariant[nameKey]) {
+                                // But only if not 'Size' or 'Color' to avoid confusion? 
+                                // Actually, if strictly mapping by index, we take the value at that index
+                                displayValue = selectedVariant[valueKey] || displayValue;
+                              }
+                            }
+                          }
+
+                          if (!displayValue) return null;
+
+                          // Avoid duplicating Size/Color if they are mapped to options
+                          if (['size', 'color'].includes(productName.toLowerCase())) return null;
+
+                          return (
+                            <tr key={nameKey} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                              <td className="p-4 bg-slate-50/80 w-1/3 font-semibold text-slate-600 uppercase text-xs tracking-wider border-r border-slate-100">{productName}</td>
+                              <td className="p-4 font-medium text-slate-900">{displayValue}</td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>

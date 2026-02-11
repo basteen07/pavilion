@@ -12,11 +12,24 @@ export async function generateMetadata({ params }) {
         }
     }
 
+    let images = [];
+    if (product.images) {
+        if (typeof product.images === 'string') {
+            try {
+                images = JSON.parse(product.images);
+            } catch (e) {
+                console.error('Error parsing product images JSON:', e);
+            }
+        } else if (Array.isArray(product.images) || typeof product.images === 'object') {
+            images = product.images;
+        }
+    }
+
     return {
         title: `${product.name} | Pavilion`,
         description: product.short_description || product.description?.slice(0, 160),
         openGraph: {
-            images: product.images ? JSON.parse(product.images) : [],
+            images: images,
         },
     }
 }

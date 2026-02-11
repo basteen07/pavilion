@@ -16,7 +16,21 @@ export default function DynamicCatchAllPage({ params }) {
     const firstSlug = slugArray[0];
     const secondSlug = slugArray[1];
 
-    // 1. Fetch CMS Page (Full slug match)
+    // 1. Fetch Category (Priority 1 - Most likely)
+    const { data: category, isLoading: catLoading } = useQuery({
+        queryKey: ['category-by-slug', firstSlug],
+        queryFn: async () => {
+            try {
+                const cats = await apiCall('/categories');
+                return cats.find(c => c.slug === firstSlug) || null;
+            } catch (e) {
+                return null;
+            }
+        },
+        retry: false
+    });
+
+    // 2. Fetch CMS Page (Priority 2 - Only if not a category)
     const { data: cmsPage, isLoading: cmsLoading } = useQuery({
         queryKey: ['cms-page', fullSlug],
         queryFn: async () => {
@@ -26,10 +40,12 @@ export default function DynamicCatchAllPage({ params }) {
                 return null;
             }
         },
+        // Enable only if category fetch is done and returned null (not found)
+        enabled: category === null && !catLoading,
         retry: false
     });
 
-    // 2. Fetch Blog Post (Full slug match)
+    // 3. Fetch Blog Post (Priority 3 - Only if not category or CMS)
     const { data: blogPost, isLoading: blogLoading } = useQuery({
         queryKey: ['blog-post', fullSlug],
         queryFn: async () => {
@@ -39,20 +55,8 @@ export default function DynamicCatchAllPage({ params }) {
                 return null;
             }
         },
-        retry: false
-    });
-
-    // 3. Fetch Category (Always based on first slug)
-    const { data: category, isLoading: catLoading } = useQuery({
-        queryKey: ['category-by-slug', firstSlug],
-        queryFn: async () => {
-            try {
-                const cats = await apiCall('/categories');
-                return cats.find(c => c.slug === firstSlug);
-            } catch (e) {
-                return null;
-            }
-        },
+        // Enable only if category and CMS fetches are done and returned null
+        enabled: category === null && cmsPage === null && !catLoading && !cmsLoading,
         retry: false
     });
 
