@@ -151,6 +151,20 @@ export function AdminSettings() {
         }
     })
 
+    const handleProfileSubmit = (e) => {
+        e.preventDefault()
+        profileMutation.mutate({ name })
+    }
+
+    const handlePasswordSubmit = (e) => {
+        e.preventDefault()
+        if (newPassword !== confirmPassword) {
+            toast.error('Passwords do not match')
+            return
+        }
+        passwordMutation.mutate({ currentPassword, newPassword })
+    }
+
     const handleSiteSettingsSubmit = (e) => {
         e.preventDefault()
         siteSettingsMutation.mutate(siteSettings)

@@ -35,57 +35,52 @@ export default async function RootLayout({ children }) {
   const settingsResponse = await getSettings(['google_analytics_id', 'organization_schema', 'head_scripts', 'body_scripts']);
   const settings = await settingsResponse.json();
 
+  // Helper to extract content and type from a potential script string
+  const getScriptData = (raw) => {
+    if (!raw) return null;
+    const trimmed = raw.trim();
+    const isJsonLd = /type=["']application\/ld\+json["']/i.test(trimmed);
+    const content = trimmed.replace(/<script[^>]*>/gi, '').replace(/<\/script>/gi, '').trim();
+    return { content, type: isJsonLd ? 'application/ld+json' : null };
+  };
+
   return (
-    <html lang="en" className={`${inter.variable} ${manrope.variable}`}>
-
+    <html lang="en" className={`${inter.variable} ${manrope.variable}`} suppressHydrationWarning>
       <head>
-        {/* Manual font links removed in favor of next/font */}
-
-        {/* Organization Schema */}
         {/* Organization Schema */}
         {(() => {
-          if (!settings.organization_schema) return null;
-          try {
-            let info = settings.organization_schema;
-
-            // Handle case where user pasted full <script> tag
-            if (typeof info === 'string') {
-              info = info.trim();
-              if (info.startsWith('<script')) {
-                info = info.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, '$1').trim();
-              }
-            }
-
-            // Ensure schema is valid JSON and has an @id
-            const schema = typeof info === 'string'
-              ? JSON.parse(info)
-              : info;
-
-            // Validate/Fix URL (Handle missing or empty string)
-            if (!schema.url) {
-              schema.url = 'https://pavilion-sports.com';
-            }
-
-            // Standardize @id if missing to allow linking from other schemas
-            if (!schema['@id']) {
-              schema['@id'] = schema.url + '#organization';
-            }
-
-            return (
-              <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-              />
-            );
-          } catch (e) {
-            console.error('Invalid Organization Schema JSON:', e);
-            return null;
+          const data = getScriptData(settings.organization_schema);
+          if (!data || !data.content) {
+            const fallback = {
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "name": "Pavilion Sports",
+              "url": "https://pavilion-sports.com",
+              "logo": "https://pavilion-sports.com/images/logo.png",
+              "@id": "https://pavilion-sports.com#organization"
+            };
+            return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(fallback) }} />;
           }
+
+          return (
+            <script
+              type={data.type || 'application/ld+json'}
+              dangerouslySetInnerHTML={{ __html: data.content }}
+            />
+          );
         })()}
 
-        {settings.head_scripts && (
-          <script dangerouslySetInnerHTML={{ __html: settings.head_scripts }} />
-        )}
+        {/* Custom Head Scripts */}
+        {(() => {
+          const data = getScriptData(settings.head_scripts);
+          if (!data || !data.content) return null;
+          return (
+            <script
+              type={data.type || undefined}
+              dangerouslySetInnerHTML={{ __html: data.content }}
+            />
+          );
+        })()}
       </head>
       <body className={inter.className}>
         {/* Google Analytics */}
@@ -111,13 +106,11 @@ export default async function RootLayout({ children }) {
             <B2BCartProvider>
               <SiteLayout>
                 {children}
-
                 <Toaster richColors closeButton />
-
                 {/* Body Scripts */}
                 {settings.body_scripts && (
                   <div
-                    style={{ display: 'none', visibility: 'hidden', height: 0, width: 0, overflow: 'hidden' }}
+                    style={{ display: 'none', visibility: 'hidden' }}
                     dangerouslySetInnerHTML={{ __html: settings.body_scripts }}
                   />
                 )}
