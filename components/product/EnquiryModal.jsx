@@ -49,12 +49,12 @@ export function EnquiryModal({ open, onOpenChange, product }) {
                 toast.success("Enquiry sent successfully! Our team will contact you soon.")
                 onOpenChange(false)
                 // Clear form but keep product context for next time if needed
-                setFormData(prev => ({
-                    ...prev,
+                setFormData({
                     name: '',
                     phone: '',
                     email: '',
-                }))
+                    message: ''
+                })
             } else {
                 toast.error(data.message || "Failed to send enquiry. Please try again.")
             }
@@ -68,8 +68,8 @@ export function EnquiryModal({ open, onOpenChange, product }) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="w-[85vw] max-w-[380px] sm:max-w-[440px] md:max-w-3xl p-0 overflow-hidden rounded-2xl border-none max-h-[85vh] overflow-y-auto">
-                <div className={`grid grid-cols-1 ${product.buy_url ? 'md:grid-cols-2' : ''} h-fit md:h-full min-h-fit`}>
+            <DialogContent className="w-[85vw] max-w-[360px] sm:max-w-[420px] md:max-w-2xl p-0 overflow-hidden rounded-2xl border-none max-h-[80vh] overflow-y-auto top-[57%]">
+                <div className={`flex flex-col-reverse ${product.buy_url ? 'md:grid md:grid-cols-2' : ''} h-fit md:h-full min-h-fit`}>
                     {/* Left Column: Form */}
                     <div className="p-3 sm:p-4 md:p-8 bg-white">
                         <DialogHeader className="mb-2 sm:mb-3 md:mb-4">
@@ -166,7 +166,7 @@ export function EnquiryModal({ open, onOpenChange, product }) {
 
                     {/* Right Column: Buy URL & Branding */}
                     {product.buy_url && (
-                        <div className="bg-gray-900 p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col justify-between relative overflow-hidden">
+                        <div className="bg-gray-900 p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col justify-center gap-8 relative overflow-hidden">
                             {/* Background Pattern */}
                             <div className="absolute inset-0 opacity-5">
                                 <svg width="100%" height="100%" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
