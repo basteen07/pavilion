@@ -65,8 +65,13 @@ export function ProductList({ onEdit, onCreate }) {
     })
 
     const { data: brands = [] } = useQuery({
-        queryKey: ['brands'],
-        queryFn: () => apiCall('/brands')
+        queryKey: ['brands', categoryFilter, subCategoryFilter],
+        queryFn: () => {
+            const params = new URLSearchParams()
+            if (categoryFilter && categoryFilter !== 'all') params.append('category_id', categoryFilter)
+            if (subCategoryFilter && subCategoryFilter !== 'all') params.append('sub_category_id', subCategoryFilter)
+            return apiCall(`/brands?${params.toString()}`)
+        }
     })
 
     // Fetch Products
@@ -98,7 +103,7 @@ export function ProductList({ onEdit, onCreate }) {
     const deleteAllMutation = useMutation({
         mutationFn: (password) => apiCall('/products/delete-all', {
             method: 'DELETE',
-            body: { password }
+            body: JSON.stringify({ password })
         }),
         onSuccess: () => {
             queryClient.invalidateQueries(['products'])

@@ -209,21 +209,13 @@ export function TagManager() {
                                         )}
                                     </div>
                                     <div className="text-xs text-gray-500">
-                                        {tag.brand_ids && tag.brand_ids.length > 0 ? (
+                                        {tag.brand_names && tag.brand_names.length > 0 ? (
                                             <div className="flex flex-wrap gap-1 mt-1">
-                                                {tag.brand_ids.map(bid => {
-                                                    // We need brand names. We have `all brands` for current filter? 
-                                                    // No, `brands` query depends on `selectedSubCategoryId` which is for MODAL.
-                                                    // We might need a map of all brand IDs to names if we want to show them in list efficiently.
-                                                    // Or just show "X Brands Linked".
-                                                    // For now, let's keep it simple or fetch brand names in API?
-                                                    // API no longer returns joined names.
-                                                    // Let's show count or "Multiple Brands".
-                                                    return null;
-                                                })}
-                                                <span className="text-blue-600 font-medium">
-                                                    {tag.brand_ids.length} Brand{tag.brand_ids.length > 1 ? 's' : ''} Linked
-                                                </span>
+                                                {tag.brand_names.map((name, idx) => (
+                                                    <span key={idx} className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full text-[10px] font-medium border border-blue-100">
+                                                        {name}
+                                                    </span>
+                                                ))}
                                             </div>
                                         ) : (
                                             <span className="block italic text-gray-400">No Brand Restriction</span>

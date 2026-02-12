@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 
-import { ChevronRight, Filter, Grid, List, TableProperties, Star, Heart, ShoppingCart, MessageCircle, ExternalLink, QrCode, PhoneForwarded, X } from 'lucide-react'
+import { ChevronRight, Filter, Grid, List, TableProperties, Star, Heart, ShoppingCart, MessageCircle, ExternalLink, QrCode, PhoneForwarded, X, Eye } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -818,21 +818,21 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
                     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
                       {/* Unified Single Table */}
                       <table className="w-full text-[10px] text-left table-fixed">
-                        <thead className="bg-gray-900 text-white text-sm font-bold uppercase">
+                        <thead className="bg-gray-900 text-white text-[11px] font-bold uppercase tracking-wider">
                           <tr>
-                            <th className="px-3 py-2 w-[40%]">Products</th>
-                            <th className="px-1 py-2 w-[15%]">Brand</th>
-                            <th className="px-1 py-2 w-[20%]">MRP<br />(Rs.)</th>
-                            <th className="px-2 py-2 w-[25%] ">Action</th>
+                            <th className="px-4 py-3 w-[35%] text-left">Products</th>
+                            <th className="px-2 py-3 w-[25%] text-left">Brand</th>
+                            <th className="px-2 py-3 w-[20%] text-left">MRP (Rs.)</th>
+                            <th className="px-4 py-3 w-[20%] text-right">Action</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
                           {primaryGroups.map(pName => (
                             <React.Fragment key={pName}>
                               {/* Red Group Header Row */}
-                              <tr className="bg-red-700">
+                              <tr className="bg-red-200">
                                 <td colSpan={4} className="py-2 px-4 text-center">
-                                  <h3 className="text-white font-black uppercase tracking-widest text-sm">
+                                  <h3 className="text-red-700 font-black uppercase tracking-widest text-sm">
                                     {pName}
                                   </h3>
                                 </td>
@@ -850,19 +850,23 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
                                     <td className="px-1 py-1.5 font-medium text-sm text-gray-500 align-middle">
                                       Rs {(product.shop_price && product.shop_price > 0 ? product.shop_price : product.mrp_price)?.toLocaleString('en-IN') || '-'}
                                     </td>
-                                    <td className="px-2 py-1.5 text-right align-middle">
-                                      <div className="flex flex-row items-end gap-1">
+                                    <td className="px-4 py-2 text-right">
+                                      <div className="flex justify-end items-center gap-2 md:gap-4">
                                         <Link
                                           href={`/product/${product.slug}`}
-                                          className="text-gray-900 text-xs font-bold hover:underline uppercase hover:text-red-600"
+                                          className="text-gray-900 font-bold hover:text-red-600 transition-colors inline-flex items-center"
+                                          title="View Details"
                                         >
-                                          View
+                                          <span className="hidden md:inline text-xs uppercase">View</span>
+                                          <Eye className="w-4 h-4 md:hidden" />
                                         </Link>
                                         <button
                                           onClick={() => handleEnquire(product)}
-                                          className="text-red-600 text-xs font-medium uppercase hover:underline"
+                                          className="text-red-600 font-bold hover:text-red-700 transition-colors inline-flex items-center"
+                                          title="Enquire Now"
                                         >
-                                          Enquire
+                                          <span className="hidden md:inline text-xs uppercase">Enquire</span>
+                                          <PhoneForwarded className="w-4 h-4 md:hidden" />
                                         </button>
                                       </div>
                                     </td>

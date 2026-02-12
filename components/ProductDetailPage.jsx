@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -32,11 +32,16 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
   const { addToCart } = useB2BCart()
   const [quantity, setQuantity] = useState(1)
   const [enquiryOpen, setEnquiryOpen] = useState(false)
-  const [selectedVariant, setSelectedVariant] = useState(null)
+
+  // State for selected options: { 1: "Value1", 2: "Value2" }
+  const [selectedOptions, setSelectedOptions] = useState({})
+
   const [pageUrl, setPageUrl] = useState('')
+  const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
     setPageUrl(window.location.href)
+    setIsMounted(true)
   }, [])
 
 
@@ -46,15 +51,169 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
     initialData: initialProduct
   })
 
-  // Set default variant on load - MODIFIED: Prioritize main product if it has attributes
-  const variants = product?.product_variants || []
-  if (product && variants.length > 0 && !selectedVariant) {
-    if (!product.size && !product.color) {
-      const defaultVar = variants.find(v => v.is_default) || variants[0]
-      // Only set if not already set (React strict mode safety)
-      if (!selectedVariant) setSelectedVariant(defaultVar)
+  // --- CORPORATE GRADE UNIFIED VARIANT LOGIC (Mixed Schema Support) ---
+
+  // 1. Helper: Get normalized value for an axis (Greedy / Fallback aware)
+  const getAxisValue = useCallback((item, axis) => {
+    if (!item) return null
+    const label = axis.label.toLowerCase()
+
+    // 1. Check the specific column designated for this axis type
+    if (axis.type.startsWith('option')) {
+      const val = item[`option${axis.index}_value`]?.trim()
+      if (val) return val
+    } else if (axis.type === 'size') {
+      const val = item.size?.trim()
+      if (val) return val
+    } else if (axis.type === 'color') {
+      const val = item.color?.trim()
+      if (val) return val
     }
-  }
+
+    // 2. Greedy Fallback: If identity matches (e.g. Axis is "Size"), check direct columns too
+    if (label.includes('size') || label.includes('type')) {
+      if (item.size?.trim()) return item.size.trim()
+    }
+    if (label.includes('color')) {
+      if (item.color?.trim()) return item.color.trim()
+    }
+
+    return null
+  }, [])
+
+  // 2. Determine All Defined Axes (Inclusive Discovery)
+  const axes = useMemo(() => {
+    if (!product) return []
+    const _axes = []
+    const seenLabels = new Set()
+
+    // A. Explicit Options 1-4
+    for (let i = 1; i <= 4; i++) {
+      const name = product[`option${i}_name`]
+      if (name && name.trim()) {
+        const label = name.trim()
+        _axes.push({ label, type: `option${i}`, index: i })
+        seenLabels.add(label.toLowerCase())
+      }
+    }
+
+    // B. Legacy Size Column
+    if (!seenLabels.has('size')) {
+      const hasSize = (product.size && product.size.trim()) ||
+        (product.product_variants || []).some(v => v.size && v.size.trim())
+      if (hasSize) {
+        _axes.push({ label: 'Size', type: 'size' })
+        seenLabels.add('size')
+      }
+    }
+
+    // C. Legacy Color Column
+    if (!seenLabels.has('color')) {
+      const hasColor = (product.color && product.color.trim()) ||
+        (product.product_variants || []).some(v => v.color && v.color.trim())
+      if (hasColor) {
+        _axes.push({ label: 'Color', type: 'color' })
+        seenLabels.add('color')
+      }
+    }
+
+    return _axes
+  }, [product])
+
+  // 3. Normalize All Possible "Selectable Targets" (Prioritize Variants)
+  const allChoices = useMemo(() => {
+    if (!product) return []
+    const list = []
+
+    // A. Add real variants FIRST
+    const rawVariants = product.product_variants || []
+    rawVariants.forEach(v => {
+      list.push({
+        ...v,
+        is_main: false,
+        variant_id: v.id,
+        images: (v.images && v.images !== '[]' && v.images !== null) ? v.images : product.images
+      })
+    })
+
+    // B. Main Product acts as the default / base choice
+    list.push({
+      ...product,
+      is_main: true,
+      variant_id: null,
+      is_active: true
+    })
+
+    return list
+  }, [product])
+
+  // 4. Helper: Get Unique Values for an Axis
+  const getValuesForAxis = useCallback((axis) => {
+    const values = new Set()
+    allChoices.forEach(item => {
+      const val = getAxisValue(item, axis)
+      if (val && val.trim()) values.add(val.trim())
+    })
+    return Array.from(values).sort()
+  }, [allChoices, getAxisValue])
+
+  // 5. Filtered Axes for Interactivity (Color & Size only)
+  const selectableAxes = useMemo(() => {
+    return axes.filter(axis => {
+      const label = axis.label.toLowerCase();
+      return (label.includes('color') || label.includes('size')) && getValuesForAxis(axis).length > 1;
+    });
+  }, [axes, getValuesForAxis]);
+
+  // 6. Resolve Selected Target based on active selections
+  const selectedChoice = useMemo(() => {
+    // Default to the first choice (usually the default variant) if nothing else matches
+    if (!product || selectableAxes.length === 0) return allChoices[0]
+
+    return allChoices.find(item => {
+      return selectableAxes.every(axis => {
+        const selectedVal = selectedOptions[axis.type]
+        if (!selectedVal) return true
+        const itemVal = getAxisValue(item, axis)
+        return itemVal === selectedVal
+      })
+    }) || allChoices[0]
+  }, [allChoices, product, selectableAxes, selectedOptions, getAxisValue])
+
+  const selectedVariant = selectedChoice?.is_main ? null : selectedChoice
+
+  // 7. Selections Initialization
+  useEffect(() => {
+    if (product && selectableAxes.length > 0 && Object.keys(selectedOptions).length === 0) {
+      const initial = {}
+      selectableAxes.forEach(axis => {
+        const val = getAxisValue(product, axis)
+        if (val) initial[axis.type] = val
+      })
+      setSelectedOptions(initial)
+    }
+  }, [product, selectableAxes, getAxisValue])
+
+  // 8. Availability Logic
+  const checkAvailability = useCallback((targetAxis, targetValue) => {
+    return allChoices.some(item => {
+      // Treat null or undefined is_active as true (active)
+      if (item.is_active === false) return false
+
+      const itemTargetVal = getAxisValue(item, targetAxis)
+      if (itemTargetVal !== targetValue) return false
+
+      return selectableAxes.every(otherAxis => {
+        if (otherAxis.type === targetAxis.type) return true
+        const selectedVal = selectedOptions[otherAxis.type]
+        if (!selectedVal) return true
+
+        const otherItemVal = getAxisValue(item, otherAxis)
+        return otherItemVal === selectedVal
+      })
+    })
+  }, [allChoices, selectableAxes, selectedOptions, getAxisValue])
+
 
   const { data: similarProductsData } = useQuery({
     queryKey: ['similar-products', product?.category_id],
@@ -62,8 +221,7 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
     enabled: !!product?.category_id
   })
 
-  const similarProducts = similarProductsData?.products?.filter(p => p.id !== product?.id) || []
-
+  // Loading / Error States
   if (productLoading && !product) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
@@ -83,7 +241,9 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
     )
   }
 
-  // MODIFIED: Image Resolution Logic
+  // --- DERIVED DISPLAY DATA ---
+
+  // Image Logic: Variant > Product
   let rawImages = (selectedVariant?.images &&
     (Array.isArray(selectedVariant.images) ? selectedVariant.images.length > 0 : selectedVariant.images !== '[]'))
     ? selectedVariant.images
@@ -114,7 +274,7 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
     images = [{ image_url: fallbackImage }]
   }
 
-  // Determine current display values (Variant or Main Product)
+  // Price Logic
   const getNonZeroPrice = (...prices) => {
     for (const p of prices) {
       const val = parseFloat(p);
@@ -137,19 +297,7 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
     ? Math.round(((currentMrp - currentPrice) / currentMrp) * 100)
     : 0
 
-  // Extract unique options for UI
-  const allSizes = variants.map(v => v.size).filter(Boolean)
-  if (product.size) allSizes.push(product.size)
-  const uniqueSizes = [...new Set(allSizes)]
-
-  const allColors = variants.map(v => v.color).filter(Boolean)
-  if (product.color) allColors.push(product.color)
-  const uniqueColors = [...new Set(allColors)]
-
-  const currentSize = selectedVariant ? selectedVariant.size : product.size;
-  const currentColor = selectedVariant ? selectedVariant.color : product.color;
-
-  // JSON-LD Schema Generation
+  // JSON-LD
   const jsonLd = {
     "@context": "https://schema.org/",
     "@type": "Product",
@@ -161,19 +309,12 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
       "@type": "Brand",
       "name": product.brand_name || "Pavilion"
     },
-    // "itemCondition": "https://schema.org/NewCondition", // Removed as per request (optional but good practice)
     "offers": {
       "@type": "Offer",
       "url": pageUrl,
       "priceCurrency": "INR",
       "price": currentPrice,
-      "priceValidUntil": new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
-      "itemCondition": "https://schema.org/NewCondition",
       "availability": (product.is_active && !product.is_discontinued) ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-      "seller": {
-        "@type": "Organization",
-        "name": "Pavilion"
-      }
     }
   };
 
@@ -262,7 +403,7 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
                 <h3 className="text-lg font-bold text-slate-900 uppercase tracking-widest mb-6 border-l-4 border-slate-900 pl-4">Product Specifications</h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 text-sm">
-                  {/* Description - spanning full width if long */}
+                  {/* Description */}
                   {product.description && (
                     <div className="md:col-span-2 mb-8">
                       <div className="prose prose-slate max-w-none text-slate-700 leading-relaxed space-y-4" dangerouslySetInnerHTML={{ __html: product.description.replace(/\n/g, '<br />') }} />
@@ -281,7 +422,7 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
                           <td className="p-4 bg-slate-50/80 w-1/3 font-semibold text-slate-600 uppercase text-xs tracking-wider border-r border-slate-100">Category</td>
                           <td className="p-4 font-medium text-slate-900">{product.category_name || 'N/A'}</td>
                         </tr>
-                        {/* SKU tracks currently selected */}
+
                         <tr className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                           <td className="p-4 bg-slate-50/80 w-1/3 font-semibold text-slate-600 uppercase text-xs tracking-wider border-r border-slate-100">SKU</td>
                           <td className="p-4 font-medium text-slate-900 font-mono text-xs">{currentSku}</td>
@@ -292,64 +433,42 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
                             <td className="p-4 font-medium text-slate-900">{product.hsn_code}</td>
                           </tr>
                         )}
-                        {/* MODIFIED: Show Size/Color if they exist on selected variant OR main product */}
-                        {currentSize && (
-                          <tr className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                            <td className="p-4 bg-slate-50/80 w-1/3 font-semibold text-slate-600 uppercase text-xs tracking-wider border-r border-slate-100">Size</td>
-                            <td className="p-4 font-medium text-slate-900">{currentSize}</td>
-                          </tr>
-                        )}
-                        {currentColor && (
-                          <tr className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                            <td className="p-4 bg-slate-50/80 w-1/3 font-semibold text-slate-600 uppercase text-xs tracking-wider border-r border-slate-100">Color</td>
-                            <td className="p-4 font-medium text-slate-900">{currentColor}</td>
-                          </tr>
-                        )}
 
-                        {/* Dynamic Options 1-4 with Smart Mapping */}
-                        {[1, 2, 3, 4].map(idx => {
-                          const nameKey = `option${idx}_name`;
-                          const valueKey = `option${idx}_value`;
+                        {/* Dynamic Option Specs */}
+                        {(() => {
+                          const seen = new Set()
+                          const specs = []
 
-                          // 1. Get the Product's Option Name (The Source of Truth for the Row Label)
-                          const productName = product[nameKey];
-                          if (!productName) return null;
+                          // 1. Add Logical Size/Color from the selected Choice
+                          axes.forEach(axis => {
+                            const val = getAxisValue(selectedChoice, axis)
+                            if (val && !seen.has(axis.label.toLowerCase())) {
+                              specs.push({ label: axis.label, value: val })
+                              seen.add(axis.label.toLowerCase())
+                            }
+                          })
 
-                          // 2. Find the corresponding value
-                          let displayValue = product[valueKey]; // Default to product value
-
-                          if (selectedVariant) {
-                            // Smart Match: Look for this option name in the variant's slots (1-4)
-                            // This handles cases where Product Option 1 might be Variant Option 2
-                            const variantMatch = [1, 2, 3, 4].find(vIdx =>
-                              selectedVariant[`option${vIdx}_name`]?.toLowerCase() === productName.toLowerCase()
-                            );
-
-                            if (variantMatch) {
-                              displayValue = selectedVariant[`option${variantMatch}_value`];
-                            } else {
-                              // Fallback: If strict name match fails, check if the *index* matches 
-                              // (Classic behavior, in case names are slightly different or missing on variant)
-                              if (selectedVariant[nameKey]) {
-                                // But only if not 'Size' or 'Color' to avoid confusion? 
-                                // Actually, if strictly mapping by index, we take the value at that index
-                                displayValue = selectedVariant[valueKey] || displayValue;
+                          // 2. Add raw options from DB schema that aren't already shown
+                          // We check both the parent product and the selected variant for option names
+                          for (let i = 1; i <= 4; i++) {
+                            const name = selectedChoice[`option${i}_name`] || product[`option${i}_name`]
+                            const val = selectedChoice[`option${i}_value`]
+                            if (name && name.trim() && val && val.trim()) {
+                              const label = name.trim()
+                              if (!seen.has(label.toLowerCase())) {
+                                specs.push({ label, value: val.trim() })
+                                seen.add(label.toLowerCase())
                               }
                             }
                           }
 
-                          if (!displayValue) return null;
-
-                          // Avoid duplicating Size/Color if they are mapped to options
-                          if (['size', 'color'].includes(productName.toLowerCase())) return null;
-
-                          return (
-                            <tr key={nameKey} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                              <td className="p-4 bg-slate-50/80 w-1/3 font-semibold text-slate-600 uppercase text-xs tracking-wider border-r border-slate-100">{productName}</td>
-                              <td className="p-4 font-medium text-slate-900">{displayValue}</td>
+                          return specs.map((spec, idx) => (
+                            <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                              <td className="p-4 bg-slate-50/80 w-1/3 font-semibold text-slate-600 uppercase text-xs tracking-wider border-r border-slate-100">{spec.label}</td>
+                              <td className="p-4 font-medium text-slate-900">{spec.value}</td>
                             </tr>
-                          );
-                        })}
+                          ))
+                        })()}
                       </tbody>
                     </table>
                   </div>
@@ -366,7 +485,7 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
 
             </div>
 
-            {/* RIGHT: Product Core Info (Sticky) - SIMPLIFIED */}
+            {/* RIGHT: Product Core Info (Sticky) */}
             <div className="lg:w-[40%] xl:w-[35%] relative order-first lg:order-last">
               <div className="sticky top-24 pt-2">
 
@@ -404,122 +523,41 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
                   <p className="text-emerald-700 font-bold text-xs uppercase tracking-wide">inclusive of all taxes</p>
                 </div>
 
-                {/* --- VARIANT SELECTORS --- */}
-                {/* Display if we have variants OR if main product has attributes that effectively creates 'options' */}
-                {((variants && variants.length > 0) || (uniqueSizes.length > 1 || uniqueColors.length > 1)) && (
+                {/* --- DYNAMIC VARIANT SELECTORS --- */}
+                {isMounted && selectableAxes.length > 0 && (
                   <div className="mb-8 space-y-6 bg-slate-50 p-6 rounded-lg border border-slate-100">
-                    {uniqueSizes.length > 0 && (
-                      <div>
-                        <label className="block text-xs font-bold text-slate-900 uppercase mb-3">Size</label>
-                        <div className="flex flex-wrap gap-2">
-                          {uniqueSizes.map(size => {
-                            const isSelected = currentSize === size
+                    {selectableAxes.map((axis, i) => {
+                      const possibleValues = getValuesForAxis(axis)
+                      return (
+                        <div key={i}>
+                          <label className="block text-xs font-bold text-slate-900 uppercase mb-3">{axis.label}</label>
+                          <div className="flex flex-wrap gap-2">
+                            {possibleValues.map(value => {
+                              const isSelected = selectedOptions[axis.type] === value
+                              const isAvailable = checkAvailability(axis, value)
 
-                            return (
-                              <button
-                                key={size}
-                                onClick={() => {
-                                  const isMainMatch = product.size === size && (uniqueColors.length > 0 ? (product.color === currentColor) : true);
-
-                                  if (isMainMatch) {
-                                    setSelectedVariant(null);
-                                    return;
-                                  }
-
-                                  const match = variants.find(v => v.size === size && (uniqueColors.length > 0 ? v.color === currentColor : true))
-                                    || variants.find(v => v.size === size)
-
-                                  if (match) setSelectedVariant(match)
-                                  else if (product.size === size) setSelectedVariant(null)
-                                }}
-                                className={`h-10 px-4 min-w-[3rem] rounded border text-sm font-semibold transition-all relative overflow-hidden
-                                   ${isSelected
-                                    ? 'border-slate-900 bg-slate-900 text-white shadow-md'
-                                    : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50'
-                                  }
-                                 `}
-                              >
-                                {size}
-                              </button>
-                            )
-                          })}
+                              return (
+                                <button
+                                  key={value}
+                                  disabled={!isAvailable}
+                                  onClick={() => setSelectedOptions(prev => ({ ...prev, [axis.type]: value }))}
+                                  className={`h-10 px-4 min-w-[3rem] rounded border text-sm font-semibold transition-all relative overflow-hidden
+                                                      ${isSelected
+                                      ? 'border-slate-900 bg-slate-900 text-white shadow-md'
+                                      : isAvailable
+                                        ? 'border-slate-200 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50'
+                                        : 'border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed decoration-slate-300 line-through'
+                                    }
+                                                  `}
+                                >
+                                  {value}
+                                </button>
+                              )
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    )}
-
-                    {uniqueColors.length > 0 && (
-                      <div>
-                        <label className="block text-xs font-bold text-slate-900 uppercase mb-3">Color</label>
-                        <div className="flex flex-wrap gap-2">
-                          {uniqueColors.map(color => {
-                            const isSelected = currentColor === color
-                            return (
-                              <button
-                                key={color}
-                                onClick={() => {
-                                  const isMainMatch = product.color === color && (uniqueSizes.length > 0 ? (product.size === currentSize) : true);
-
-                                  if (isMainMatch) {
-                                    setSelectedVariant(null);
-                                    return;
-                                  }
-
-                                  const match = variants.find(v => v.color === color && (uniqueSizes.length > 0 ? v.size === currentSize : true))
-                                    || variants.find(v => v.color === color)
-
-                                  if (match) setSelectedVariant(match)
-                                  else if (product.color === color) setSelectedVariant(null)
-                                }}
-                                className={`h-10 px-4 rounded border text-sm font-semibold transition-all
-                                   ${isSelected
-                                    ? 'border-slate-900 bg-slate-900 text-white shadow-md'
-                                    : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50'
-                                  }
-                                 `}
-                              >
-                                {color}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Fallback for named variants if no size/color structure */}
-                    {uniqueSizes.length === 0 && uniqueColors.length === 0 && variants.length > 0 && (
-                      <div>
-                        <label className="block text-xs font-bold text-slate-900 uppercase mb-3">Options</label>
-                        <div className="flex flex-wrap gap-2">
-                          {/* Main Product Option if applicable (e.g. Default) */}
-                          <button
-                            onClick={() => setSelectedVariant(null)}
-                            className={`h-10 px-4 rounded border text-sm font-medium transition-all
-                                    ${!selectedVariant
-                                ? 'border-slate-900 bg-slate-900 text-white shadow-md'
-                                : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400'
-                              }
-                                `}
-                          >
-                            Default
-                          </button>
-                          {variants.map((v, idx) => (
-                            <button
-                              key={v.id || idx}
-                              onClick={() => setSelectedVariant(v)}
-                              className={`h-10 px-4 rounded border text-sm font-medium transition-all
-                                   ${selectedVariant?.id === v.id
-                                  ? 'border-slate-900 bg-slate-900 text-white shadow-md'
-                                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400'
-                                }
-                                 `}
-                            >
-                              {v.option1_value || v.sku || `Variant ${idx + 1}`}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
+                      )
+                    })}
                   </div>
                 )}
 
@@ -531,9 +569,13 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
                       user.b2b_status === 'approved' ? (
                         <Button
                           className="flex-1 h-14 bg-slate-900 hover:bg-slate-800 text-white font-bold uppercase tracking-wider text-sm rounded-sm transition-all shadow-lg hover:shadow-xl"
-                          onClick={() => addToCart({ ...product, ...selectedVariant }, quantity)}
+                          disabled={!selectedChoice}
+                          onClick={() => {
+                            addToCart(selectedChoice, quantity)
+                          }}
                         >
-                          <ShoppingCart className="w-4 h-4 mr-2" /> Add to Order
+                          <ShoppingCart className="w-4 h-4 mr-2" />
+                          {(!selectedChoice) ? 'Select Options' : 'Add to Order'}
                         </Button>
                       ) : (
                         <div className="w-full p-4 bg-amber-50 border border-amber-200 text-amber-800 text-sm font-medium rounded-sm">
@@ -572,12 +614,14 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
         </div>
       </div>
 
-      {/* Enquiry Modal */}
-      <EnquiryModal
-        open={enquiryOpen}
-        onOpenChange={setEnquiryOpen}
-        product={{ ...product, ...selectedVariant }}
-      />
+      {/* Enquiry Modal - Deferred to client to avoid SSR context issues */}
+      {isMounted && (
+        <EnquiryModal
+          open={enquiryOpen}
+          onOpenChange={setEnquiryOpen}
+          product={selectedVariant ? { ...product, ...selectedVariant } : product}
+        />
+      )}
     </>
   )
 }

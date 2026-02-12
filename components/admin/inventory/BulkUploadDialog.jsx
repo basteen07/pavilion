@@ -764,6 +764,21 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                                                     return t.sub_category_id === subId;
                                                 }) || [];
 
+                                                const availableBrands = masters?.brands.filter(b => {
+                                                    if (!row.sub_category && !row.category) return true;
+                                                    if (row.sub_category) {
+                                                        const subId = masters.subCategories.find(sc => sc.name === row.sub_category)?.id;
+                                                        return b.sub_category_id === subId;
+                                                    }
+                                                    if (row.category) {
+                                                        const catId = masters.categories.find(cat => cat.name === row.category)?.id;
+                                                        return b.category_id === catId;
+                                                    }
+                                                    return true;
+                                                }) || [];
+
+
+
                                                 return (
                                                     <tr key={row._id} className="border-b hover:bg-gray-50">
                                                         <td className="p-1 border">
@@ -908,7 +923,7 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                                                                 onChange={(e) => updateGridRow(row._id, { brand: e.target.value })}
                                                             >
                                                                 <option value="">Select</option>
-                                                                {masters?.brands.map(b => (
+                                                                {availableBrands.map(b => (
                                                                     <option key={b.id} value={b.name}>{b.name}</option>
                                                                 ))}
                                                             </select>
