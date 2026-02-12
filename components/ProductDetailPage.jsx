@@ -588,7 +588,15 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
                           className="w-full h-14 bg-slate-900 hover:bg-slate-800 text-white font-bold uppercase tracking-wider text-sm rounded-[4px] shadow-lg transform active:scale-[0.98] transition-all hover:shadow-xl"
                           onClick={() => setEnquiryOpen(true)}
                         >
-                          <PhoneForwarded className="w-4 h-4 mr-2" /> Enquire Now
+                          {selectedChoice?.buy_url || product.buy_url ? (
+                            <>
+                              <ShoppingCart className="w-4 h-4 mr-2" /> Buy Now
+                            </>
+                          ) : (
+                            <>
+                              <PhoneForwarded className="w-4 h-4 mr-2" /> Enquire Now
+                            </>
+                          )}
                         </Button>
                       </div>
                     )}

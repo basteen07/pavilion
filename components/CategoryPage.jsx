@@ -1,11 +1,11 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 
-import { ChevronRight, Filter, Grid, List, TableProperties, Star, Heart, ShoppingCart, MessageCircle, ExternalLink, QrCode, PhoneForwarded, X, Eye } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Filter, Grid, List, TableProperties, Star, Heart, ShoppingCart, MessageCircle, ExternalLink, QrCode, PhoneForwarded, X, Eye } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -34,6 +34,44 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
   const [enquiryOpen, setEnquiryOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false)
+
+  // Scroller refs and states
+  const scrollerRef = useRef(null)
+  const [showLeftArrow, setShowLeftArrow] = useState(false)
+  const [showRightArrow, setShowRightArrow] = useState(true)
+
+  const checkScroll = () => {
+    if (scrollerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollerRef.current
+      setShowLeftArrow(scrollLeft > 10)
+      setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10)
+    }
+  }
+
+  useEffect(() => {
+    const scroller = scrollerRef.current
+    if (scroller) {
+      scroller.addEventListener('scroll', checkScroll)
+      // Initial check
+      checkScroll()
+      // Also check on window resize
+      window.addEventListener('resize', checkScroll)
+      return () => {
+        scroller.removeEventListener('scroll', checkScroll)
+        window.removeEventListener('resize', checkScroll)
+      }
+    }
+  }, [hierarchy, categorySlug, subcategorySlug]) // Re-check when content changes
+
+  const scroll = (direction) => {
+    if (scrollerRef.current) {
+      const scrollAmount = 300
+      scrollerRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      })
+    }
+  }
 
   const handleEnquire = (product) => {
     setSelectedProduct(product)
@@ -320,7 +358,7 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1540747913346-19e3adca174f?w=1920')] bg-cover bg-center opacity-10"></div>
         <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-transparent"></div>
         <div className="container relative z-10">
-          <div className="flex items-center gap-2 text-red-500 font-bold uppercase tracking-widest text-xs mb-6">
+          <div className="flex items-center gap-2 text-red-500  uppercase tracking-widest text-xs mb-3">
             <Link href="/" className="hover:text-white transition-colors">Home</Link>
             <ChevronRight className="w-4 h-4" />
             <Link href={`/${categorySlug}`} className="text-white/80 hover:text-white transition-colors">{currentCategory.name}</Link>
@@ -338,14 +376,14 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
             {tagFromSlug && (
               <>
                 <ChevronRight className="w-4 h-4" />
-                <span className="text-white font-black">{tagFromSlug.name}</span>
+                <span className="text-white font">{tagFromSlug.name}</span>
               </>
             )}
           </div>
-          <h1 className="text-4xl lg:text-6xl font-black tracking-tight mb-4 uppercase text-white">
+          <h1 className="text-2xl lg:text-4xl font-black tracking-tight mb-2 uppercase text-white">
             {tagFromSlug ? tagFromSlug.name : (activeSubCategory ? activeSubCategory.name : currentCategory.name)}
           </h1>
-          <p className="text-lg text-gray-300 max-w-2xl font-medium leading-relaxed">
+          <p className="text-sm text-gray-300 max-w-2xl font leading-relaxed">
             Explore our professional grade equipment used by elite athletes and institutions worldwide.
           </p>
         </div>
@@ -360,9 +398,23 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
 
       {/* Category-Specific Tags & Subcategories Chips */}
       {(tags.length > 0 || subCategories.length > 0) && (
-        <section className="py-0 bg-white border-b lg:relative lg:top-0 lg:z-auto w-full">
-          <div className="w-full px-4 lg:px-6 py-2">
-            <div className="flex gap-2 w-full overflow-x-auto pb-2 lg:pb-0 scrollbar-hide touch-pan-x snap-x lg:flex-wrap">
+        <section className="py-0 bg-white border-b lg:relative lg:top-0 lg:z-auto w-full group/scroller">
+          <div className="w-full px-4 lg:px-12 py-2 relative">
+            {/* Left Scroll Arrow */}
+            {showLeftArrow && (
+              <button
+                onClick={() => scroll('left')}
+                className="hidden lg:flex absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 items-center justify-center bg-white border border-gray-200 rounded-full shadow-md hover:bg-gray-50 hover:border-red-600 group/btn transition-all duration-300"
+                title="Scroll Left"
+              >
+                <ChevronLeft className="w-4 h-4 text-gray-500 group-hover/btn:text-red-600" />
+              </button>
+            )}
+
+            <div
+              ref={scrollerRef}
+              className="flex gap-2 w-full overflow-x-auto pb-2 scrollbar-hide touch-pan-x snap-x"
+            >
               {/* Tags */}
               {tags.map((tag) => {
                 const tagSlug = tag.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
@@ -413,6 +465,17 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
                 )
               })}
             </div>
+
+            {/* Right Scroll Arrow */}
+            {showRightArrow && (
+              <button
+                onClick={() => scroll('right')}
+                className="hidden lg:flex absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 items-center justify-center bg-white border border-gray-200 rounded-full shadow-md hover:bg-gray-50 hover:border-red-600 group/btn transition-all duration-300"
+                title="Scroll Right"
+              >
+                <ChevronRight className="w-4 h-4 text-gray-500 group-hover/btn:text-red-600" />
+              </button>
+            )}
           </div>
         </section>
       )}
@@ -820,7 +883,7 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
                       <table className="w-full text-[10px] text-left table-fixed">
                         <thead className="bg-gray-900 text-white text-[11px] font-bold uppercase tracking-wider">
                           <tr>
-                            <th className="px-4 py-3 w-[35%] text-left">Products</th>
+                            <th className="px-6 py-3 w-[35%] text-left">Products</th>
                             <th className="px-2 py-3 w-[25%] text-left">Brand</th>
                             <th className="px-2 py-3 w-[20%] text-left">MRP (Rs.)</th>
                             <th className="px-4 py-3 w-[20%] text-right">Action</th>
@@ -830,7 +893,7 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
                           {primaryGroups.map(pName => (
                             <React.Fragment key={pName}>
                               {/* Red Group Header Row */}
-                              <tr className="bg-red-200">
+                              <tr className="bg-red-100">
                                 <td colSpan={4} className="py-2 px-4 text-center">
                                   <h3 className="text-red-700 font-black uppercase tracking-widest text-sm">
                                     {pName}
@@ -841,8 +904,8 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
                               {Object.keys(grouped[pName]).sort().map(sName => (
                                 grouped[pName][sName].map(product => (
                                   <tr key={product.id} className="hover:bg-red-50/30 transition-colors group">
-                                    <td className="px-3 py-1.5 align-middle">
-                                      <div className="text-sm text-gray-600 leading-tight">{product.name}</div>
+                                    <td className="px-5 py-1.5 align-middle">
+                                      <div className="text-sm text-gray-600 leading-tight pl-[3px]">{product.name}</div>
                                     </td>
                                     <td className="px-1 py-1.5 text-sm text-gray-500 align-middle">
                                       {product.brand_name || '-'}
@@ -862,11 +925,11 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
                                         </Link>
                                         <button
                                           onClick={() => handleEnquire(product)}
-                                          className="text-red-600 font-bold hover:text-red-700 transition-colors inline-flex items-center"
-                                          title="Enquire Now"
+                                          className="text-red-600 font-bold hover:text-red-700 transition-colors inline-flex items-center gap-1"
+                                          title={product.buy_url ? "Buy Now" : "Enquire Now"}
                                         >
-                                          <span className="hidden md:inline text-xs uppercase">Enquire</span>
-                                          <PhoneForwarded className="w-4 h-4 md:hidden" />
+                                          <span className="hidden md:inline text-xs uppercase">{product.buy_url ? 'Buy Now' : 'Enquire'}</span>
+                                          {product.buy_url ? <ShoppingCart className="w-4 h-4 md:hidden" /> : <PhoneForwarded className="w-4 h-4 md:hidden" />}
                                         </button>
                                       </div>
                                     </td>
@@ -996,7 +1059,15 @@ function ProductCard({ product, viewMode, onEnquire }) {
               className="flex-1 md:flex-none rounded-lg bg-gray-900 hover:bg-red-600 text-white font-black text-xs h-10 px-6 gap-2 transition-all duration-300 uppercase tracking-widest"
               onClick={() => onEnquire(product)}
             >
-              Enquire <PhoneForwarded className="w-3.5 h-3.5" />
+              {product.buy_url ? (
+                <>
+                  Buy Now <ShoppingCart className="w-3.5 h-3.5" />
+                </>
+              ) : (
+                <>
+                  Enquire <PhoneForwarded className="w-3.5 h-3.5" />
+                </>
+              )}
             </Button>
             <Button
               variant="outline"
@@ -1059,7 +1130,7 @@ function ProductCard({ product, viewMode, onEnquire }) {
               <ChevronRight className="w-4 h-4" />
             </Button>
             <Button size="icon" className="h-8 w-8 rounded-full bg-gray-100 hover:bg-red-600 hover:text-white text-gray-900 transition-colors shadow-sm" onClick={() => onEnquire(product)}>
-              <PhoneForwarded className="w-3.5 h-3.5" />
+              {product.buy_url ? <ShoppingCart className="w-3.5 h-3.5" /> : <PhoneForwarded className="w-3.5 h-3.5" />}
             </Button>
           </div>
         </div>
