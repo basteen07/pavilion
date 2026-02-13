@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/simple-db';
 import { hashPassword, verifyPassword, createToken, verifyToken, generateMFASecret, generateQRCode, verifyTOTP } from '@/lib/auth';
+import { authRateLimit } from '@/lib/rate-limit';
+import { loginSchema, validateInput } from '@/lib/validators';
 
 // CORS helper
 function handleCORS(response) {
@@ -16,13 +18,17 @@ export async function OPTIONS() {
 
 export async function POST(request) {
   try {
-    console.log('Login endpoint called');
-    const body = await request.json();
-    const { email, password, mfa_code } = body;
+    // SECURITY: Rate limit login attempts (5 per 15 min per IP)
+    const limited = authRateLimit(request);
+    if (limited) return handleCORS(limited);
 
-    if (!email || !password) {
-      return handleCORS(NextResponse.json({ error: 'Email and password required' }, { status: 400 }));
+    const body = await request.json();
+    // SECURITY: Validate login input with Zod schema
+    const validation = validateInput(body, loginSchema);
+    if (!validation.success) {
+      return handleCORS(NextResponse.json({ error: validation.error }, { status: 400 }));
     }
+    const { email, password, mfa_code } = validation.data;
 
     const result = await query(
       `SELECT u.*, r.name as role_name 
@@ -87,9 +93,10 @@ export async function POST(request) {
 
   } catch (error) {
     console.error('Login error:', error);
+    // SECURITY: Never expose error details in production
     return handleCORS(NextResponse.json({
       error: 'Internal server error',
-      message: error.message
+      ...(process.env.NODE_ENV !== 'production' ? { message: error.message } : {})
     }, { status: 500 }));
   }
 }

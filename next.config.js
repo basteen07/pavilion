@@ -51,12 +51,19 @@ const nextConfig = {
       {
         source: "/(.*)",
         headers: [
-          { key: "X-Frame-Options", value: "ALLOWALL" },
-          { key: "Content-Security-Policy", value: "frame-ancestors *;" },
+          // SECURITY: Prevent clickjacking — deny all framing
+          { key: "X-Frame-Options", value: "DENY" },
+          // SECURITY: CSP restricts framing to same origin only
+          { key: "Content-Security-Policy", value: "frame-ancestors 'self';" },
           { key: "X-Content-Type-Options", value: "nosniff" },
+          // SECURITY: HSTS — enforce HTTPS for 1 year
+          { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+          // SECURITY: Referrer policy — send origin only on cross-origin requests
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Access-Control-Allow-Origin", value: process.env.CORS_ORIGINS || "*" },
           { key: "Access-Control-Allow-Methods", value: "GET, POST, PUT, DELETE, OPTIONS" },
-          { key: "Access-Control-Allow-Headers", value: "*" },
+          // SECURITY: Only allow specific headers instead of wildcard
+          { key: "Access-Control-Allow-Headers", value: "Content-Type, Authorization" },
         ],
       },
       // Cache Static Assets Aggressively

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import dns from 'dns';
 import util from 'util';
+import { publicPostRateLimit } from '@/lib/rate-limit';
+import { validateEmailSchema, validateInput } from '@/lib/validators';
 
 // Promisify dns.resolveMx
 const resolveMx = util.promisify(dns.resolveMx);
@@ -19,12 +21,17 @@ export async function OPTIONS() {
 
 export async function POST(request) {
     try {
-        const body = await request.json();
-        const { email } = body;
+        // SECURITY: Rate limit email validation (10 per 5 min per IP)
+        const limited = publicPostRateLimit(request);
+        if (limited) return handleCORS(limited);
 
-        if (!email) {
-            return handleCORS(NextResponse.json({ valid: false, message: 'Email is required' }, { status: 400 }));
+        const body = await request.json();
+        // SECURITY: Validate email input
+        const validation = validateInput(body, validateEmailSchema);
+        if (!validation.success) {
+            return handleCORS(NextResponse.json({ valid: false, message: validation.error }, { status: 400 }));
         }
+        const { email } = validation.data;
 
         // 1. Basic Syntax Check
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -63,8 +70,8 @@ export async function POST(request) {
         console.error('Email validation error:', error);
         return handleCORS(NextResponse.json({
             error: 'Internal server error',
-            valid: false, // Fail safe
-            message: error.message
+            valid: false,
+            ...(process.env.NODE_ENV !== 'production' ? { message: error.message } : {})
         }, { status: 500 }));
     }
 }

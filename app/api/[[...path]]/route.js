@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/simple-db';
 import { hashPassword, verifyPassword, createToken, verifyToken, generateMFASecret, generateQRCode, verifyTOTP } from '@/lib/auth';
 import { sendEmail, sendQuotationEmail, sendOrderConfirmationEmail, sendB2BApprovalEmail, sendB2BRegistrationPendingEmail, sendB2BAdminRegistrationNotification } from '@/lib/email';
+import { authRateLimit, publicGetRateLimit, publicPostRateLimit, adminRateLimit } from '@/lib/rate-limit';
+import { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema, b2bRegisterSchema, mfaVerifySchema, createUserSchema, roleSchema, rolePermissionsSchema, orderStatusSchema, validateInput } from '@/lib/validators';
 
 // CORS helper
 function handleCORS(response) {
@@ -105,6 +107,30 @@ async function authenticateRequest(request) {
   return user;
 }
 
+// ─── One-time lazy migration flag ──────────────────────────────────────────
+// PERFORMANCE: Run migrations once per process, not on every request.
+let migrationsApplied = false;
+async function applyLazyMigrations() {
+  if (migrationsApplied) return;
+  try {
+    await query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS price_updated_at TIMESTAMPTZ;`);
+    await query(`ALTER TABLE product_variants ADD COLUMN IF NOT EXISTS price_updated_at TIMESTAMPTZ;`);
+    migrationsApplied = true;
+  } catch (err) {
+    console.error('Lazy migration error (non-fatal):', err.message);
+  }
+}
+
+// ─── Auth guard helper ────────────────────────────────────────────────────────
+// SECURITY: Centralised admin auth check for mutation endpoints
+async function requireAdmin(request) {
+  const user = await authenticateRequest(request);
+  if (!user || (user.role_name !== 'superadmin' && user.role_name !== 'admin')) {
+    return { user: null, errorResponse: handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 })) };
+  }
+  return { user, errorResponse: null };
+}
+
 // Main route handler
 async function handleRoute(request, { params }) {
   const { path = [] } = params;
@@ -112,13 +138,25 @@ async function handleRoute(request, { params }) {
   const method = request.method;
 
   try {
-    console.log('API Route called:', { route, method, path });
+    // PERFORMANCE: Apply lazy migrations once per process
+    await applyLazyMigrations();
 
-    // Lazy migration: Add price_updated_at to products and variants
-    await query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS price_updated_at TIMESTAMPTZ;`);
-    await query(`ALTER TABLE product_variants ADD COLUMN IF NOT EXISTS price_updated_at TIMESTAMPTZ;`);
+    // ─── RATE LIMITING ──────────────────────────────────────────────────────
+    // SECURITY: Apply rate limits based on route type
+    const isAuthRoute = ['/login', '/auth/login', '/auth/register', '/register', '/auth/forgot-password', '/auth/reset-password'].includes(route);
+    const isPublicPost = ['/b2b/register', '/enquiry'].includes(route) && method === 'POST';
+    const isAdminRoute = route.startsWith('/admin/');
 
-    // ============ PUBLIC ENDPOINTS ============
+    if (isAuthRoute && method === 'POST') {
+      const limited = authRateLimit(request);
+      if (limited) return handleCORS(limited);
+    } else if (isPublicPost) {
+      const limited = publicPostRateLimit(request);
+      if (limited) return handleCORS(limited);
+    } else if (method === 'GET' && !isAdminRoute) {
+      const limited = publicGetRateLimit(request);
+      if (limited) return handleCORS(limited);
+    }
 
     // ============ PUBLIC ENDPOINTS ============
 
@@ -128,15 +166,24 @@ async function handleRoute(request, { params }) {
         const url = new URL(request.url);
         return import('@/lib/api/collections').then(m => m.getCollections(url.searchParams));
       }
-      if (method === 'POST') return import('@/lib/api/collections').then(async m => m.createCollection(await request.json()));
+      // SECURITY: Require admin auth for mutations
+      if (method === 'POST') {
+        const { user, errorResponse } = await requireAdmin(request);
+        if (errorResponse) return errorResponse;
+        return import('@/lib/api/collections').then(async m => m.createCollection(await request.json()));
+      }
     }
 
     if (route.startsWith('/collections/') && method === 'PUT') {
+      const { user, errorResponse } = await requireAdmin(request);
+      if (errorResponse) return errorResponse;
       const id = path[1];
       return import('@/lib/api/collections').then(async m => m.updateCollection(id, await request.json()));
     }
 
     if (route.startsWith('/collections/') && method === 'DELETE') {
+      const { user, errorResponse } = await requireAdmin(request);
+      if (errorResponse) return errorResponse;
       const id = path[1];
       return import('@/lib/api/collections').then(m => m.deleteCollection(id));
     }
@@ -144,15 +191,24 @@ async function handleRoute(request, { params }) {
     // Get categories
     if (route === '/categories') {
       if (method === 'GET') return import('@/lib/api/categories').then(m => m.getCategories());
-      if (method === 'POST') return import('@/lib/api/categories').then(async m => m.createCategory(await request.json()));
+      // SECURITY: Require admin auth for mutations
+      if (method === 'POST') {
+        const { user, errorResponse } = await requireAdmin(request);
+        if (errorResponse) return errorResponse;
+        return import('@/lib/api/categories').then(async m => m.createCategory(await request.json()));
+      }
     }
 
     if (route.startsWith('/categories/') && method === 'PUT') {
+      const { user, errorResponse } = await requireAdmin(request);
+      if (errorResponse) return errorResponse;
       const id = path[1];
       return import('@/lib/api/categories').then(async m => m.updateCategory(id, await request.json()));
     }
 
     if (route.startsWith('/categories/') && method === 'DELETE') {
+      const { user, errorResponse } = await requireAdmin(request);
+      if (errorResponse) return errorResponse;
       const id = path[1];
       return import('@/lib/api/categories').then(m => m.deleteCategory(id));
     }
@@ -162,15 +218,24 @@ async function handleRoute(request, { params }) {
       const url = new URL(request.url);
       const categoryId = url.searchParams.get('categoryId');
       if (method === 'GET') return import('@/lib/api/categories').then(m => m.getSubCategories(categoryId));
-      if (method === 'POST') return import('@/lib/api/categories').then(async m => m.createSubCategory(await request.json()));
+      // SECURITY: Require admin auth for mutations
+      if (method === 'POST') {
+        const { user, errorResponse } = await requireAdmin(request);
+        if (errorResponse) return errorResponse;
+        return import('@/lib/api/categories').then(async m => m.createSubCategory(await request.json()));
+      }
     }
 
     if (route.startsWith('/sub-categories/') && method === 'PUT') {
+      const { user, errorResponse } = await requireAdmin(request);
+      if (errorResponse) return errorResponse;
       const id = path[1];
       return import('@/lib/api/categories').then(async m => m.updateSubCategory(id, await request.json()));
     }
 
     if (route.startsWith('/sub-categories/') && method === 'DELETE') {
+      const { user, errorResponse } = await requireAdmin(request);
+      if (errorResponse) return errorResponse;
       const id = path[1];
       return import('@/lib/api/categories').then(m => m.deleteSubCategory(id));
     }
@@ -181,15 +246,24 @@ async function handleRoute(request, { params }) {
       const subCategoryId = url.searchParams.get('subCategoryId');
       const slug = url.searchParams.get('slug');
       if (method === 'GET') return import('@/lib/api/categories').then(m => m.getTags({ subCategoryId, slug }));
-      if (method === 'POST') return import('@/lib/api/categories').then(async m => m.createTag(await request.json()));
+      // SECURITY: Require admin auth for mutations
+      if (method === 'POST') {
+        const { user, errorResponse } = await requireAdmin(request);
+        if (errorResponse) return errorResponse;
+        return import('@/lib/api/categories').then(async m => m.createTag(await request.json()));
+      }
     }
 
     if (route.startsWith('/tags/') && method === 'PUT') {
+      const { user, errorResponse } = await requireAdmin(request);
+      if (errorResponse) return errorResponse;
       const id = path[1];
       return import('@/lib/api/categories').then(async m => m.updateTag(id, await request.json()));
     }
 
     if (route.startsWith('/tags/') && method === 'DELETE') {
+      const { user, errorResponse } = await requireAdmin(request);
+      if (errorResponse) return errorResponse;
       const id = path[1];
       return import('@/lib/api/categories').then(m => m.deleteTag(id));
     }
@@ -200,15 +274,24 @@ async function handleRoute(request, { params }) {
         const url = new URL(request.url);
         return import('@/lib/api/brands').then(m => m.getBrands(url.searchParams));
       }
-      if (method === 'POST') return import('@/lib/api/brands').then(async m => m.createBrand(await request.json()));
+      // SECURITY: Require admin auth for mutations
+      if (method === 'POST') {
+        const { user, errorResponse } = await requireAdmin(request);
+        if (errorResponse) return errorResponse;
+        return import('@/lib/api/brands').then(async m => m.createBrand(await request.json()));
+      }
     }
 
     if (route.startsWith('/brands/') && method === 'PUT') {
+      const { user, errorResponse } = await requireAdmin(request);
+      if (errorResponse) return errorResponse;
       const id = path[1];
       return import('@/lib/api/brands').then(async m => m.updateBrand(id, await request.json()));
     }
 
     if (route.startsWith('/brands/') && method === 'DELETE') {
+      const { user, errorResponse } = await requireAdmin(request);
+      if (errorResponse) return errorResponse;
       const id = path[1];
       return import('@/lib/api/brands').then(m => m.deleteBrand(id));
     }
@@ -219,12 +302,18 @@ async function handleRoute(request, { params }) {
         const url = new URL(request.url);
         return import('@/lib/api/products').then(m => m.getProducts(url.searchParams));
       }
+      // SECURITY: Require admin auth for mutations
       if (method === 'POST') {
+        const { user, errorResponse } = await requireAdmin(request);
+        if (errorResponse) return errorResponse;
         return import('@/lib/api/products').then(async m => m.createProduct(await request.json()));
       }
     }
 
+    // SECURITY: Require admin auth for bulk upload
     if (route === '/products/bulk' && method === 'POST') {
+      const { user, errorResponse } = await requireAdmin(request);
+      if (errorResponse) return errorResponse;
       return import('@/lib/api/products').then(async m => m.bulkUploadProducts(await request.json()));
     }
 
@@ -274,61 +363,78 @@ async function handleRoute(request, { params }) {
       return import('@/lib/api/bulk-template-masters').then(m => m.getBulkTemplateMasters());
     }
 
-    // --- NEW: Banners API ---
+    // --- Banners API ---
     if (route === '/banners') {
       if (method === 'GET') {
         const url = new URL(request.url);
         return import('@/lib/api/banners').then(m => m.getBanners(url.searchParams));
       }
-      if (method === 'POST') return import('@/lib/api/banners').then(async m => m.createBanner(await request.json()));
+      // SECURITY: Require admin auth for mutations
+      if (method === 'POST') {
+        const { user, errorResponse } = await requireAdmin(request);
+        if (errorResponse) return errorResponse;
+        return import('@/lib/api/banners').then(async m => m.createBanner(await request.json()));
+      }
     }
 
     if (route.startsWith('/banners/') && method === 'PUT') {
+      const { user, errorResponse } = await requireAdmin(request);
+      if (errorResponse) return errorResponse;
       const id = path[1];
       return import('@/lib/api/banners').then(async m => m.updateBanner(id, await request.json()));
     }
 
     if (route.startsWith('/banners/') && method === 'DELETE') {
+      const { user, errorResponse } = await requireAdmin(request);
+      if (errorResponse) return errorResponse;
       const id = path[1];
       return import('@/lib/api/banners').then(m => m.deleteBanner(id));
     }
 
-    // --- NEW: Blogs API ---
+    // --- Blogs API ---
     if (route === '/blogs') {
       if (method === 'GET') {
         const url = new URL(request.url);
         return import('@/lib/api/blogs').then(m => m.getBlogs(url.searchParams));
       }
-      if (method === 'POST') return import('@/lib/api/blogs').then(async m => m.createBlog(await request.json()));
+      // SECURITY: Require admin auth for mutations
+      if (method === 'POST') {
+        const { user, errorResponse } = await requireAdmin(request);
+        if (errorResponse) return errorResponse;
+        return import('@/lib/api/blogs').then(async m => m.createBlog(await request.json()));
+      }
     }
 
-    // Get blog by slug (public) or ID (admin) logic might overlap. 
-    // Usually public uses slug. Let's assume /blogs/[slug] is public GET, and /blogs/[id] is admin PUT/DELETE.
-    // However, clean REST might use /blogs/slug/[slug].
-    // Let's stick to /blogs/[param] where we check if it's a UUID or Slug.
-    // Actually, `getBlogBySlug` is what we want for public.
-
     if (route.startsWith('/blogs/slug/')) {
-      const slug = path[2]; // /blogs/slug/my-blog
+      const slug = path[2];
       if (method === 'GET') {
         return import('@/lib/api/blogs').then(m => m.getBlogBySlug(slug));
       }
     }
 
     if (route.startsWith('/blogs/') && method === 'PUT') {
+      const { user, errorResponse } = await requireAdmin(request);
+      if (errorResponse) return errorResponse;
       const id = path[1];
       return import('@/lib/api/blogs').then(async m => m.updateBlog(id, await request.json()));
     }
 
     if (route.startsWith('/blogs/') && method === 'DELETE') {
+      const { user, errorResponse } = await requireAdmin(request);
+      if (errorResponse) return errorResponse;
       const id = path[1];
       return import('@/lib/api/blogs').then(m => m.deleteBlog(id));
     }
 
-    // --- NEW: CMS Pages API ---
+    // --- CMS Pages API ---
     if (route === '/cms-pages') {
       if (method === 'GET') return import('@/lib/api/cms-pages').then(m => m.getCMSPages());
-      if (method === 'POST') return import('@/lib/api/cms-pages').then(async m => m.createCMSPage(await request.json()));
+      // SECURITY: Require admin auth for mutations
+      if (method === 'POST') {
+        const { user, errorResponse } = await requireAdmin(request);
+        if (errorResponse) return errorResponse;
+        return import('@/lib/api/cms-pages').then(async m => m.createCMSPage(await request.json()));
+      }
     }
 
     if (route.startsWith('/cms-pages/slug/')) {
@@ -339,11 +445,15 @@ async function handleRoute(request, { params }) {
     }
 
     if (route.startsWith('/cms-pages/') && method === 'PUT') {
+      const { user, errorResponse } = await requireAdmin(request);
+      if (errorResponse) return errorResponse;
       const id = path[1];
       return import('@/lib/api/cms-pages').then(async m => m.updateCMSPage(id, await request.json()));
     }
 
     if (route.startsWith('/cms-pages/') && method === 'DELETE') {
+      const { user, errorResponse } = await requireAdmin(request);
+      if (errorResponse) return errorResponse;
       const id = path[1];
       return import('@/lib/api/cms-pages').then(m => m.deleteCMSPage(id));
     }
@@ -375,18 +485,27 @@ async function handleRoute(request, { params }) {
       }
     }
 
-    // --- NEW: Customer Types API ---
+    // --- Customer Types API ---
     if (route === '/customer-types') {
       if (method === 'GET') return import('@/lib/api/customer-types').then(m => m.getCustomerTypes());
-      if (method === 'POST') return import('@/lib/api/customer-types').then(async m => m.createCustomerType(await request.json()));
+      // SECURITY: Require admin auth for mutations
+      if (method === 'POST') {
+        const { user, errorResponse } = await requireAdmin(request);
+        if (errorResponse) return errorResponse;
+        return import('@/lib/api/customer-types').then(async m => m.createCustomerType(await request.json()));
+      }
     }
 
     if (route.startsWith('/customer-types/') && method === 'PUT') {
+      const { user, errorResponse } = await requireAdmin(request);
+      if (errorResponse) return errorResponse;
       const id = path[1];
       return import('@/lib/api/customer-types').then(async m => m.updateCustomerType(id, await request.json()));
     }
 
     if (route.startsWith('/customer-types/') && method === 'DELETE') {
+      const { user, errorResponse } = await requireAdmin(request);
+      if (errorResponse) return errorResponse;
       const id = path[1];
       return import('@/lib/api/customer-types').then(m => m.deleteCustomerType(id));
     }
@@ -514,13 +633,15 @@ async function handleRoute(request, { params }) {
         return import('@/lib/api/products').then(m => m.getProductBySlug(param));
       }
 
-      // For PUT/DELETE we assume ID is passed in route for admin actions, 
-      // but if the route logic uses slug, we might need adjustment.
-      // The current frontend might use ID. Let's assume ID for mutation.
+      // SECURITY: Require admin auth for product mutations
       if (method === 'PUT') {
+        const { user, errorResponse } = await requireAdmin(request);
+        if (errorResponse) return errorResponse;
         return import('@/lib/api/products').then(async m => m.updateProduct(param, await request.json()));
       }
       if (method === 'DELETE') {
+        const { user, errorResponse } = await requireAdmin(request);
+        if (errorResponse) return errorResponse;
         return import('@/lib/api/products').then(m => m.deleteProduct(param));
       }
     }
@@ -530,11 +651,12 @@ async function handleRoute(request, { params }) {
     // Login (direct route for frontend compatibility)
     if (route === '/login' && method === 'POST') {
       const body = await request.json();
-      const { email, password, mfa_code } = body;
-
-      if (!email || !password) {
-        return handleCORS(NextResponse.json({ error: 'Email and password required' }, { status: 400 }));
+      // SECURITY: Validate login input with schema
+      const validation = validateInput(body, loginSchema);
+      if (!validation.success) {
+        return handleCORS(NextResponse.json({ error: validation.error }, { status: 400 }));
       }
+      const { email, password, mfa_code } = validation.data;
 
       const result = await query(
         `SELECT u.*, r.name as role_name 
@@ -601,12 +723,13 @@ async function handleRoute(request, { params }) {
     // Register
     if ((route === '/auth/register' || route === '/register') && method === 'POST') {
       const body = await request.json();
-      const { email, password, name, full_name, phone } = body;
-      const userName = name || full_name;
-
-      if (!email || !password) {
-        return handleCORS(NextResponse.json({ error: 'Email and password required' }, { status: 400 }));
+      // SECURITY: Validate registration input
+      const validation = validateInput(body, registerSchema);
+      if (!validation.success) {
+        return handleCORS(NextResponse.json({ error: validation.error }, { status: 400 }));
       }
+      const { email, password, name, full_name, phone } = validation.data;
+      const userName = name || full_name;
 
       const existing = await query('SELECT id FROM users WHERE email = $1', [email]);
       if (existing.rows.length > 0) {
@@ -634,11 +757,12 @@ async function handleRoute(request, { params }) {
     // Login
     if (route === '/auth/login' && method === 'POST') {
       const body = await request.json();
-      const { email, password, mfa_code } = body;
-
-      if (!email || !password) {
-        return handleCORS(NextResponse.json({ error: 'Email and password required' }, { status: 400 }));
+      // SECURITY: Validate login input with schema
+      const validation = validateInput(body, loginSchema);
+      if (!validation.success) {
+        return handleCORS(NextResponse.json({ error: validation.error }, { status: 400 }));
       }
+      const { email, password, mfa_code } = validation.data;
 
       const result = await query(
         `SELECT u.*, r.name as role_name 
@@ -735,11 +859,12 @@ async function handleRoute(request, { params }) {
       }
 
       const body = await request.json();
-      const { code } = body;
-
-      if (!code) {
-        return handleCORS(NextResponse.json({ error: 'Code required' }, { status: 400 }));
+      // SECURITY: Validate MFA input
+      const validation = validateInput(body, mfaVerifySchema);
+      if (!validation.success) {
+        return handleCORS(NextResponse.json({ error: validation.error }, { status: 400 }));
       }
+      const { code } = validation.data;
 
       const valid = verifyTOTP(user.mfa_secret, code);
       if (!valid) {
@@ -773,11 +898,12 @@ async function handleRoute(request, { params }) {
     // Forgot Password - send reset email
     if (route === '/auth/forgot-password' && method === 'POST') {
       const body = await request.json();
-      const { email } = body;
-
-      if (!email) {
-        return handleCORS(NextResponse.json({ error: 'Email is required' }, { status: 400 }));
+      // SECURITY: Validate forgot-password input
+      const validation = validateInput(body, forgotPasswordSchema);
+      if (!validation.success) {
+        return handleCORS(NextResponse.json({ error: validation.error }, { status: 400 }));
       }
+      const { email } = validation.data;
 
       // Find user
       const result = await query('SELECT id, name, email FROM users WHERE email = $1 AND is_active = true', [email]);
@@ -824,11 +950,12 @@ async function handleRoute(request, { params }) {
     // Reset Password - validate token and set new password
     if (route === '/auth/reset-password' && method === 'POST') {
       const body = await request.json();
-      const { token, password } = body;
-
-      if (!token || !password) {
-        return handleCORS(NextResponse.json({ error: 'Token and password are required' }, { status: 400 }));
+      // SECURITY: Validate reset-password input
+      const validation = validateInput(body, resetPasswordSchema);
+      if (!validation.success) {
+        return handleCORS(NextResponse.json({ error: validation.error }, { status: 400 }));
       }
+      const { token, password } = validation.data;
 
       if (password.length < 6) {
         return handleCORS(NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 }));
@@ -890,15 +1017,16 @@ async function handleRoute(request, { params }) {
     // Register B2B customer (combined user + B2B registration)
     if (route === '/b2b/register' && method === 'POST') {
       const body = await request.json();
+      // SECURITY: Validate B2B registration input
+      const validation = validateInput(body, b2bRegisterSchema);
+      if (!validation.success) {
+        return handleCORS(NextResponse.json({ error: validation.error }, { status: 400 }));
+      }
       const {
         email, password, name, phone, company_name, gstin, pan_number,
         business_type, address, address_line2, city, state, pincode,
         first_name, last_name
-      } = body;
-
-      if (!email || !password || !company_name) {
-        return handleCORS(NextResponse.json({ error: 'Email, password, and company name required' }, { status: 400 }));
-      }
+      } = validation.data;
 
       // Check if user already exists
       const existingUser = await query('SELECT id FROM users WHERE email = $1', [email]);
@@ -2747,9 +2875,10 @@ async function handleRoute(request, { params }) {
 
   } catch (error) {
     console.error('API Error:', error);
+    // SECURITY: Never expose error details in production
     return handleCORS(NextResponse.json({
       error: 'Internal server error',
-      message: error.message
+      ...(process.env.NODE_ENV !== 'production' ? { message: error.message } : {})
     }, { status: 500 }));
   }
 }

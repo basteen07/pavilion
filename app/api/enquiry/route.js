@@ -1,18 +1,24 @@
 import { NextResponse } from 'next/server';
 import { sendEnquiryEmail } from '@/lib/email';
+import { publicPostRateLimit } from '@/lib/rate-limit';
+import { enquirySchema, validateInput } from '@/lib/validators';
 
 export async function POST(request) {
     try {
-        const body = await request.json();
-        const { name, email, phone, message, product } = body;
+        // SECURITY: Rate limit enquiry submissions (10 per 5 min per IP)
+        const limited = publicPostRateLimit(request);
+        if (limited) return limited;
 
-        // Validation
-        if (!name || !email || !phone || !product) {
+        const body = await request.json();
+        // SECURITY: Validate enquiry input with Zod schema
+        const validation = validateInput(body, enquirySchema);
+        if (!validation.success) {
             return NextResponse.json(
-                { success: false, message: 'Missing required fields' },
+                { success: false, message: validation.error },
                 { status: 400 }
             );
         }
+        const { name, email, phone, message, product } = validation.data;
 
         // Send email
         const result = await sendEnquiryEmail({

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/simple-db';
 import { hashPassword } from '@/lib/auth';
+import { authRateLimit } from '@/lib/rate-limit';
+import { resetPasswordSchema, validateInput } from '@/lib/validators';
 
 // CORS helper
 function handleCORS(response) {
@@ -16,12 +18,17 @@ export async function OPTIONS() {
 
 export async function POST(request) {
     try {
-        const body = await request.json();
-        const { token, password } = body;
+        // SECURITY: Rate limit reset-password attempts (5 per 15 min per IP)
+        const limited = authRateLimit(request);
+        if (limited) return handleCORS(limited);
 
-        if (!token || !password) {
-            return handleCORS(NextResponse.json({ error: 'Token and password are required' }, { status: 400 }));
+        const body = await request.json();
+        // SECURITY: Validate reset-password input
+        const validation = validateInput(body, resetPasswordSchema);
+        if (!validation.success) {
+            return handleCORS(NextResponse.json({ error: validation.error }, { status: 400 }));
         }
+        const { token, password } = validation.data;
 
         // Verify token
         const result = await query(
@@ -60,7 +67,7 @@ export async function POST(request) {
         console.error('Reset password error:', error);
         return handleCORS(NextResponse.json({
             error: 'Internal server error',
-            message: error.message
+            ...(process.env.NODE_ENV !== 'production' ? { message: error.message } : {})
         }, { status: 500 }));
     }
 }

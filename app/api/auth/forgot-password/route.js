@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/simple-db';
 import { sendPasswordResetEmail } from '@/lib/email';
 import crypto from 'crypto';
+import { authRateLimit } from '@/lib/rate-limit';
+import { forgotPasswordSchema, validateInput } from '@/lib/validators';
 
 // CORS helper
 function handleCORS(response) {
@@ -17,12 +19,17 @@ export async function OPTIONS() {
 
 export async function POST(request) {
     try {
-        const body = await request.json();
-        const { email } = body;
+        // SECURITY: Rate limit password reset requests (5 per 15 min per IP)
+        const limited = authRateLimit(request);
+        if (limited) return handleCORS(limited);
 
-        if (!email) {
-            return handleCORS(NextResponse.json({ error: 'Email is required' }, { status: 400 }));
+        const body = await request.json();
+        // SECURITY: Validate forgot-password input
+        const validation = validateInput(body, forgotPasswordSchema);
+        if (!validation.success) {
+            return handleCORS(NextResponse.json({ error: validation.error }, { status: 400 }));
         }
+        const { email } = validation.data;
 
         // Check if user exists (and is active)
         const result = await query(
@@ -67,7 +74,7 @@ export async function POST(request) {
         console.error('Forgot password error:', error);
         return handleCORS(NextResponse.json({
             error: 'Internal server error',
-            message: error.message
+            ...(process.env.NODE_ENV !== 'production' ? { message: error.message } : {})
         }, { status: 500 }));
     }
 }
