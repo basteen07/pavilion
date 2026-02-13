@@ -75,7 +75,7 @@ export default async function RootLayout({ children }) {
     <html lang="en" className={`${inter.variable} ${manrope.variable}`} suppressHydrationWarning>
       <head>
         {/* Preconnect to external image CDN for faster LCP */}
-        <link rel="preconnect" href="https://pavilion-sports.com" />
+
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         {/* Organization Schema */}
         {(() => {

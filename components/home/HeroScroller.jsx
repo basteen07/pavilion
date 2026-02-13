@@ -172,9 +172,9 @@ export function HeroScroller({ initialBanners = [] }) {
                                     <button
                                         key={idx}
                                         onClick={() => setCurrent(idx)}
-                                        className={`h-1 rounded-full transition-all duration-300 ${idx === current
+                                        className={`h-1.5 rounded-full transition-all duration-300 ${idx === current
                                             ? 'w-6 bg-red-600'
-                                            : 'w-1.5 bg-white/30 hover:bg-white/50'
+                                            : 'w-1.5 bg-white/40 hover:bg-white/60'
                                             }`}
                                     />
                                 ))}
