@@ -1,0 +1,161 @@
+╔══════════════════════════════════════════════════╗
+║    SCHEMA VERIFICATION — Full Test Suite        ║
+║    Testing initializeDatabase() output          ║
+╚══════════════════════════════════════════════════╝
+
+══════════════════════════════════════════
+  TEST 1: TABLE EXISTENCE (37 expected)
+══════════════════════════════════════════
+  ✅ Table "activity_logs" exists
+  ✅ Table "b2b_customer_events" exists
+  ✅ Table "b2b_customers" exists
+  ✅ Table "banners" exists
+  ✅ Table "blog_posts" exists
+  ✅ Table "brands" exists
+  ✅ Table "careers_jobs" exists
+  ✅ Table "categories" exists
+  ✅ Table "cms_pages" exists
+  ✅ Table "customer_addresses" exists
+  ✅ Table "customer_types" exists
+  ✅ Table "customers" exists
+  ✅ Table "gallery_albums" exists
+  ✅ Table "gallery_items" exists
+  ✅ Table "homepage_banners" exists
+  ✅ Table "job_applications" exists
+  ✅ Table "job_listings" exists
+  ✅ Table "jobs" exists
+  ✅ Table "order_comments" exists
+  ✅ Table "order_items" exists
+  ✅ Table "orders" exists
+  ✅ Table "parent_collections" exists
+  ✅ Table "permissions" exists
+  ✅ Table "product_images" exists
+  ✅ Table "product_tags" exists
+  ✅ Table "product_variants" exists
+  ✅ Table "products" exists
+  ✅ Table "quotation_items" exists
+  ✅ Table "quotations" exists
+  ✅ Table "role_permissions" exists
+  ✅ Table "roles" exists
+  ✅ Table "sessions" exists
+  ✅ Table "site_settings" exists
+  ✅ Table "sub_categories" exists
+  ✅ Table "system_settings" exists
+  ✅ Table "testimonials" exists
+  ✅ Table "users" exists
+
+  Tables: 37 expected, 37 in DB
+
+══════════════════════════════════════════
+  TEST 2: COLUMN VERIFICATION
+══════════════════════════════════════════
+  ✅ Table "roles" — all 4 columns present
+  ✅ Table "permissions" — all 4 columns present
+  ✅ Table "role_permissions" — all 3 columns present
+  ✅ Table "users" — all 17 columns present
+  ✅ Table "sessions" — all 5 columns present
+  ✅ Table "cms_pages" — all 11 columns present
+  ✅ Table "banners" — all 9 columns present
+  ✅ Table "homepage_banners" — all 9 columns present
+  ✅ Table "blog_posts" — all 16 columns present
+  ✅ Table "testimonials" — all 11 columns present
+  ✅ Table "site_settings" — all 7 columns present
+  ✅ Table "system_settings" — all 6 columns present
+  ✅ Table "parent_collections" — all 8 columns present
+  ✅ Table "categories" — all 11 columns present
+  ✅ Table "sub_categories" — all 8 columns present
+  ✅ Table "brands" — all 13 columns present
+  ✅ Table "product_tags" — all 9 columns present
+  ✅ Table "products" — all 51 columns present
+  ✅ Table "product_variants" — all 30 columns present
+  ✅ Table "product_images" — all 6 columns present
+  ✅ Table "customer_types" — all 6 columns present
+  ✅ Table "customers" — all 29 columns present
+  ✅ Table "customer_addresses" — all 11 columns present
+  ✅ Table "b2b_customers" — all 23 columns present
+  ✅ Table "b2b_customer_events" — all 7 columns present
+  ✅ Table "quotations" — all 20 columns present
+  ✅ Table "quotation_items" — all 17 columns present
+  ✅ Table "orders" — all 14 columns present
+  ✅ Table "order_items" — all 10 columns present
+  ✅ Table "order_comments" — all 7 columns present
+  ✅ Table "careers_jobs" — all 10 columns present
+  ✅ Table "job_applications" — all 11 columns present
+  ✅ Table "jobs" — all 11 columns present
+  ✅ Table "job_listings" — all 9 columns present
+  ✅ Table "gallery_albums" — all 10 columns present
+  ✅ Table "gallery_items" — all 10 columns present
+  ✅ Table "activity_logs" — all 9 columns present
+
+══════════════════════════════════════════
+  TEST 3: FOREIGN KEY CONSTRAINTS
+══════════════════════════════════════════
+  ✅ FK: users.role_id -> roles.id
+  ✅ FK: sessions.user_id -> users.id
+  ✅ FK: role_permissions.role_id -> roles.id
+  ✅ FK: role_permissions.permission_id -> permissions.id
+  ✅ FK: blog_posts.author_id -> users.id
+  ✅ FK: categories.parent_id -> categories.id
+  ✅ FK: categories.parent_collection_id -> parent_collections.id
+  ✅ FK: sub_categories.category_id -> categories.id
+  ✅ FK: brands.category_id -> categories.id
+  ✅ FK: brands.sub_category_id -> sub_categories.id
+  ✅ FK: product_tags.category_id -> categories.id
+  ✅ FK: product_tags.sub_category_id -> sub_categories.id
+  ✅ FK: products.category_id -> categories.id
+  ✅ FK: products.sub_category_id -> sub_categories.id
+  ✅ FK: products.brand_id -> brands.id
+  ✅ FK: products.tag_id -> product_tags.id
+  ✅ FK: product_variants.product_id -> products.id
+  ✅ FK: product_images.product_id -> products.id
+  ✅ FK: customer_addresses.customer_id -> customers.id
+  ✅ FK: customers.customer_type_id -> customer_types.id
+  ✅ FK: b2b_customers.user_id -> users.id
+  ✅ FK: b2b_customers.approved_by -> users.id
+  ✅ FK: b2b_customer_events.customer_id -> b2b_customers.id
+  ✅ FK: b2b_customer_events.admin_id -> users.id
+  ✅ FK: quotations.customer_id -> customers.id
+  ✅ FK: quotations.created_by -> users.id
+  ✅ FK: quotation_items.quotation_id -> quotations.id
+  ✅ FK: quotation_items.product_id -> products.id
+  ✅ FK: orders.customer_id -> b2b_customers.id
+  ✅ FK: order_items.order_id -> orders.id
+  ✅ FK: order_items.product_id -> products.id
+  ✅ FK: order_comments.order_id -> orders.id
+  ✅ FK: order_comments.user_id -> users.id
+  ✅ FK: order_comments.customer_id -> customers.id
+  ✅ FK: job_applications.job_id -> careers_jobs.id
+  ✅ FK: gallery_items.album_id -> gallery_albums.id
+  ✅ FK: activity_logs.admin_id -> users.id
+  ✅ FK: activity_logs.customer_id -> customers.id
+  ✅ FK: activity_logs.quotation_id -> quotations.id
+  ✅ FK: activity_logs.order_id -> orders.id
+
+══════════════════════════════════════════
+  TEST 4: INDEXES
+══════════════════════════════════════════
+  ✅ Index "idx_products_category" exists
+  ✅ Index "idx_products_brand" exists
+  ✅ Index "idx_products_active" exists
+  ✅ Index "idx_products_slug" exists
+  ✅ Index "idx_product_variants_product" exists
+  ✅ Index "idx_product_variants_sku" exists
+  ✅ Index "idx_sub_categories_category" exists
+  ✅ Index "idx_users_email" exists
+  ✅ Index "idx_sessions_token" exists
+  ✅ Index "idx_sessions_user" exists
+  ✅ Index "idx_job_applications_job_id" exists
+  ✅ Index "idx_orders_customer" exists
+  ✅ Index "idx_order_items_order" exists
+  ✅ Index "idx_quotation_items_quotation" exists
+  ✅ Index "idx_activity_logs_event" exists
+  ✅ Index "idx_customers_email" exists
+
+══════════════════════════════════════════
+  FINAL RESULTS
+══════════════════════════════════════════
+  ✅ Passed: 130
+  ❌ Failed: 0
+  Total:   130
+
+  VERDICT: 🎉 ALL TESTS PASSED
