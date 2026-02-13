@@ -124,9 +124,13 @@ export function AuthPage({ mode = 'login' }) {
                 toast.success('Registration was successful. Once admin approved you will be notified via email. After that you can login.')
                 router.push('/login')
             } else {
+                const payload = { email, password }
+                if (mfaCode && mfaCode.length === 6) {
+                    payload.mfa_code = mfaCode
+                }
                 const data = await apiCall('/auth/login', {
                     method: 'POST',
-                    body: JSON.stringify({ email, password, mfa_code: mfaCode })
+                    body: JSON.stringify(payload)
                 })
 
                 if (data.mfa_required) {

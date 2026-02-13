@@ -51,6 +51,12 @@ async function apiCall(endpoint, options = {}) {
 }
 
 export default function CareersManagement() {
+    if (typeof window !== 'undefined') {
+        alert("CAREERS VERSION 5 LOADING");
+        window._ANTIGRAVITY_VERSION = "5.0";
+        console.log('[CareersManagement] Loaded Version: 5.0 (Nuke Cache Fix)');
+    }
+
     const [jobs, setJobs] = useState([])
     const [filteredJobs, setFilteredJobs] = useState([])
     const [searchTerm, setSearchTerm] = useState('')
@@ -69,9 +75,16 @@ export default function CareersManagement() {
 
     // Applicants State
     const [viewApplicantsJob, setViewApplicantsJob] = useState(null)
-    const [applicants, setApplicants] = useState([])
+    const [jobApplicants, setJobApplicants] = useState([]) // Renamed to avoid shadowing/caching
     const [loadingApplicants, setLoadingApplicants] = useState(false)
     const [isApplicantsSheetOpen, setIsApplicantsSheetOpen] = useState(false)
+
+    useEffect(() => {
+        if (!isApplicantsSheetOpen) {
+            setJobApplicants([]) // Reset when closed
+            setViewApplicantsJob(null)
+        }
+    }, [isApplicantsSheetOpen])
 
     useEffect(() => {
         loadJobs()
@@ -92,9 +105,15 @@ export default function CareersManagement() {
     async function loadJobs() {
         try {
             const data = await apiCall('/admin/careers')
-            setJobs(data || [])
+            if (Array.isArray(data)) {
+                setJobs(data)
+            } else {
+                setJobs([])
+                if (data.error) toast.error(data.error)
+            }
         } catch (error) {
             toast.error('Failed to load jobs')
+            setJobs([])
         }
     }
 
@@ -164,14 +183,22 @@ export default function CareersManagement() {
         setLoadingApplicants(true)
         try {
             const data = await apiCall(`/admin/careers/${job.id}/applications`)
-            setApplicants(data || [])
+            if (Array.isArray(data)) {
+                setJobApplicants(data)
+            } else {
+                setJobApplicants([])
+                if (data.error) toast.error(data.error)
+            }
         } catch (error) {
             toast.error('Failed to load applicants')
-            setApplicants([])
+            setJobApplicants([])
         } finally {
             setLoadingApplicants(false)
         }
     }
+
+    // Pre-compute safe applicants list with unique name to avoid any collisions
+    const safeApplicantsRenderList = Array.isArray(jobApplicants) ? jobApplicants : [];
 
     return (
         <div className="space-y-6">
@@ -339,59 +366,56 @@ export default function CareersManagement() {
                             <div className="text-center py-10">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                             </div>
-                        ) : applicants.length === 0 ? (
+                        ) : safeApplicantsRenderList.length === 0 ? (
                             <div className="text-center py-10 border rounded-lg bg-gray-50 text-gray-500">
                                 No applications received yet.
                             </div>
                         ) : (
-                            applicants.map((app) => (
-                                <Card key={app.id} className="overflow-hidden">
-                                    <CardContent className="p-6 space-y-4">
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <h3 className="font-bold text-lg">{app.full_name}</h3>
-                                                <p className="text-xs text-gray-500">Applied on {new Date(app.created_at).toLocaleDateString()}</p>
+                            <div className="space-y-6">
+                                {safeApplicantsRenderList.map((app) => (
+                                    <Card key={app.id || `app-${Math.random()}`} className="overflow-hidden">
+                                        <CardContent className="p-6 space-y-4">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <h3 className="font-bold text-lg">{app.full_name || 'Unknown Candidate'}</h3>
+                                                    <p className="text-xs text-gray-500">Applied on {app.created_at ? new Date(app.created_at).toLocaleDateString() : 'Unknown date'}</p>
+                                                </div>
+                                                <Badge variant={app.status === 'pending' ? 'outline' : 'default'}>
+                                                    {app.status || 'Pending'}
+                                                </Badge>
                                             </div>
-                                            <Badge variant={app.status === 'pending' ? 'outline' : 'default'}>
-                                                {app.status}
-                                            </Badge>
-                                        </div>
 
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                                            <div className="flex items-center gap-2">
-                                                <Mail className="w-4 h-4 text-gray-400" />
-                                                <a href={`mailto:${app.email}`} className="text-blue-600 hover:underline">{app.email}</a>
-                                            </div>
-                                            {app.phone && (
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                                                <div className="flex items-center gap-2">
+                                                    <Mail className="w-4 h-4 text-gray-400" />
+                                                    <a href={`mailto:${app.email}`} className="hover:text-primary">{app.email}</a>
+                                                </div>
                                                 <div className="flex items-center gap-2">
                                                     <Phone className="w-4 h-4 text-gray-400" />
-                                                    {app.phone}
+                                                    <a href={`tel:${app.phone}`} className="hover:text-primary">{app.phone}</a>
                                                 </div>
-                                            )}
-                                        </div>
-
-                                        <div className="flex gap-3 text-sm">
-                                            {app.linkedin_url && (
-                                                <a href={app.linkedin_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline">
-                                                    <ExternalLink className="w-3 h-3" /> LinkedIn
-                                                </a>
-                                            )}
-                                            {app.portfolio_url && (
-                                                <a href={app.portfolio_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline">
-                                                    <ExternalLink className="w-3 h-3" /> Portfolio
-                                                </a>
-                                            )}
-                                        </div>
-
-                                        {app.cover_letter && (
-                                            <div className="bg-gray-50 p-4 rounded-md text-sm text-gray-700 whitespace-pre-wrap">
-                                                <p className="font-semibold text-xs text-gray-500 mb-1 uppercase tracking-wider">Cover Letter</p>
-                                                {app.cover_letter}
+                                                {app.linkedin_url && (
+                                                    <div className="flex items-center gap-2">
+                                                        <ExternalLink className="w-4 h-4 text-gray-400" />
+                                                        <a href={app.linkedin_url} target="_blank" rel="noopener noreferrer" className="hover:text-primary">LinkedIn Profile</a>
+                                                    </div>
+                                                )}
+                                                {app.portfolio_url && (
+                                                    <div className="flex items-center gap-2">
+                                                        <ExternalLink className="w-4 h-4 text-gray-400" />
+                                                        <a href={app.portfolio_url} target="_blank" rel="noopener noreferrer" className="hover:text-primary">Portfolio</a>
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            ))
+
+                                            <div className="bg-gray-50 p-3 rounded text-sm">
+                                                <p className="font-semibold text-xs text-gray-500 mb-1">Cover Letter</p>
+                                                <p className="whitespace-pre-wrap">{app.cover_letter}</p>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
                         )}
                     </div>
                 </SheetContent>

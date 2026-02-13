@@ -62,9 +62,10 @@ export function GalleryPage() {
         try {
             setLoading(true)
             const data = await apiCall('/gallery')
-            setAlbums(data)
+            setAlbums(Array.isArray(data) ? data : [])
         } catch (error) {
             console.error('Error loading gallery albums:', error)
+            setAlbums([])
         } finally {
             setLoading(false)
         }
@@ -74,9 +75,10 @@ export function GalleryPage() {
         try {
             setLoading(true)
             const data = await apiCall(`/gallery/${albumId}`)
-            setItems(data)
+            setItems(Array.isArray(data) ? data : [])
         } catch (error) {
             console.error(`Error loading items for album ${albumId}:`, error)
+            setItems([])
         } finally {
             setLoading(false)
         }

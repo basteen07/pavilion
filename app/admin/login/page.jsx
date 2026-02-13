@@ -90,9 +90,17 @@ function AdminLoginForm() {
       // First, we need password to verify MFA - show password field
       // Actually, for security, we should still require password
       // But show a simplified UI focused on MFA
+      const payload = {
+        email: storedEmail,
+        password
+      }
+      if (mfaCode && mfaCode.length === 6) {
+        payload.mfa_code = mfaCode
+      }
+
       const data = await apiCall('/login', {
         method: 'POST',
-        body: JSON.stringify({ email: storedEmail, password, mfa_code: mfaCode })
+        body: JSON.stringify(payload)
       })
 
       if (data.success) {
@@ -116,9 +124,14 @@ function AdminLoginForm() {
     setLoading(true)
 
     try {
+      const payload = { email, password }
+      if (mfaCode && mfaCode.length === 6) {
+        payload.mfa_code = mfaCode
+      }
+
       const data = await apiCall('/login', {
         method: 'POST',
-        body: JSON.stringify({ email, password, mfa_code: mfaCode })
+        body: JSON.stringify(payload)
       })
 
       if (data.mfa_required) {
