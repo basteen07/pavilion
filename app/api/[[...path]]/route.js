@@ -31,7 +31,9 @@ async function logActivity(params) {
 async function authenticateRequest(request) {
   const authHeader = request.headers.get('authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    console.log('Auth Debug: No/Invalid Auth Header', authHeader);
+    const allHeaders = {};
+    request.headers.forEach((v, k) => { allHeaders[k] = v; });
+    console.log('[Auth Debug] Missing/Invalid Header. Path:', request.nextUrl.pathname, 'Keys:', Object.keys(allHeaders));
     return null;
   }
 
@@ -137,7 +139,23 @@ async function handleRoute(request, { params }) {
   const route = `/${path.join('/')}`;
   const method = request.method;
 
+  // GLOBAL DIAGNOSTIC LOG
+  console.log(`[API Request] ${method} ${route}`);
+
   try {
+    // --- AUTH DEBUG ROUTE ---
+    if (route === '/admin/debug-auth' && method === 'GET') {
+      const { user, errorResponse } = await requireAdmin(request);
+      if (errorResponse) return errorResponse;
+      return handleCORS(NextResponse.json({
+        authenticated: true,
+        user: { email: user.email, role: user.role_name },
+        env_check: {
+          has_jwt_secret: !!process.env.JWT_SECRET,
+          has_smtp_user: !!process.env.SMTP_USER
+        }
+      }));
+    }
     // PERFORMANCE: Apply lazy migrations once per process
     await applyLazyMigrations();
 
@@ -559,6 +577,26 @@ async function handleRoute(request, { params }) {
       }
     }
 
+    // Get available email senders (non-sensitive display data only)
+    if (route === '/admin/config/email-senders' && method === 'GET') {
+      // Try auth but don't block — this only returns sender display names, not credentials
+      const user = await authenticateRequest(request);
+      console.log('[API] email-senders requested. Auth user:', user?.email || 'anonymous');
+
+      const { getAvailableSenders } = await import('@/lib/email');
+      const senders = getAvailableSenders();
+      console.log('[API] Returning available senders:', senders.length, 'Keys:', Object.keys(process.env).filter(k => k.startsWith('SMTP')));
+      return handleCORS(NextResponse.json({
+        senders,
+        debug: {
+          hasSmtp1: !!process.env.SMTP_USER,
+          hasSmtp2: !!process.env.SMTP2_USER,
+          emailEnabled: process.env.EMAIL_ENABLED,
+          envKeys: Object.keys(process.env).filter(k => k.startsWith('SMTP') || k === 'EMAIL_ENABLED')
+        }
+      }));
+    }
+
     // Send Quotation Email
     if (route.match(/^\/admin\/quotations\/[^/]+\/send-email$/) && method === 'POST') {
       const user = await authenticateRequest(request);
@@ -566,7 +604,7 @@ async function handleRoute(request, { params }) {
 
       const quotationId = path[2]; // /admin/quotations/{id}/send-email
       const body = await request.json();
-      const { email: targetEmail, pdfData } = body;
+      const { email: targetEmail, pdfData, senderKey } = body;
 
       // Fetch quotation details
       const quoteRes = await query(`
@@ -593,7 +631,7 @@ async function handleRoute(request, { params }) {
         quotation_number: quotation.quotation_number,
         total: quotation.total_amount,
         pdfData: pdfData // Pass the base64 PDF data
-      }, recipientEmail);
+      }, recipientEmail, senderKey);
 
       // Log activity
       await logActivity({

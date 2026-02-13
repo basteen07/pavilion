@@ -21,6 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Label } from "@/components/ui/label"
 import { QuotationPreviewModal } from '@/components/admin/QuotationPreviewModal'
 import { PaginationControls } from '@/components/admin/PaginationControls'
+import { SenderSelectionDialog } from '@/components/admin/SenderSelectionDialog'
 import { useSearchParams } from 'next/navigation'
 
 export function QuotationsList({ onCreate, onEdit }) {
@@ -41,6 +42,8 @@ export function QuotationsList({ onCreate, onEdit }) {
     const [filterOpen, setFilterOpen] = useState(false)
     const [previewOpen, setPreviewOpen] = useState(false)
     const [selectedQuoteForPreview, setSelectedQuoteForPreview] = useState(null)
+    const [senderDialogOpen, setSenderDialogOpen] = useState(false)
+    const [pendingQuoteForSend, setPendingQuoteForSend] = useState(null)
 
     // Handle deep link to specific quotation
     useEffect(() => {
@@ -170,9 +173,7 @@ export function QuotationsList({ onCreate, onEdit }) {
         }
     }
 
-    async function handleMarkAsSent(quote) {
-        if (!confirm(`Are you sure you want to send quotation ${quote.quotation_number} to ${quote.customer_snapshot?.email || quote.customer_email}?`)) return;
-
+    async function handleMarkAsSent(quote, senderKey) {
         setActionLoading(quote.id)
         try {
             // Fetch full quotation details to get items for PDF
@@ -186,7 +187,8 @@ export function QuotationsList({ onCreate, onEdit }) {
                 method: 'POST',
                 body: JSON.stringify({
                     email: quote.customer_snapshot?.email || quote.customer_email,
-                    pdfData: pdfData
+                    pdfData: pdfData,
+                    senderKey: senderKey
                 })
             })
             if (res.success) {
@@ -200,6 +202,18 @@ export function QuotationsList({ onCreate, onEdit }) {
         } finally {
             setActionLoading(null)
         }
+    }
+
+    function openSendDialog(quote) {
+        setPendingQuoteForSend(quote)
+        setSenderDialogOpen(true)
+    }
+
+    function handleSenderConfirm(senderKey) {
+        if (pendingQuoteForSend) {
+            handleMarkAsSent(pendingQuoteForSend, senderKey)
+        }
+        setPendingQuoteForSend(null)
     }
 
     async function handleDownload(quoteId) {
@@ -723,7 +737,7 @@ export function QuotationsList({ onCreate, onEdit }) {
                                                         size="icon"
                                                         variant="ghost"
                                                         className="h-8 w-8 text-green-600 hover:bg-green-50"
-                                                        onClick={() => handleMarkAsSent(quote)}
+                                                        onClick={() => openSendDialog(quote)}
                                                         title="Send Quotation via Email"
                                                     >
                                                         <Send className="w-4 h-4" />
@@ -797,6 +811,14 @@ export function QuotationsList({ onCreate, onEdit }) {
                     onDownload={() => handleDownload(selectedQuoteForPreview.id)}
                 />
             )}
+
+            {/* Sender Selection Dialog */}
+            <SenderSelectionDialog
+                open={senderDialogOpen}
+                onOpenChange={setSenderDialogOpen}
+                onConfirm={handleSenderConfirm}
+                recipientEmails={pendingQuoteForSend ? [pendingQuoteForSend.customer_snapshot?.email || pendingQuoteForSend.customer_email].filter(Boolean) : []}
+            />
         </div>
     )
 }

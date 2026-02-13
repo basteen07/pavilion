@@ -26,6 +26,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { Switch } from '@/components/ui/switch'
 import { QuotationPreviewModal } from '@/components/admin/QuotationPreviewModal'
 import ActivityTimeline from './ActivityTimeline'
+import { SenderSelectionDialog } from './SenderSelectionDialog'
 
 // --- Constants for stability ---
 const EMPTY_ARRAY = Object.freeze([]);
@@ -58,6 +59,8 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
     const [customerSearchOpen, setCustomerSearchOpen] = useState(false)
     const [discardDialogOpen, setDiscardDialogOpen] = useState(false)
     const [clearCustomerDialogOpen, setClearCustomerDialogOpen] = useState(false)
+    const [senderDialogOpen, setSenderDialogOpen] = useState(false)
+    const [pendingSendAction, setPendingSendAction] = useState(null)
 
     // --- Quotation Details ---
     const [quotationDetails, setQuotationDetails] = useState({
@@ -954,18 +957,42 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
         }
     };
 
-    // --- Save ---
-    async function handleMarkAsSent() {
+    // --- Helper: get recipient emails for the current customer ---
+    function getRecipientEmails() {
         const customer = customers.find(c => c.id === selectedCustomer);
-        // Get primary contact email or fallback to company email
         const primaryContact = customer?.contacts?.find(c => c.is_primary);
         const emails = [];
         if (customer?.email) emails.push(customer.email);
         if (primaryContact?.email && primaryContact.email !== customer?.email) emails.push(primaryContact.email);
+        return emails;
+    }
+
+    // --- Open sender selection dialog ---
+    function openSenderDialog(action) {
+        if (!selectedCustomer) { return toast.error('Please select a customer') }
+        if (quotationItems.length === 0) { return toast.error('Please add at least one product') }
+        const emails = getRecipientEmails();
+        if (emails.length === 0) return toast.error('No customer email found');
+        setPendingSendAction(action);
+        setSenderDialogOpen(true);
+    }
+
+    // --- Sender dialog confirm handler ---
+    function handleSenderConfirm(senderKey) {
+        if (pendingSendAction === 'saveAndSend') {
+            handleSaveAndSend(senderKey);
+        } else if (pendingSendAction === 'markAsSent') {
+            handleMarkAsSent(senderKey);
+        }
+        setPendingSendAction(null);
+    }
+
+    // --- Save ---
+    async function handleMarkAsSent(senderKey) {
+        const customer = customers.find(c => c.id === selectedCustomer);
+        const emails = getRecipientEmails();
 
         if (emails.length === 0) return toast.error('No customer email found');
-
-        if (!confirm(`Are you sure you want to send this quotation to ${emails.join(', ')}?`)) return;
 
         setIsSaving(true);
         try {
@@ -977,7 +1004,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             for (const email of emails) {
                 const res = await apiCall(`/admin/quotations/${quoteId}/send-email`, {
                     method: 'POST',
-                    body: JSON.stringify({ email, pdfData })
+                    body: JSON.stringify({ email, pdfData, senderKey })
                 });
 
                 if (!res.success) {
@@ -1003,20 +1030,14 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
     }
 
     // Save and Send function - first saves the quotation then sends email
-    async function handleSaveAndSend() {
+    async function handleSaveAndSend(senderKey) {
         if (!selectedCustomer) { return toast.error('Please select a customer') }
         if (quotationItems.length === 0) { return toast.error('Please add at least one product') }
 
         const customer = customers.find(c => c.id === selectedCustomer);
-        // Get primary contact email or fallback to company email
-        const primaryContact = customer?.contacts?.find(c => c.is_primary);
-        const emails = [];
-        if (customer?.email) emails.push(customer.email);
-        if (primaryContact?.email && primaryContact.email !== customer?.email) emails.push(primaryContact.email);
+        const emails = getRecipientEmails();
 
         if (emails.length === 0) return toast.error('No customer email found to send quotation');
-
-        if (!confirm(`Are you sure you want to save and send this quotation to ${emails.join(', ')}?`)) return;
 
         setIsSaving(true);
         try {
@@ -1070,7 +1091,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             for (const email of emails) {
                 await apiCall(`/admin/quotations/${savedQuoteId}/send-email`, {
                     method: 'POST',
-                    body: JSON.stringify({ email, pdfData })
+                    body: JSON.stringify({ email, pdfData, senderKey })
                 });
             }
 
@@ -1243,7 +1264,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                             </Button>
                             <Button
                                 className="bg-green-600 hover:bg-green-700 text-white shadow-sm gap-2"
-                                onClick={handleSaveAndSend}
+                                onClick={() => openSenderDialog('saveAndSend')}
                                 disabled={isSaving}
                             >
                                 <Send className="w-4 h-4" />
@@ -1274,7 +1295,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                             </Button>
                             <Button
                                 className="bg-green-600 hover:bg-green-700 text-white shadow-sm gap-2"
-                                onClick={handleMarkAsSent}
+                                onClick={() => openSenderDialog('markAsSent')}
                                 disabled={isSaving}
                             >
                                 <Send className="w-4 h-4" />
@@ -2345,6 +2366,13 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                     </Card>
                 </div>
             </div>
+            {/* Sender Selection Dialog */}
+            <SenderSelectionDialog
+                open={senderDialogOpen}
+                onOpenChange={setSenderDialogOpen}
+                onConfirm={handleSenderConfirm}
+                recipientEmails={getRecipientEmails()}
+            />
         </div>
     );
 }
