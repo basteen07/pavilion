@@ -269,6 +269,11 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
     return { image_url: getImageUrl(img) }
   }).filter(img => img && img.image_url) : []
 
+  // Ensure we define fallback if parsing failed but we had raw data (avoid showing nothing for valid data)
+  if (images.length === 0 && rawImages && typeof rawImages === 'string' && (rawImages.startsWith('http') || rawImages.startsWith('/'))) {
+    images = [{ image_url: rawImages }]
+  }
+
   if (images.length === 0) {
     const fallbackImage = getProductImage(product) || 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=1200'
     images = [{ image_url: fallbackImage }]
@@ -365,7 +370,7 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
                           src={img.image_url}
                           alt={`${product.name} - View ${idx + 1}`}
                           fill
-                          className="object-cover object-top transition-transform duration-700 ease-in-out group-hover:scale-105"
+                          className="object-cover object-center transition-transform duration-700 ease-in-out group-hover:scale-105"
                           sizes="(max-width: 768px) 100vw, 50vw"
                           priority={idx < 2}
                         />

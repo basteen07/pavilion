@@ -7,6 +7,8 @@ const nextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'], // Modern formats
     minimumCacheTTL: 31536000, // Cache optimized images for 1 year (immutable content-addressed)
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     remotePatterns: [
       {
         protocol: 'https',

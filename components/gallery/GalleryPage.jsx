@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { ArrowLeft, ArrowRight, X, ChevronLeft, ChevronRight, Maximize2, Play, Image as ImageIcon } from 'lucide-react'
 import { apiCall } from '@/lib/api-client'
+import Image from 'next/image'
+import { getImageUrl } from '@/lib/utils'
 
 export function GalleryPage() {
     const router = useRouter()
@@ -134,10 +136,12 @@ export function GalleryPage() {
                                             className="group cursor-pointer bg-white rounded-lg overflow-hidden border border-gray-100 shadow-sm hover:shadow-2xl transition-all duration-500"
                                         >
                                             <div className="aspect-[4/5] relative overflow-hidden bg-gray-900">
-                                                <img
-                                                    src={album.cover_image || 'https://via.placeholder.com/800x1000'}
+                                                <Image
+                                                    src={getImageUrl(album.cover_image) || 'https://via.placeholder.com/800x1000'}
                                                     alt={album.title}
-                                                    className="w-full h-full object-cover transition-all duration-1000 group-hover:scale-110 opacity-90 group-hover:opacity-100 grayscale hover:grayscale-0"
+                                                    fill
+                                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                                    className="object-cover transition-all duration-1000 group-hover:scale-110 opacity-90 group-hover:opacity-100 grayscale hover:grayscale-0"
                                                 />
                                                 <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-transparent to-transparent opacity-60"></div>
                                                 <div className="absolute top-6 right-6">
@@ -198,11 +202,14 @@ export function GalleryPage() {
                                             className="group relative cursor-pointer break-inside-avoid mb-8 rounded-lg overflow-hidden bg-gray-50 animate-in fade-in zoom-in-95 duration-500"
                                             style={{ animationDelay: `${idx * 50}ms` }}
                                         >
-                                            <img
-                                                src={item.url}
-                                                alt={item.caption || 'Gallery Image'}
-                                                className="w-full h-auto object-cover transition-transform duration-1000 group-hover:scale-105"
-                                            />
+                                            <div className="relative w-full h-auto min-h-[200px]">
+                                                <img
+                                                    src={getImageUrl(item.url)}
+                                                    alt={item.caption || 'Gallery Image'}
+                                                    className="w-full h-auto object-cover transition-transform duration-1000 group-hover:scale-105"
+                                                    loading="lazy"
+                                                />
+                                            </div>
                                             <div className="absolute inset-0 bg-gray-950/40 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-[2px]">
                                                 <div className="w-14 h-14 rounded-full border border-white/30 flex items-center justify-center text-white translate-y-4 group-hover:translate-y-0 transition-all duration-300">
                                                     <Maximize2 className="w-6 h-6" />
@@ -248,7 +255,7 @@ export function GalleryPage() {
                     <div className="relative w-full h-full flex items-center justify-center p-4">
                         <div className="relative group max-h-full max-w-full">
                             <img
-                                src={items[selectedImageIndex].url}
+                                src={getImageUrl(items[selectedImageIndex].url)}
                                 alt={items[selectedImageIndex].caption || 'Full view'}
                                 className="max-w-full max-h-[60vh] md:max-h-[85vh] w-full h-auto object-contain shadow-[0_0_80px_rgba(0,0,0,0.5)] animate-in zoom-in-95 duration-500 ease-out rounded-lg"
                             />

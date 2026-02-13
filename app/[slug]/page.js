@@ -1,94 +1,67 @@
-"use client";
-
-import { useQuery } from '@tanstack/react-query';
-import { apiCall } from '@/lib/api-client';
+import { serverApiCall } from '@/lib/server-api-client';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Calendar, ArrowLeft } from 'lucide-react';
-import { useEffect } from 'react';
 import { CategoryLanding } from '@/components/product/CategoryLanding';
 
-
-export default function DynamicRootPage({ params }) {
+// 1. Generate Metadata Dynamically
+export async function generateMetadata({ params }) {
     const { slug } = params;
 
-    // 1. Fetch CMS Page
-    const { data: cmsPage, isLoading: cmsLoading } = useQuery({
-        queryKey: ['cms-page', slug],
-        queryFn: async () => {
-            try {
-                return await apiCall(`/cms-pages/slug/${slug}`);
-            } catch (e) {
-                return null;
-            }
-        },
-        retry: false
-    });
+    // Parallel fetch for metadata candidate (we optimize by checking one by one or parallel if API allows fast 404s)
+    // Strategy: Try CMS -> Blog -> Category -> Collection
 
-    // 2. Fetch Blog Post
-    const { data: blogPost, isLoading: blogLoading } = useQuery({
-        queryKey: ['blog-post', slug],
-        queryFn: async () => {
-            try {
-                return await apiCall(`/blogs/slug/${slug}`);
-            } catch (e) {
-                return null;
-            }
-        },
-        retry: false
-    });
-
-    // 3. Fetch Category
-
-    const { data: category, isLoading: catLoading } = useQuery({
-        queryKey: ['category-by-slug', slug],
-        queryFn: async () => {
-            try {
-                const cats = await apiCall('/categories');
-                return cats.find(c => c.slug === slug);
-            } catch (e) {
-                return null;
-            }
-        },
-        retry: false
-    });
-
-    // 4. Fetch Parent Collection
-    const { data: collection, isLoading: collLoading } = useQuery({
-        queryKey: ['collection-by-slug', slug],
-        queryFn: async () => {
-            try {
-                const colls = await apiCall('/collections');
-                return colls.find(c => c.slug === slug);
-            } catch (e) {
-                return null;
-            }
-        },
-        retry: false
-    });
-
-    const isLoading = cmsLoading || blogLoading || catLoading || collLoading;
-
-
-    // Handle Metadata (Client Side)
-    useEffect(() => {
-        if (cmsPage) {
-            document.title = cmsPage.meta_title || cmsPage.title;
-            const metaDesc = document.querySelector('meta[name="description"]');
-            if (metaDesc && cmsPage.meta_description) metaDesc.content = cmsPage.meta_description;
-        } else if (blogPost) {
-            document.title = blogPost.meta_title || blogPost.title;
-            const metaDesc = document.querySelector('meta[name="description"]');
-            if (metaDesc && blogPost.meta_description) metaDesc.content = blogPost.meta_description;
-        }
-    }, [cmsPage, blogPost]);
-
-
-    if (isLoading) {
-        return <div className="container py-20 text-center">Loading...</div>;
+    // CMS Page
+    const cmsPage = await serverApiCall(`/cms-pages/slug/${slug}`);
+    if (cmsPage) {
+        return {
+            title: cmsPage.meta_title || cmsPage.title,
+            description: cmsPage.meta_description || '',
+        };
     }
 
-    // --- RENDER CMS PAGE ---
+    // Blog Post
+    const blogPost = await serverApiCall(`/blogs/slug/${slug}`);
+    if (blogPost) {
+        return {
+            title: blogPost.meta_title || blogPost.title,
+            description: blogPost.meta_description || '',
+        };
+    }
+
+    // Category
+    const categories = await serverApiCall('/categories') || [];
+    const category = categories.find(c => c.slug === slug);
+    if (category) {
+        return {
+            title: `${category.name} | Pavilion Sports`,
+            description: category.description || `Explore our ${category.name} collection.`,
+        };
+    }
+
+    // Collection
+    const collections = await serverApiCall('/collections') || [];
+    const collection = collections.find(c => c.slug === slug);
+    if (collection) {
+        return {
+            title: `${collection.name} | Pavilion Sports`,
+            description: collection.description || `Explore our ${collection.name} collection.`,
+        };
+    }
+
+    return {
+        title: 'Page Not Found',
+    };
+}
+
+// 2. Server Component
+export default async function DynamicRootPage({ params }) {
+    const { slug } = params;
+
+    // Fetch Data (Waterfall or Parallel? Waterfall is safer for "Routing" priority logic)
+
+    // 1. CMS Page
+    const cmsPage = await serverApiCall(`/cms-pages/slug/${slug}`);
     if (cmsPage) {
         return (
             <div className="bg-white min-h-screen">
@@ -107,7 +80,8 @@ export default function DynamicRootPage({ params }) {
         );
     }
 
-    // --- RENDER BLOG POST ---
+    // 2. Blog Post
+    const blogPost = await serverApiCall(`/blogs/slug/${slug}`);
     if (blogPost) {
         return (
             <article className="min-h-screen bg-white">
@@ -151,24 +125,23 @@ export default function DynamicRootPage({ params }) {
         );
     }
 
-    // --- RENDER CATEGORY LANDING ---
+    // 3. Category
+    // Optimization: Fetch all categories once.
+    const categories = await serverApiCall('/categories');
+    const category = categories?.find(c => c.slug === slug);
 
     if (category) {
         return <CategoryLanding type="category" data={category} />;
     }
 
-    // --- RENDER COLLECTION LANDING ---
+    // 4. Collection
+    const collections = await serverApiCall('/collections');
+    const collection = collections?.find(c => c.slug === slug);
+
     if (collection) {
         return <CategoryLanding type="collection" data={collection} />;
     }
 
-    // --- 404 NOT FOUND ---
-
-    return (
-        <div className="container py-20 text-center">
-            <h1 className="text-4xl font-bold mb-4">404 - Page Not Found</h1>
-            <p className="text-muted-foreground">The page or insight you are looking for does not exist.</p>
-            <Link href="/" className="text-red-600 hover:underline mt-4 inline-block">Go Home</Link>
-        </div>
-    );
+    // 5. Not Found
+    return notFound();
 }

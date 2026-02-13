@@ -22,7 +22,7 @@ import { getImageUrl, getProductImage } from '@/lib/utils'
 
 
 
-export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy = [] }) {
+export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy = [], initialAllCategories = [] }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [viewMode, setViewMode] = useState('table')
@@ -90,9 +90,10 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
   }, [categorySlug, subcategorySlug])
 
   // Fetch all categories
-  const { data: allCategories = [], isLoading: categoriesLoading } = useQuery({
+  const { data: allCategories = initialAllCategories, isLoading: categoriesLoading } = useQuery({
     queryKey: ['categories'],
     queryFn: () => apiCall('/categories'),
+    initialData: initialAllCategories.length > 0 ? initialAllCategories : undefined,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false
   })
@@ -1049,10 +1050,12 @@ function ProductCard({ product, viewMode, onEnquire }) {
       <div className="group flex flex-col md:flex-row items-center gap-6 p-6 bg-white border-b border-gray-100 hover:bg-gray-50 transition-colors">
         {/* Image */}
         <div className="w-full md:w-48 aspect-square flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden relative">
-          <img
+          <Image
             src={getProductImage(product) || 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=600'}
             alt={product.name}
-            className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out"
+            fill
+            sizes="(max-width: 768px) 100vw, 300px"
+            className="object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out"
           />
           {product.discount_percentage > 0 && (
             <Badge className="absolute top-2 left-2 bg-red-600 border-none font-bold text-[10px] uppercase">
@@ -1147,10 +1150,12 @@ function ProductCard({ product, viewMode, onEnquire }) {
   return (
     <div className="group bg-white rounded-2xl p-4 hover:shadow-xl transition-shadow border border-gray-100">
       <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-50 mb-4 cursor-pointer" onClick={() => router.push(`/product/${product.slug}`)}>
-        <img
+        <Image
           src={getProductImage(product) || 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=600'}
           alt={product.name}
-          className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+          fill
+          sizes="(max-width: 768px) 50vw, 300px"
+          className="object-cover transform group-hover:scale-105 transition-transform duration-500"
         />
         {product.discount_percentage > 0 && (
           <Badge className="absolute top-2 left-2 bg-red-600 border-none font-bold text-[10px] uppercase">

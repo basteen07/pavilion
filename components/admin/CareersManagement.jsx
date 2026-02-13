@@ -385,25 +385,48 @@ export default function CareersManagement() {
                                                 </Badge>
                                             </div>
 
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                                                <div className="flex items-center gap-2">
-                                                    <Mail className="w-4 h-4 text-gray-400" />
-                                                    <a href={`mailto:${app.email}`} className="hover:text-primary">{app.email}</a>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <Phone className="w-4 h-4 text-gray-400" />
-                                                    <a href={`tel:${app.phone}`} className="hover:text-primary">{app.phone}</a>
-                                                </div>
-                                                {app.linkedin_url && (
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mt-4 p-4 bg-slate-50 rounded-lg border border-slate-100">
+                                                <div className="space-y-1">
+                                                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email Address</span>
                                                     <div className="flex items-center gap-2">
-                                                        <ExternalLink className="w-4 h-4 text-gray-400" />
-                                                        <a href={app.linkedin_url} target="_blank" rel="noopener noreferrer" className="hover:text-primary">LinkedIn Profile</a>
+                                                        <Mail className="w-3.5 h-3.5 text-slate-500" />
+                                                        <a href={`mailto:${app.email}`} className="font-medium text-slate-900 hover:text-primary hover:underline transition-colors truncate block">
+                                                            {app.email}
+                                                        </a>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-1">
+                                                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Phone Number</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <Phone className="w-3.5 h-3.5 text-slate-500" />
+                                                        <a href={`tel:${app.phone}`} className="font-medium text-slate-900 hover:text-primary hover:underline transition-colors">
+                                                            {app.phone}
+                                                        </a>
+                                                    </div>
+                                                </div>
+
+                                                {app.linkedin_url && (
+                                                    <div className="space-y-1">
+                                                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">LinkedIn</span>
+                                                        <div className="flex items-center gap-2">
+                                                            <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+                                                            <a href={app.linkedin_url} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:underline transition-colors truncate block">
+                                                                Profile Link
+                                                            </a>
+                                                        </div>
                                                     </div>
                                                 )}
+
                                                 {app.portfolio_url && (
-                                                    <div className="flex items-center gap-2">
-                                                        <ExternalLink className="w-4 h-4 text-gray-400" />
-                                                        <a href={app.portfolio_url} target="_blank" rel="noopener noreferrer" className="hover:text-primary">Portfolio</a>
+                                                    <div className="space-y-1">
+                                                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Portfolio</span>
+                                                        <div className="flex items-center gap-2">
+                                                            <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+                                                            <a href={app.portfolio_url} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:underline transition-colors truncate block">
+                                                                Portfolio Link
+                                                            </a>
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
