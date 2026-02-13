@@ -14,8 +14,8 @@ export function BrandsCarousel({ initialBrands = [] }) {
         initialData: initialBrands
     })
 
-    // Create multiple copies for seamless infinite scroll
-    const displayBrands = [...brands, ...brands, ...brands, ...brands]
+    // Two copies is sufficient for seamless infinite scroll
+    const displayBrands = [...brands, ...brands]
 
     return (
         <section className="py-16 lg:py-24 bg-gradient-to-br from-gray-50 to-white relative overflow-hidden">
@@ -62,6 +62,7 @@ export function BrandsCarousel({ initialBrands = [] }) {
                                                 src={getImageUrl(brand.logo_url || brand.image_url)}
                                                 alt={brand.name}
                                                 fill
+                                                loading="lazy"
                                                 className="object-contain filter grayscale group-hover:grayscale-0 opacity-60 group-hover:opacity-100 transition-all duration-300"
                                                 sizes="150px"
                                             />

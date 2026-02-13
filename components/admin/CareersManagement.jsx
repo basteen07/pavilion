@@ -26,7 +26,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Plus, Edit, Trash2, Search, Briefcase, MapPin, Clock } from 'lucide-react'
+import { Plus, Edit, Trash2, Search, Briefcase, MapPin, Clock, Users, ExternalLink, Mail, Phone } from 'lucide-react'
 import dynamic from 'next/dynamic'
 
 // Dynamically import RichEditor to avoid SSR issues
@@ -66,6 +66,12 @@ export default function CareersManagement() {
         display_order: 0,
         is_active: true
     })
+
+    // Applicants State
+    const [viewApplicantsJob, setViewApplicantsJob] = useState(null)
+    const [applicants, setApplicants] = useState([])
+    const [loadingApplicants, setLoadingApplicants] = useState(false)
+    const [isApplicantsSheetOpen, setIsApplicantsSheetOpen] = useState(false)
 
     useEffect(() => {
         loadJobs()
@@ -152,6 +158,21 @@ export default function CareersManagement() {
         setIsSheetOpen(true)
     }
 
+    async function openApplicants(job) {
+        setViewApplicantsJob(job)
+        setIsApplicantsSheetOpen(true)
+        setLoadingApplicants(true)
+        try {
+            const data = await apiCall(`/admin/careers/${job.id}/applications`)
+            setApplicants(data || [])
+        } catch (error) {
+            toast.error('Failed to load applicants')
+            setApplicants([])
+        } finally {
+            setLoadingApplicants(false)
+        }
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -208,6 +229,9 @@ export default function CareersManagement() {
                                 </div>
 
                                 <div className="flex items-center gap-2 w-full sm:w-auto justify-end border-t sm:border-t-0 pt-4 sm:pt-0">
+                                    <Button size="sm" variant="outline" onClick={() => openApplicants(job)}>
+                                        <Users className="w-4 h-4 mr-2" /> Applicants
+                                    </Button>
                                     <Button size="sm" variant="outline" onClick={() => openEdit(job)}>
                                         <Edit className="w-4 h-4 mr-2" /> Edit
                                     </Button>
@@ -297,6 +321,79 @@ export default function CareersManagement() {
                             {editingJob ? 'Save Changes' : 'Post Job'}
                         </Button>
                     </SheetFooter>
+                </SheetContent>
+            </Sheet>
+
+            {/* Applicants Sheet */}
+            <Sheet open={isApplicantsSheetOpen} onOpenChange={setIsApplicantsSheetOpen}>
+                <SheetContent className="overflow-y-auto sm:max-w-3xl w-full">
+                    <SheetHeader>
+                        <SheetTitle>Applicants for {viewApplicantsJob?.title}</SheetTitle>
+                        <SheetDescription>
+                            Review applications received for this position.
+                        </SheetDescription>
+                    </SheetHeader>
+
+                    <div className="mt-6 space-y-6 pb-20">
+                        {loadingApplicants ? (
+                            <div className="text-center py-10">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                            </div>
+                        ) : applicants.length === 0 ? (
+                            <div className="text-center py-10 border rounded-lg bg-gray-50 text-gray-500">
+                                No applications received yet.
+                            </div>
+                        ) : (
+                            applicants.map((app) => (
+                                <Card key={app.id} className="overflow-hidden">
+                                    <CardContent className="p-6 space-y-4">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <h3 className="font-bold text-lg">{app.full_name}</h3>
+                                                <p className="text-xs text-gray-500">Applied on {new Date(app.created_at).toLocaleDateString()}</p>
+                                            </div>
+                                            <Badge variant={app.status === 'pending' ? 'outline' : 'default'}>
+                                                {app.status}
+                                            </Badge>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                                            <div className="flex items-center gap-2">
+                                                <Mail className="w-4 h-4 text-gray-400" />
+                                                <a href={`mailto:${app.email}`} className="text-blue-600 hover:underline">{app.email}</a>
+                                            </div>
+                                            {app.phone && (
+                                                <div className="flex items-center gap-2">
+                                                    <Phone className="w-4 h-4 text-gray-400" />
+                                                    {app.phone}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="flex gap-3 text-sm">
+                                            {app.linkedin_url && (
+                                                <a href={app.linkedin_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline">
+                                                    <ExternalLink className="w-3 h-3" /> LinkedIn
+                                                </a>
+                                            )}
+                                            {app.portfolio_url && (
+                                                <a href={app.portfolio_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline">
+                                                    <ExternalLink className="w-3 h-3" /> Portfolio
+                                                </a>
+                                            )}
+                                        </div>
+
+                                        {app.cover_letter && (
+                                            <div className="bg-gray-50 p-4 rounded-md text-sm text-gray-700 whitespace-pre-wrap">
+                                                <p className="font-semibold text-xs text-gray-500 mb-1 uppercase tracking-wider">Cover Letter</p>
+                                                {app.cover_letter}
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            ))
+                        )}
+                    </div>
                 </SheetContent>
             </Sheet>
 

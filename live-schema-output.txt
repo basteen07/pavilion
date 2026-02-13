@@ -1,0 +1,607 @@
+TOTAL TABLES: 37
+
+1. activity_logs
+2. b2b_customer_events
+3. b2b_customers
+4. banners
+5. blog_posts
+6. brands
+7. careers_jobs
+8. categories
+9. cms_pages
+10. customer_addresses
+11. customer_types
+12. customers
+13. gallery_albums
+14. gallery_items
+15. homepage_banners
+16. job_applications
+17. job_listings
+18. jobs
+19. order_comments
+20. order_items
+21. orders
+22. parent_collections
+23. permissions
+24. product_images
+25. product_tags
+26. product_variants
+27. products
+28. quotation_items
+29. quotations
+30. role_permissions
+31. roles
+32. sessions
+33. site_settings
+34. sub_categories
+35. system_settings
+36. testimonials
+37. users
+
+--- DETAILED SCHEMA ---
+
+Table: activity_logs
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - admin_id uuid NULL
+  - customer_id uuid NULL
+  - quotation_id uuid NULL
+  - event_type varchar(50) NOT NULL
+  - description text NOT NULL
+  - metadata jsonb NULL DEFAULT '{}'::jsonb
+  - created_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP
+  - order_id uuid NULL
+
+Table: b2b_customer_events
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - customer_id uuid NOT NULL
+  - admin_id uuid NULL
+  - event_type text NOT NULL
+  - description text NULL
+  - metadata jsonb NULL DEFAULT '{}'::jsonb
+  - created_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP
+
+Table: b2b_customers
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - user_id uuid NULL
+  - company_name varchar(255) NOT NULL
+  - gstin varchar(50) NULL
+  - business_type varchar(100) NULL
+  - address text NULL
+  - city varchar(100) NULL
+  - state varchar(100) NULL
+  - pincode varchar(10) NULL
+  - status varchar(50) NULL DEFAULT 'pending'::character varying
+  - approved_by uuid NULL
+  - approved_at timestamp NULL
+  - discount_percentage numeric(5,2) NULL DEFAULT 0
+  - created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - updated_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - is_active bool NULL DEFAULT true
+  - first_name text NULL
+  - last_name text NULL
+  - pan_number text NULL
+  - address_line2 text NULL
+  - terms_and_conditions text NULL
+  - admin_comments text NULL
+  - approval_token text NULL
+
+Table: banners
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - title varchar(255) NULL
+  - desktop_image_url text NOT NULL
+  - mobile_image_url text NULL
+  - link text NULL
+  - display_order int4 NULL DEFAULT 0
+  - is_active bool NULL DEFAULT true
+  - created_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP
+  - updated_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP
+
+Table: blog_posts
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - title varchar(255) NOT NULL
+  - slug varchar(255) NOT NULL
+  - excerpt text NULL
+  - content text NULL
+  - featured_image varchar(500) NULL
+  - author_id uuid NULL
+  - is_published bool NULL DEFAULT false
+  - published_at timestamp NULL
+  - meta_title varchar(255) NULL
+  - meta_description text NULL
+  - created_at timestamp NULL DEFAULT now()
+  - updated_at timestamp NULL DEFAULT now()
+  - image_url text NULL
+  - is_active bool NULL DEFAULT true
+  - tags jsonb NULL DEFAULT '[]'::jsonb
+
+Table: brands
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - name varchar(255) NOT NULL
+  - slug varchar(255) NOT NULL
+  - logo_url text NULL
+  - description text NULL
+  - is_active bool NULL DEFAULT true
+  - display_order int4 NULL DEFAULT 0
+  - created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - is_featured bool NULL DEFAULT false
+  - category_id uuid NULL
+  - sub_category_id int4 NULL
+  - image_url text NULL
+  - updated_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+
+Table: careers_jobs
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - title varchar(255) NOT NULL
+  - location varchar(255) NULL
+  - type varchar(100) NULL
+  - description text NULL
+  - requirements text NULL
+  - display_order int4 NULL DEFAULT 0
+  - is_active bool NULL DEFAULT true
+  - created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - updated_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+
+Table: categories
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - name varchar(255) NOT NULL
+  - slug varchar(255) NOT NULL
+  - description text NULL
+  - parent_id uuid NULL
+  - is_active bool NULL DEFAULT true
+  - display_order int4 NULL DEFAULT 0
+  - created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - parent_collection_id uuid NULL
+  - updated_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - image_url jsonb NULL
+
+Table: cms_pages
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - title varchar(255) NOT NULL
+  - slug varchar(255) NOT NULL
+  - content text NULL
+  - is_published bool NULL DEFAULT true
+  - created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - content_blocks jsonb NULL DEFAULT '[]'::jsonb
+  - image_url text NULL
+  - template varchar(100) NULL DEFAULT 'default'::character varying
+  - is_active bool NULL DEFAULT true
+  - updated_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+
+Table: customer_addresses
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - customer_id uuid NULL
+  - address_type varchar(50) NULL DEFAULT 'Billing'::character varying
+  - address_line1 varchar(255) NOT NULL
+  - address_line2 varchar(255) NULL
+  - city varchar(100) NOT NULL
+  - state varchar(100) NOT NULL
+  - pincode varchar(10) NOT NULL
+  - country varchar(100) NULL DEFAULT 'India'::character varying
+  - is_default bool NULL DEFAULT false
+  - created_at timestamp NULL DEFAULT now()
+
+Table: customer_types
+  - id int4 NOT NULL DEFAULT nextval('customer_types_id_seq'::regclass)
+  - name text NOT NULL
+  - discount_percentage numeric NULL DEFAULT 0
+  - created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - base_price_type text NULL DEFAULT 'mrp'::text
+  - percentage numeric NULL DEFAULT 0
+
+Table: customers
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - email varchar(255) NOT NULL
+  - password_hash varchar(255) NULL
+  - company_name varchar(255) NOT NULL
+  - contact_person varchar(255) NULL
+  - phone varchar(50) NULL
+  - gstin varchar(50) NULL
+  - address text NULL
+  - city varchar(100) NULL
+  - state varchar(100) NULL
+  - pincode varchar(20) NULL
+  - customer_type varchar(50) NULL DEFAULT 'general'::character varying
+  - discount_percentage numeric(5,2) NULL DEFAULT 0
+  - is_approved bool NULL DEFAULT false
+  - mfa_enabled bool NULL DEFAULT false
+  - mfa_secret varchar(255) NULL
+  - is_active bool NULL DEFAULT true
+  - created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - type varchar(50) NULL DEFAULT 'General'::character varying
+  - gst_number varchar(50) NULL
+  - primary_contact_name varchar(255) NULL
+  - primary_contact_email varchar(255) NULL
+  - primary_contact_phone varchar(50) NULL
+  - updated_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - contacts jsonb NULL DEFAULT '[]'::jsonb
+  - name text NULL
+  - customer_type_id int4 NULL
+  - entity_type varchar(20) NULL DEFAULT 'individual'::character varying
+  - display_name_type varchar(20) NULL DEFAULT 'company'::character varying
+
+Table: gallery_albums
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - title varchar(255) NOT NULL
+  - description text NULL
+  - type varchar(50) NULL DEFAULT 'photo'::character varying
+  - display_order int4 NULL DEFAULT 0
+  - is_active bool NULL DEFAULT true
+  - created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - updated_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - slug varchar(255) NULL
+  - cover_image jsonb NULL
+
+Table: gallery_items
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - album_id uuid NULL
+  - type varchar(50) NULL DEFAULT 'image'::character varying
+  - caption text NULL
+  - display_order int4 NULL DEFAULT 0
+  - created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - width int4 NULL
+  - height int4 NULL
+  - url jsonb NULL
+  - thumbnail_url jsonb NULL
+
+Table: homepage_banners
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - title varchar(255) NOT NULL
+  - subtitle varchar(255) NULL
+  - image_url varchar(500) NULL
+  - cta_text varchar(100) NULL
+  - cta_link varchar(500) NULL
+  - display_order int4 NULL DEFAULT 0
+  - is_active bool NULL DEFAULT true
+  - created_at timestamp NULL DEFAULT now()
+
+Table: job_applications
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - job_id uuid NULL
+  - full_name varchar(255) NOT NULL
+  - email varchar(255) NOT NULL
+  - phone varchar(50) NULL
+  - linkedin_url text NULL
+  - portfolio_url text NULL
+  - cover_letter text NULL
+  - status varchar(50) NULL DEFAULT 'pending'::character varying
+  - created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - updated_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+
+Table: job_listings
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - title varchar(255) NOT NULL
+  - slug varchar(255) NOT NULL
+  - department varchar(100) NULL
+  - location varchar(255) NULL
+  - employment_type varchar(50) NULL
+  - description text NULL
+  - is_active bool NULL DEFAULT true
+  - created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+
+Table: jobs
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - title varchar(255) NOT NULL
+  - department varchar(100) NULL
+  - location varchar(100) NULL
+  - employment_type varchar(50) NULL
+  - description text NULL
+  - requirements text NULL
+  - salary_range varchar(100) NULL
+  - is_active bool NULL DEFAULT true
+  - created_at timestamp NULL DEFAULT now()
+  - updated_at timestamp NULL DEFAULT now()
+
+Table: order_comments
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - order_id uuid NULL
+  - user_id uuid NULL
+  - customer_id uuid NULL
+  - comment text NOT NULL
+  - is_internal bool NULL DEFAULT false
+  - created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+
+Table: order_items
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - order_id uuid NULL
+  - product_id uuid NULL
+  - product_name varchar(255) NOT NULL
+  - quantity int4 NOT NULL
+  - unit_price numeric(10,2) NOT NULL
+  - discount_percentage numeric(5,2) NULL DEFAULT 0
+  - line_total numeric(10,2) NOT NULL
+  - quantity_fulfilled int4 NULL DEFAULT 0
+  - status varchar(50) NULL DEFAULT 'pending'::character varying
+
+Table: orders
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - order_number varchar(50) NOT NULL
+  - customer_id uuid NULL
+  - total numeric(10,2) NULL DEFAULT 0
+  - status varchar(50) NULL DEFAULT 'open'::character varying
+  - notes text NULL
+  - created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - subtotal numeric(10,2) NULL DEFAULT 0
+  - discount numeric(10,2) NULL DEFAULT 0
+  - tax numeric(10,2) NULL DEFAULT 0
+  - products jsonb NULL DEFAULT '[]'::jsonb
+  - fulfillment jsonb NULL DEFAULT '[]'::jsonb
+  - updated_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - edited_by text NULL
+
+Table: parent_collections
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - name varchar(255) NOT NULL
+  - slug varchar(255) NOT NULL
+  - is_active bool NULL DEFAULT true
+  - created_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP
+  - updated_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP
+  - image_desktop jsonb NULL
+  - image_mobile jsonb NULL
+
+Table: permissions
+  - id int4 NOT NULL DEFAULT nextval('permissions_id_seq'::regclass)
+  - name varchar(50) NOT NULL
+  - description text NULL
+  - created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+
+Table: product_images
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - product_id uuid NULL
+  - image_url text NOT NULL
+  - alt_text varchar(255) NULL
+  - display_order int4 NULL DEFAULT 0
+  - is_primary bool NULL DEFAULT false
+
+Table: product_tags
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - name varchar(255) NOT NULL
+  - category_id uuid NULL
+  - sub_category_id int4 NULL
+  - is_active bool NULL DEFAULT true
+  - created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - updated_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - brand_ids jsonb NULL DEFAULT '[]'::jsonb
+  - display_order int4 NULL DEFAULT 0
+
+Table: product_variants
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - product_id uuid NULL
+  - sku text NOT NULL
+  - size text NULL
+  - color text NULL
+  - option1_name text NULL
+  - option1_value text NULL
+  - option2_name text NULL
+  - option2_value text NULL
+  - option3_name text NULL
+  - option3_value text NULL
+  - mrp_price numeric NOT NULL DEFAULT 0
+  - dealer_price numeric NULL DEFAULT 0
+  - counter_price numeric NULL DEFAULT 0
+  - recommended_price numeric NULL DEFAULT 0
+  - shop_price numeric NULL DEFAULT 0
+  - inventory int4 NULL DEFAULT 0
+  - is_default bool NULL DEFAULT false
+  - is_active bool NULL DEFAULT true
+  - created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - updated_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - images jsonb NULL DEFAULT '[]'::jsonb
+  - price_updated_at timestamptz NULL
+  - mrp_updated_at timestamptz NULL
+  - dealer_price_updated_at timestamptz NULL
+  - counter_price_updated_at timestamptz NULL
+  - recommended_price_updated_at timestamptz NULL
+  - shop_price_updated_at timestamptz NULL
+  - option4_name text NULL
+  - option4_value text NULL
+
+Table: products
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - sku varchar(100) NOT NULL
+  - name varchar(255) NOT NULL
+  - slug varchar(255) NOT NULL
+  - short_description text NULL
+  - description text NULL
+  - category_id uuid NULL
+  - brand_id uuid NULL
+  - mrp_price numeric(10,2) NOT NULL
+  - discount_percentage numeric(5,2) NULL DEFAULT 0
+  - shop_price numeric(10,2) NOT NULL
+  - dealer_price numeric(10,2) NULL
+  - size varchar(100) NULL
+  - stock_quantity int4 NULL DEFAULT 0
+  - is_featured bool NULL DEFAULT false
+  - allow_quote bool NULL DEFAULT true
+  - is_active bool NULL DEFAULT true
+  - created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - sub_category_id int4 NULL
+  - videos jsonb NULL DEFAULT '[]'::jsonb
+  - images jsonb NULL DEFAULT '[]'::jsonb
+  - variants jsonb NULL DEFAULT '[]'::jsonb
+  - a_plus_content text NULL
+  - is_discontinued bool NULL DEFAULT false
+  - is_quote_hidden bool NULL DEFAULT false
+  - buy_url text NULL
+  - tax_class text NULL
+  - hsn_code text NULL
+  - updated_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - tag_id uuid NULL
+  - unit_type varchar(50) NULL DEFAULT 'single'::character varying
+  - counter_price numeric NULL DEFAULT 0
+  - recommended_price numeric NULL DEFAULT 0
+  - unit text NULL
+  - gst_percentage numeric(5,2) NULL DEFAULT 18
+  - price_updated_at timestamp NULL
+  - handle text NULL
+  - color text NULL
+  - option1_name text NULL
+  - option1_value text NULL
+  - option2_name text NULL
+  - option2_value text NULL
+  - mrp_updated_at timestamptz NULL
+  - dealer_price_updated_at timestamptz NULL
+  - counter_price_updated_at timestamptz NULL
+  - recommended_price_updated_at timestamptz NULL
+  - shop_price_updated_at timestamptz NULL
+  - option3_name text NULL
+  - option3_value text NULL
+  - option4_name text NULL
+  - option4_value text NULL
+
+Table: quotation_items
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - quotation_id uuid NULL
+  - product_id uuid NULL
+  - product_name varchar(255) NOT NULL
+  - quantity int4 NOT NULL
+  - unit_price numeric(10,2) NOT NULL
+  - line_total numeric(10,2) NOT NULL
+  - total_price numeric(15,2) NULL DEFAULT 0
+  - mrp numeric(15,2) NULL DEFAULT 0
+  - discount numeric(5,2) NULL DEFAULT 0
+  - slug text NULL
+  - dealer_price numeric(15,2) NULL DEFAULT 0
+  - is_detailed bool NULL DEFAULT false
+  - short_description text NULL
+  - image_url text NULL
+  - uom text NULL DEFAULT 'Single'::text
+  - recommended_price numeric NULL DEFAULT 0
+
+Table: quotations
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - quotation_number varchar(50) NOT NULL
+  - customer_id uuid NULL
+  - created_by uuid NULL
+  - total_amount numeric(10,2) NULL DEFAULT 0
+  - show_total bool NULL DEFAULT true
+  - status varchar(50) NULL DEFAULT 'draft'::character varying
+  - notes text NULL
+  - created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - customer_snapshot jsonb NULL
+  - reference_number varchar(50) NULL
+  - updated_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - subtotal numeric(15,2) NULL DEFAULT 0
+  - tax numeric(15,2) NULL DEFAULT 0
+  - terms_conditions text NULL
+  - valid_until date NULL
+  - shipping_cost numeric(10,2) NULL DEFAULT 0
+  - discount_type varchar(20) NULL DEFAULT 'percentage'::character varying
+  - discount_value numeric(10,2) NULL DEFAULT 0
+  - tax_rate numeric(5,2) NULL DEFAULT 18
+
+Table: role_permissions
+  - role_id uuid NOT NULL
+  - permission_id int4 NOT NULL
+  - created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+
+Table: roles
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - name varchar(50) NOT NULL
+  - permissions jsonb NULL DEFAULT '{}'::jsonb
+  - created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+
+Table: sessions
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - user_id uuid NULL
+  - token text NOT NULL
+  - expires_at timestamp NOT NULL
+  - created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+
+Table: site_settings
+  - id int4 NOT NULL DEFAULT nextval('site_settings_id_seq'::regclass)
+  - meta_title text NULL
+  - meta_description text NULL
+  - head_scripts text NULL
+  - body_scripts text NULL
+  - google_analytics_id text NULL
+  - updated_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+
+Table: sub_categories
+  - id int4 NOT NULL DEFAULT nextval('sub_categories_id_seq'::regclass)
+  - name varchar(255) NOT NULL
+  - category_id uuid NULL
+  - is_active bool NULL DEFAULT true
+  - created_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP
+  - updated_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP
+  - display_order int4 NULL DEFAULT 0
+  - image_url jsonb NULL
+
+Table: system_settings
+  - id int4 NOT NULL DEFAULT nextval('system_settings_id_seq'::regclass)
+  - key varchar(255) NOT NULL
+  - value text NULL
+  - type varchar(50) NULL DEFAULT 'string'::character varying
+  - description text NULL
+  - updated_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+
+Table: testimonials
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - customer_name varchar(255) NOT NULL
+  - customer_photo varchar(500) NULL
+  - profession varchar(255) NULL
+  - rating int4 NULL
+  - testimonial text NOT NULL
+  - is_featured bool NULL DEFAULT false
+  - is_active bool NULL DEFAULT true
+  - display_order int4 NULL DEFAULT 0
+  - created_at timestamp NULL DEFAULT now()
+  - updated_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+
+Table: users
+  - id uuid NOT NULL DEFAULT gen_random_uuid()
+  - email varchar(255) NOT NULL
+  - password_hash varchar(255) NOT NULL
+  - name varchar(255) NOT NULL
+  - phone varchar(50) NULL
+  - role varchar(50) NULL
+  - mfa_enabled bool NULL DEFAULT false
+  - mfa_secret varchar(255) NULL
+  - is_active bool NULL DEFAULT true
+  - created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - full_name varchar(255) NULL
+  - role_id uuid NULL
+  - last_active_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP
+  - password_reset_token varchar(255) NULL
+  - password_reset_expires timestamp NULL
+  - reset_token varchar(255) NULL
+  - reset_token_expiry timestamp NULL
+
+--- FOREIGN KEYS ---
+
+  activity_logs.admin_id -> users.id (ON DELETE NO ACTION)
+  activity_logs.customer_id -> customers.id (ON DELETE NO ACTION)
+  activity_logs.order_id -> orders.id (ON DELETE SET NULL)
+  activity_logs.quotation_id -> quotations.id (ON DELETE SET NULL)
+  b2b_customer_events.admin_id -> users.id (ON DELETE SET NULL)
+  b2b_customer_events.customer_id -> b2b_customers.id (ON DELETE CASCADE)
+  b2b_customers.approved_by -> users.id (ON DELETE NO ACTION)
+  b2b_customers.user_id -> users.id (ON DELETE CASCADE)
+  brands.category_id -> categories.id (ON DELETE CASCADE)
+  brands.sub_category_id -> sub_categories.id (ON DELETE CASCADE)
+  categories.parent_collection_id -> parent_collections.id (ON DELETE SET NULL)
+  categories.parent_id -> categories.id (ON DELETE NO ACTION)
+  gallery_items.album_id -> gallery_albums.id (ON DELETE CASCADE)
+  job_applications.job_id -> careers_jobs.id (ON DELETE CASCADE)
+  order_comments.customer_id -> customers.id (ON DELETE NO ACTION)
+  order_comments.order_id -> orders.id (ON DELETE CASCADE)
+  order_comments.user_id -> users.id (ON DELETE NO ACTION)
+  order_items.order_id -> orders.id (ON DELETE CASCADE)
+  order_items.product_id -> products.id (ON DELETE CASCADE)
+  orders.customer_id -> b2b_customers.id (ON DELETE NO ACTION)
+  product_images.product_id -> products.id (ON DELETE CASCADE)
+  product_tags.category_id -> categories.id (ON DELETE NO ACTION)
+  product_tags.sub_category_id -> sub_categories.id (ON DELETE NO ACTION)
+  product_variants.product_id -> products.id (ON DELETE CASCADE)
+  products.brand_id -> brands.id (ON DELETE CASCADE)
+  products.category_id -> categories.id (ON DELETE CASCADE)
+  products.sub_category_id -> sub_categories.id (ON DELETE CASCADE)
+  products.tag_id -> product_tags.id (ON DELETE NO ACTION)
+  quotation_items.product_id -> products.id (ON DELETE CASCADE)
+  quotation_items.quotation_id -> quotations.id (ON DELETE CASCADE)
+  quotations.created_by -> users.id (ON DELETE NO ACTION)
+  quotations.customer_id -> customers.id (ON DELETE NO ACTION)
+  role_permissions.permission_id -> permissions.id (ON DELETE CASCADE)
+  role_permissions.role_id -> roles.id (ON DELETE CASCADE)
+  sessions.user_id -> users.id (ON DELETE CASCADE)
+  sub_categories.category_id -> categories.id (ON DELETE CASCADE)
+  users.role_id -> roles.id (ON DELETE NO ACTION)

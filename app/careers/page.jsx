@@ -6,15 +6,11 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Briefcase, MapPin, Clock, ArrowRight, CheckCircle2 } from 'lucide-react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import Link from 'next/link'
 
 export default function CareersPage() {
     const [jobs, setJobs] = useState([])
     const [loading, setLoading] = useState(true)
-    const [selectedJob, setSelectedJob] = useState(null)
 
     useEffect(() => {
         async function fetchJobs() {
@@ -93,64 +89,28 @@ export default function CareersPage() {
                         ) : (
                             <div className="space-y-4">
                                 {jobs.map((job) => (
-                                    <Card key={job.id} className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-transparent hover:border-l-red-600 px-2" onClick={() => setSelectedJob(job)}>
-                                        <CardContent className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                            <div className="space-y-1">
-                                                <h3 className="text-xl font-bold group-hover:text-red-600 transition-colors">{job.title}</h3>
-                                                <div className="flex flex-wrap gap-4 text-sm text-gray-500">
-                                                    <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {job.location}</span>
-                                                    <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {job.type}</span>
+                                    <Link href={`/careers/${job.id}`} key={job.id} className="block group">
+                                        <Card className="overflow-hidden hover:shadow-md transition-all cursor-pointer border-l-4 border-l-transparent hover:border-l-red-600 px-2 group-hover:scale-[1.01]">
+                                            <CardContent className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                                <div className="space-y-1">
+                                                    <h3 className="text-xl font-bold group-hover:text-red-600 transition-colors">{job.title}</h3>
+                                                    <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+                                                        <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {job.location || 'Remote'}</span>
+                                                        <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {job.type}</span>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <Button variant="outline" className="shrink-0">Details & Apply</Button>
-                                        </CardContent>
-                                    </Card>
+                                                <Button variant="outline" className="shrink-0 group-hover:bg-red-50 group-hover:text-red-600 group-hover:border-red-200">
+                                                    Details & Apply <ArrowRight className="ml-2 w-4 h-4" />
+                                                </Button>
+                                            </CardContent>
+                                        </Card>
+                                    </Link>
                                 ))}
                             </div>
                         )}
                     </div>
                 </section>
             </main>
-
-
-            <Dialog open={!!selectedJob} onOpenChange={(open) => !open && setSelectedJob(null)}>
-                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle className="text-2xl font-bold">{selectedJob?.title}</DialogTitle>
-                        <DialogDescription className="flex items-center gap-4 pt-2">
-                            <Badge variant="secondary" className="rounded-md">{selectedJob?.type}</Badge>
-                            <span className="flex items-center gap-1 text-sm"><MapPin className="w-3 h-3" /> {selectedJob?.location}</span>
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="space-y-6 pt-4">
-                        <div className="prose max-w-none">
-                            <h3 className="text-lg font-semibold mb-2">About the Role</h3>
-                            <div dangerouslySetInnerHTML={{ __html: selectedJob?.description }} className="text-gray-600 text-sm leading-relaxed" />
-                        </div>
-
-                        {selectedJob?.requirements && (
-                            <div className="prose max-w-none">
-                                <h3 className="text-lg font-semibold mb-2">Requirements</h3>
-                                <div dangerouslySetInnerHTML={{ __html: selectedJob?.requirements }} className="text-gray-600 text-sm leading-relaxed" />
-                            </div>
-                        )}
-
-                        <div className="bg-gray-50 p-6 rounded-lg space-y-4 border">
-                            <h3 className="font-semibold">Apply for this position</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1"><Label>Full Name</Label><Input placeholder="John Doe" /></div>
-                                <div className="space-y-1"><Label>Email</Label><Input placeholder="john@example.com" /></div>
-                                <div className="space-y-1"><Label>Phone</Label><Input placeholder="+91..." /></div>
-                                <div className="space-y-1"><Label>Resume Link (LinkedIn/Portfolio)</Label><Input placeholder="https://..." /></div>
-                                <div className="col-span-2 space-y-1"><Label>Cover Letter</Label><Textarea placeholder="Tell us why you're a great fit..." /></div>
-                            </div>
-                            <Button className="w-full bg-red-600 hover:bg-red-700">Submit Application</Button>
-                            <p className="text-xs text-gray-400 text-center">By submitting, you agree to our privacy policy.</p>
-                        </div>
-                    </div>
-                </DialogContent>
-            </Dialog>
         </div>
     )
 }

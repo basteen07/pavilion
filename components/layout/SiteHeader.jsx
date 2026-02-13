@@ -102,10 +102,10 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                     <div className="flex items-center gap-5">
                         <span className="text-gray-500 text-[10px] uppercase tracking-wider font-bold">Follow us</span>
                         <div className="flex items-center gap-4">
-                            <Instagram className="w-4 h-4 cursor-pointer hover:text-red-400 transition-colors" />
-                            <Facebook className="w-4 h-4 cursor-pointer hover:text-red-400 transition-colors" />
-                            <Twitter className="w-4 h-4 cursor-pointer hover:text-red-400 transition-colors" />
-                            <MessageCircle className="w-4 h-4 cursor-pointer hover:text-green-400 transition-colors" />
+                            <a href="https://www.instagram.com/thepavilionsports/" aria-label="Follow us on Instagram" className="hover:text-red-400 transition-colors"><Instagram className="w-4 h-4" /></a>
+                            <a href="https://www.facebook.com/thepavilionsports" aria-label="Follow us on Facebook" className="hover:text-red-400 transition-colors"><Facebook className="w-4 h-4" /></a>
+                            <a href="https://x.com/thepavilionshop" aria-label="Follow us on Twitter" className="hover:text-red-400 transition-colors"><Twitter className="w-4 h-4" /></a>
+                            <a href="https://wa.me/+914428418975" aria-label="Message us on WhatsApp" className="hover:text-green-400 transition-colors"><MessageCircle className="w-4 h-4" /></a>
                         </div>
                     </div>
                 </div>
@@ -134,7 +134,7 @@ export function SiteHeader({ categories = [], brands = [], collections = [], sub
                         </Link>
 
                         {/* Desktop Navigation */}
-                        <nav className="hidden lg:flex items-center gap-8 h-full">
+                        <nav className="hidden lg:flex items-center gap-8 h-full" aria-label="Main navigation">
                             <MegaMenu
                                 categories={categories}
                                 brands={brands}

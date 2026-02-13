@@ -27,7 +27,34 @@ export async function generateMetadata() {
 
   return {
     title: settings.meta_title || 'Pavilion Sports - B2B Sports Equipment',
-    description: settings.meta_description || 'India\'s Premier B2B Sports Equipment Supplier',
+    description: settings.meta_description || 'India\'s Premier B2B Sports Equipment Supplier. Professional-grade cricket, football, badminton and fitness equipment for schools, clubs and institutions since 1988.',
+    metadataBase: new URL('https://pavilion-sports.com'),
+    alternates: {
+      canonical: '/',
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
+    openGraph: {
+      title: settings.meta_title || 'Pavilion Sports - B2B Sports Equipment',
+      description: settings.meta_description || 'India\'s Premier B2B Sports Equipment Supplier',
+      url: 'https://pavilion-sports.com',
+      siteName: 'Pavilion Sports',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: settings.meta_title || 'Pavilion Sports - B2B Sports Equipment',
+      description: settings.meta_description || 'India\'s Premier B2B Sports Equipment Supplier',
+    },
   };
 }
 
@@ -47,6 +74,9 @@ export default async function RootLayout({ children }) {
   return (
     <html lang="en" className={`${inter.variable} ${manrope.variable}`} suppressHydrationWarning>
       <head>
+        {/* Preconnect to external image CDN for faster LCP */}
+        <link rel="preconnect" href="https://pavilion-sports.com" />
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         {/* Organization Schema */}
         {(() => {
           const data = getScriptData(settings.organization_schema);

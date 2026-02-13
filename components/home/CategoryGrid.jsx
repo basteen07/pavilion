@@ -78,6 +78,7 @@ export function CategoryGrid({ initialCollections = [] }) {
                                                 src={getImageUrl(collection.image_desktop || collection.image_mobile)}
                                                 alt={collection.name}
                                                 fill
+                                                loading="lazy"
                                                 className="object-cover transition-transform duration-700 group-hover:scale-115"
                                                 sizes={
                                                     collections.length === 1 ? "(max-width: 768px) 100vw, 80vw" :
@@ -88,7 +89,6 @@ export function CategoryGrid({ initialCollections = [] }) {
                                                                         collections.length === 6 ? "(max-width: 768px) 50vw, 16vw" :
                                                                             "(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
                                                 }
-                                                priority={idx < 6}
                                             />
                                             {/* Enhanced Gradient overlay */}
                                             <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/50 to-transparent opacity-90 group-hover:opacity-80 transition-opacity duration-300"></div>

@@ -34,6 +34,8 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
   const [enquiryOpen, setEnquiryOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const PRODUCTS_PER_PAGE = 50
 
   // Scroller refs and states
   const scrollerRef = useRef(null)
@@ -84,12 +86,15 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
     setSelectedBrand('all')
     setSelectedTag('all')
     setPriceRange([0, 200000])
+    setCurrentPage(1)
   }, [categorySlug, subcategorySlug])
 
   // Fetch all categories
   const { data: allCategories = [], isLoading: categoriesLoading } = useQuery({
     queryKey: ['categories'],
-    queryFn: () => apiCall('/categories')
+    queryFn: () => apiCall('/categories'),
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false
   })
 
   // Find current category by slug
@@ -105,7 +110,9 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
       const result = await apiCall(`/sub-categories?categoryId=${currentCategory.id}`)
       return result || []
     },
-    enabled: !!currentCategory?.id
+    enabled: !!currentCategory?.id,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false
   })
 
   // Find current sub-category by matching slug or ID from URL
@@ -133,14 +140,13 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
     queryKey: ['tag-by-slug', subcategorySlug],
     queryFn: async () => {
       if (!subcategorySlug || currentSubCategory) return null;
-      // Fetch all tags for this category to find a match
-      // Note: Ideally API should support /tags?slug=xyz, but filtering client side for now if needed or relying on finding it in a broad search if efficient.
-      // Trying to find strict match:
       const allTagsRes = await apiCall('/tags');
       const found = allTagsRes.find(t => t.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === subcategorySlug);
       return found || null;
     },
-    enabled: !!subcategorySlug && !currentSubCategory && !categoriesLoading
+    enabled: !!subcategorySlug && !currentSubCategory && !categoriesLoading,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false
   });
 
   // Effect: When we find a tag from the slug (and no sub-category matched),
@@ -185,7 +191,9 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
       const result = await apiCall(`/tags?subCategoryId=${activeSubCategory.id}`)
       return result || []
     },
-    enabled: !!activeSubCategory?.id
+    enabled: !!activeSubCategory?.id,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false
   })
 
   // URL Hash Updates for Navigation Context
@@ -254,53 +262,46 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
       const result = await apiCall(`/brands?${params.toString()}`)
       return result || []
     },
-    enabled: !!currentCategory?.id
+    enabled: !!currentCategory?.id,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false
   })
 
 
   // Fetch products with all filters applied
-  const { data: productsData, isLoading: productsLoading } = useQuery({
-    queryKey: ['filtered-products', currentCategory?.id, activeSubCategory?.id, selectedBrand, selectedTag, priceRange, sortBy],
+  const { data: productsData, isLoading: productsLoading, isFetching: productsFetching } = useQuery({
+    queryKey: ['filtered-products', currentCategory?.id, activeSubCategory?.id, selectedBrand, selectedTag, priceRange, sortBy, currentPage, viewMode],
     queryFn: async () => {
       const params = new URLSearchParams()
-      params.append('limit', '500')
+      params.append('limit', String(PRODUCTS_PER_PAGE))
+      params.append('page', String(currentPage))
 
-      // Category filter (required)
-      if (currentCategory?.id) {
-        params.append('category', currentCategory.id)
+      // Skip variant aggregation for table view (major speedup)
+      if (viewMode === 'table') {
+        params.append('skipVariants', 'true')
       }
 
-      // Sub-category filter (optional)
-      if (activeSubCategory?.id) {
-        params.append('sub_category', activeSubCategory.id)
-      }
+      if (currentCategory?.id) params.append('category', currentCategory.id)
+      if (activeSubCategory?.id) params.append('sub_category', activeSubCategory.id)
+      if (selectedBrand && selectedBrand !== 'all') params.append('brand', selectedBrand)
+      if (selectedTag && selectedTag !== 'all') params.append('tag', selectedTag)
 
-      // Brand filter (optional)
-      if (selectedBrand && selectedBrand !== 'all') {
-        params.append('brand', selectedBrand)
-      }
-
-      // Tag filter (optional)
-      if (selectedTag && selectedTag !== 'all') {
-        params.append('tag', selectedTag)
-      }
-
-
-
-      // Price range filter
       params.append('price_min', priceRange[0].toString())
       params.append('price_max', priceRange[1].toString())
-
-      // Sorting
       if (sortBy) params.append('sort', sortBy)
 
       const result = await apiCall(`/products?${params.toString()}`)
       return result || { products: [], total: 0 }
     },
-    enabled: !!currentCategory?.id
+    enabled: !!currentCategory?.id,
+    staleTime: 1000 * 60,
+    keepPreviousData: true,
+    refetchOnWindowFocus: false
   })
 
   const products = productsData?.products || []
+  const totalProducts = productsData?.total || 0
+  const totalPages = productsData?.totalPages || 1
 
   const isTagPage = selectedTag && selectedTag !== 'all';
   const primaryKey = isTagPage ? 'brand_name' : 'tag_name';
@@ -324,6 +325,11 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
       return a.localeCompare(b);
     })
   }, [groupedProducts, primaryFallback])
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [selectedBrand, selectedTag, sortBy, priceRange])
 
   // Loading state
   if (categoriesLoading) {
@@ -970,6 +976,59 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
           )}
         </div>
       </section>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="bg-white border-t py-6">
+          <div className="container flex items-center justify-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="h-9 px-4 font-bold text-xs uppercase tracking-wider"
+            >
+              <ChevronLeft className="w-4 h-4 mr-1" /> Prev
+            </Button>
+            {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+              let pageNum
+              if (totalPages <= 7) {
+                pageNum = i + 1
+              } else if (currentPage <= 4) {
+                pageNum = i + 1
+              } else if (currentPage >= totalPages - 3) {
+                pageNum = totalPages - 6 + i
+              } else {
+                pageNum = currentPage - 3 + i
+              }
+              return (
+                <Button
+                  key={pageNum}
+                  variant={currentPage === pageNum ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`w-9 h-9 font-bold text-xs ${currentPage === pageNum ? 'bg-red-600 hover:bg-red-700 text-white' : ''}`}
+                >
+                  {pageNum}
+                </Button>
+              )
+            })}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="h-9 px-4 font-bold text-xs uppercase tracking-wider"
+            >
+              Next <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+            <span className="ml-4 text-xs text-gray-500 font-bold">
+              {totalProducts} total
+            </span>
+          </div>
+        </div>
+      )}
+
       <EnquiryModal
         open={enquiryOpen}
         onOpenChange={setEnquiryOpen}

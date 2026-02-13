@@ -13,22 +13,30 @@ export function SiteLayout({ children }) {
 
     const { data: categories = [] } = useQuery({
         queryKey: ['categories'],
-        queryFn: () => apiCall('/categories')
+        queryFn: () => apiCall('/categories'),
+        staleTime: 1000 * 60 * 5,
+        refetchOnWindowFocus: false
     })
 
     const { data: brands = [] } = useQuery({
         queryKey: ['brands'],
-        queryFn: () => apiCall('/brands')
+        queryFn: () => apiCall('/brands'),
+        staleTime: 1000 * 60 * 5,
+        refetchOnWindowFocus: false
     })
 
     const { data: collections = [] } = useQuery({
         queryKey: ['collections'],
-        queryFn: () => apiCall('/collections')
+        queryFn: () => apiCall('/collections'),
+        staleTime: 1000 * 60 * 5,
+        refetchOnWindowFocus: false
     })
 
     const { data: subCategories = [] } = useQuery({
         queryKey: ['sub-categories'],
-        queryFn: () => apiCall('/sub-categories')
+        queryFn: () => apiCall('/sub-categories'),
+        staleTime: 1000 * 60 * 5,
+        refetchOnWindowFocus: false
     })
 
     const { data: tags = [] } = useQuery({

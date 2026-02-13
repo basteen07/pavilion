@@ -6,7 +6,7 @@ const nextConfig = {
 
   images: {
     formats: ['image/avif', 'image/webp'], // Modern formats
-    minimumCacheTTL: 60, // Cache optimized images for 60 seconds at edge (defaults are higher usually, but ensures freshness)
+    minimumCacheTTL: 31536000, // Cache optimized images for 1 year (immutable content-addressed)
     remotePatterns: [
       {
         protocol: 'https',
@@ -18,6 +18,7 @@ const nextConfig = {
   },
 
   experimental: {
+    instrumentationHook: true,
     // Critically helps with "Render blocking requests"
     optimizeCss: true,
     // Remove if not using Server Components
@@ -66,9 +67,29 @@ const nextConfig = {
           { key: "Access-Control-Allow-Headers", value: "Content-Type, Authorization" },
         ],
       },
-      // Cache Static Assets Aggressively
+      // Cache Static JS/CSS Assets Aggressively (Next.js hashed files)
+      {
+        source: "/_next/static/(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      // Cache Optimized Images  
       {
         source: "/_next/image(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      // Cache Public Static Assets (fonts, icons, manifest)
+      {
+        source: "/:path*.(ico|png|jpg|jpeg|gif|webp|avif|svg|woff|woff2|ttf|eot)",
         headers: [
           {
             key: "Cache-Control",

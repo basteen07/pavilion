@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { query } from '@/lib/db'
 import { publicGetRateLimit } from '@/lib/rate-limit'
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
     try {
         // SECURITY: Rate limit public GET (100 per min per IP)

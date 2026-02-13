@@ -42,14 +42,8 @@ export function CricketSpecialistStore() {
                     <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3 pr-4">
                         <div className="flex -space-x-2">
                             {[1, 2, 3].map(i => (
-                                <div key={i} className="w-8 h-8 relative rounded-full border-2 border-white overflow-hidden">
-                                    <Image
-                                        src={`https://i.pravatar.cc/80?u=${i + 20}`}
-                                        alt="User"
-                                        fill
-                                        sizes="32px"
-                                        className="object-cover"
-                                    />
+                                <div key={i} className="w-8 h-8 relative rounded-full border-2 border-white overflow-hidden bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center">
+                                    <span className="text-white text-[10px] font-bold" aria-hidden="true">P</span>
                                 </div>
                             ))}
                             <div className="w-8 h-8 rounded-full border-2 border-white bg-red-600 flex items-center justify-center text-white text-[10px] font-bold">
@@ -69,11 +63,11 @@ export function CricketSpecialistStore() {
                     >
                         <Image
                             src="/images/cricket_bats_hero.png"
-                            alt="English Willow Bats"
+                            alt="English Willow Cricket Bats - Pro Series 2024"
                             fill
+                            loading="lazy"
                             className="object-cover transition-transform duration-500 group-hover:scale-105"
                             sizes="(max-width: 1024px) 100vw, 66vw"
-                            priority
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/30 to-transparent"></div>
 
@@ -116,8 +110,9 @@ export function CricketSpecialistStore() {
                         >
                             <Image
                                 src="/images/cricket_protective.png"
-                                alt="Protective Gear"
+                                alt="Cricket Protective Gear - Helmets, Pads and Guards"
                                 fill
+                                loading="lazy"
                                 className="object-cover transition-transform duration-500 group-hover:scale-110"
                                 sizes="(max-width: 1024px) 100vw, 33vw"
                             />
@@ -137,8 +132,9 @@ export function CricketSpecialistStore() {
                         >
                             <Image
                                 src="/images/cricket_accessories.png"
-                                alt="Accessories"
+                                alt="Cricket Shoes and Accessories"
                                 fill
+                                loading="lazy"
                                 className="object-cover transition-transform duration-500 group-hover:scale-110"
                                 sizes="(max-width: 1024px) 100vw, 33vw"
                             />

@@ -1,16 +1,24 @@
 import dynamic from 'next/dynamic'
 import { HeroScroller } from '@/components/home/HeroScroller'
-import { BrandsCarousel } from '@/components/home/BrandsCarousel'
-import { CategoryGrid } from '@/components/home/CategoryGrid'
-import { USPSection } from '@/components/home/USPSection'
-import { CricketSpecialistStore } from '@/components/home/CricketSpecialistStore'
 import { fetchBanners } from '@/lib/api/banners'
 import { fetchCollections } from '@/lib/api/collections'
 import { fetchBrands } from '@/lib/api/brands'
 
-// Dynamic Imports for Below-the-Fold Content
+// Dynamic Imports — ALL below-fold components are lazy-loaded to reduce initial JS
+const BrandsCarousel = dynamic(() => import('@/components/home/BrandsCarousel').then(mod => mod.BrandsCarousel), {
+  loading: () => <div className="h-64 bg-gray-50 animate-pulse" aria-hidden="true" />
+})
+const CategoryGrid = dynamic(() => import('@/components/home/CategoryGrid').then(mod => mod.CategoryGrid), {
+  loading: () => <div className="h-96 bg-white animate-pulse" aria-hidden="true" />
+})
+const CricketSpecialistStore = dynamic(() => import('@/components/home/CricketSpecialistStore').then(mod => mod.CricketSpecialistStore), {
+  loading: () => <div className="h-96 bg-white animate-pulse" aria-hidden="true" />
+})
+const USPSection = dynamic(() => import('@/components/home/USPSection').then(mod => mod.USPSection), {
+  loading: () => <div className="h-64 bg-gray-50 animate-pulse" aria-hidden="true" />
+})
 const Testimonials = dynamic(() => import('@/components/home/Testimonials').then(mod => mod.Testimonials), {
-  loading: () => <p className="text-center py-20">Loading...</p>
+  loading: () => <div className="h-64 bg-white animate-pulse" aria-hidden="true" />
 })
 const VideoBlock = dynamic(() => import('@/components/home/VideoBlock').then(mod => mod.VideoBlock))
 const RecentBlogs = dynamic(() => import('@/components/home/RecentBlogs').then(mod => mod.RecentBlogs))
