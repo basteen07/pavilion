@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useMemo, useEffect, useRef, useCallback, Fragment } from 'react'
 import { useQuery, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'next/navigation'
@@ -963,8 +965,13 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
         const primaryContact = customer?.contacts?.find(c => c.is_primary);
         const emails = [];
         if (customer?.email) emails.push(customer.email);
-        if (primaryContact?.email && primaryContact.email !== customer?.email) emails.push(primaryContact.email);
-        return emails;
+        if (customer?.billing_email) emails.push(customer.billing_email);
+        if (primaryContact?.email) emails.push(primaryContact.email);
+
+        // Filter out empty/null and remove duplicates
+        return emails.filter((email, index, self) =>
+            email && self.indexOf(email) === index
+        );
     }
 
     // --- Open sender selection dialog ---
@@ -978,19 +985,25 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
     }
 
     // --- Sender dialog confirm handler ---
-    function handleSenderConfirm(senderKey) {
+    function handleSenderConfirm(senderKey, selectedRecipients, message) {
+        // Safeguard against Event objects being passed directly
+        const cleanSenderKey = typeof senderKey === 'string' ? senderKey : 'primary';
+        const cleanRecipients = Array.isArray(selectedRecipients) ? selectedRecipients : getRecipientEmails();
+
+        console.log('[handleSenderConfirm] Action:', pendingSendAction, 'Sender:', cleanSenderKey, 'Recipients:', cleanRecipients, 'Message:', message);
+
         if (pendingSendAction === 'saveAndSend') {
-            handleSaveAndSend(senderKey);
+            handleSaveAndSend(cleanSenderKey, cleanRecipients, message);
         } else if (pendingSendAction === 'markAsSent') {
-            handleMarkAsSent(senderKey);
+            handleMarkAsSent(cleanSenderKey, cleanRecipients, message);
         }
         setPendingSendAction(null);
     }
 
     // --- Save ---
-    async function handleMarkAsSent(senderKey) {
+    async function handleMarkAsSent(senderKey, selectedRecipients, message) {
         const customer = customers.find(c => c.id === selectedCustomer);
-        const emails = getRecipientEmails();
+        const emails = selectedRecipients || getRecipientEmails();
 
         if (emails.length === 0) return toast.error('No customer email found');
 
@@ -1004,7 +1017,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             for (const email of emails) {
                 const res = await apiCall(`/admin/quotations/${quoteId}/send-email`, {
                     method: 'POST',
-                    body: JSON.stringify({ email, pdfData, senderKey })
+                    body: JSON.stringify({ email, pdfData, senderKey, message })
                 });
 
                 if (!res.success) {
@@ -1030,7 +1043,13 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
     }
 
     // Save and Send function - first saves the quotation then sends email
-    async function handleSaveAndSend(senderKey) {
+    async function handleSaveAndSend(senderKey, selectedRecipients, message) {
+        // Defensive check: If senderKey is an event object or not a string, default to primary
+        if (typeof senderKey !== 'string') {
+            console.warn('[handleSaveAndSend] Invalid senderKey received (likely Event object), defaulting to primary:', senderKey);
+            senderKey = 'primary';
+        }
+
         if (!selectedCustomer) { return toast.error('Please select a customer') }
         if (quotationItems.length === 0) { return toast.error('Please add at least one product') }
 
@@ -1043,7 +1062,16 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
         try {
             const payload = {
                 customer_id: selectedCustomer,
-                customer_snapshot: customer,
+                customer_snapshot: customer ? {
+                    id: customer.id,
+                    name: customer.name,
+                    company_name: customer.company_name,
+                    email: customer.email,
+                    phone: customer.phone,
+                    address: customer.address,
+                    gst_number: customer.gst_number,
+                    customer_type_name: customer.customer_type_name
+                } : null,
                 status: 'Sent',
                 items: quotationItems.map(item => ({
                     product_id: item.product_id,
@@ -1063,7 +1091,18 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                     uom: item.uom || 'Single',
                     is_detailed: (item.is_detailed === true || item.is_detailed === 'true' || item.is_detailed === 1 || item.is_detailed === '1') // Safe check
                 })),
-                ...quotationDetails,
+                quotation_number: quotationDetails.quotation_number,
+                issue_date: quotationDetails.issue_date,
+                valid_until: quotationDetails.valid_until,
+                shipping_cost: quotationDetails.shipping_cost,
+                discount_type: quotationDetails.discount_type,
+                discount_value: quotationDetails.discount_value,
+                tax_rate: quotationDetails.tax_rate,
+                additional_notes: quotationDetails.additional_notes,
+                terms_and_conditions: quotationDetails.terms_and_conditions,
+                payment_terms: quotationDetails.payment_terms,
+                comments: quotationDetails.comments,
+                show_total: quotationDetails.show_total,
                 subtotal, gst: tax, total_amount: total
             };
 
@@ -1088,10 +1127,11 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             const doc = await generatePDFDoc();
             const pdfData = doc.output('datauristring').split(',')[1];
 
-            for (const email of emails) {
+            const targets = selectedRecipients || getRecipientEmails();
+            for (const email of targets) {
                 await apiCall(`/admin/quotations/${savedQuoteId}/send-email`, {
                     method: 'POST',
-                    body: JSON.stringify({ email, pdfData, senderKey })
+                    body: JSON.stringify({ email, pdfData, senderKey, message })
                 });
             }
 
@@ -1125,7 +1165,16 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             console.log('[handleSave] Current State Items:', quotationItems.map(i => ({ name: i.name, is_detailed: i.is_detailed, type: typeof i.is_detailed })));
             const payload = {
                 customer_id: selectedCustomer,
-                customer_snapshot: customer,
+                customer_snapshot: customer ? {
+                    id: customer.id,
+                    name: customer.name,
+                    company_name: customer.company_name,
+                    email: customer.email,
+                    phone: customer.phone,
+                    address: customer.address,
+                    gst_number: customer.gst_number,
+                    customer_type_name: customer.customer_type_name
+                } : null,
                 status: statusToSave,
                 items: quotationItems.map(item => ({
                     product_id: item.product_id,
@@ -1145,7 +1194,18 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                     uom: item.uom || 'Single',
                     is_detailed: (item.is_detailed === true || item.is_detailed === 'true' || item.is_detailed === 1 || item.is_detailed === '1') // Safe check
                 })),
-                ...quotationDetails,
+                quotation_number: quotationDetails.quotation_number,
+                issue_date: quotationDetails.issue_date,
+                valid_until: quotationDetails.valid_until,
+                shipping_cost: quotationDetails.shipping_cost,
+                discount_type: quotationDetails.discount_type,
+                discount_value: quotationDetails.discount_value,
+                tax_rate: quotationDetails.tax_rate,
+                additional_notes: quotationDetails.additional_notes,
+                terms_and_conditions: quotationDetails.terms_and_conditions,
+                payment_terms: quotationDetails.payment_terms,
+                comments: quotationDetails.comments,
+                show_total: quotationDetails.show_total,
                 subtotal, gst: tax, total_amount: total
             }
 
@@ -1715,7 +1775,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                     <div className="space-y-6">
                         {/* PRODUCT MODAL */}
                         <Dialog open={showProductModal} onOpenChange={setShowProductModal}>
-                            <DialogContent className="max-w-5xl h-[85vh] p-0 gap-0 overflow-hidden flex flex-col bg-white">
+                            <DialogContent className="z-[9999] max-w-5xl h-[85vh] p-0 gap-0 overflow-hidden flex flex-col bg-white">
                                 <div className="px-6 py-4 flex items-center justify-between border-b border-gray-200 bg-white z-10">
                                     <DialogTitle className="text-lg font-bold">Select products</DialogTitle>
                                     <button onClick={() => setShowProductModal(false)} className="text-gray-500 hover:text-gray-700">

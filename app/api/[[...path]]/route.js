@@ -580,20 +580,12 @@ async function handleRoute(request, { params }) {
     // Get available email senders (non-sensitive display data only)
     if (route === '/admin/config/email-senders' && method === 'GET') {
       // Try auth but don't block — this only returns sender display names, not credentials
-      const user = await authenticateRequest(request);
-      console.log('[API] email-senders requested. Auth user:', user?.email || 'anonymous');
+      await authenticateRequest(request);
 
       const { getAvailableSenders } = await import('@/lib/email');
       const senders = getAvailableSenders();
-      console.log('[API] Returning available senders:', senders.length, 'Keys:', Object.keys(process.env).filter(k => k.startsWith('SMTP')));
       return handleCORS(NextResponse.json({
-        senders,
-        debug: {
-          hasSmtp1: !!process.env.SMTP_USER,
-          hasSmtp2: !!process.env.SMTP2_USER,
-          emailEnabled: process.env.EMAIL_ENABLED,
-          envKeys: Object.keys(process.env).filter(k => k.startsWith('SMTP') || k === 'EMAIL_ENABLED')
-        }
+        senders
       }));
     }
 
@@ -604,7 +596,7 @@ async function handleRoute(request, { params }) {
 
       const quotationId = path[2]; // /admin/quotations/{id}/send-email
       const body = await request.json();
-      const { email: targetEmail, pdfData, senderKey } = body;
+      const { email: targetEmail, pdfData, senderKey, message } = body;
 
       // Fetch quotation details
       const quoteRes = await query(`
@@ -631,7 +623,7 @@ async function handleRoute(request, { params }) {
         quotation_number: quotation.quotation_number,
         total: quotation.total_amount,
         pdfData: pdfData // Pass the base64 PDF data
-      }, recipientEmail, senderKey);
+      }, recipientEmail, senderKey, message);
 
       // Log activity
       await logActivity({

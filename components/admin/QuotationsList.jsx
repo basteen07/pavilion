@@ -173,7 +173,7 @@ export function QuotationsList({ onCreate, onEdit }) {
         }
     }
 
-    async function handleMarkAsSent(quote, senderKey) {
+    async function handleMarkAsSent(quote, senderKey, selectedRecipients, message) {
         setActionLoading(quote.id)
         try {
             // Fetch full quotation details to get items for PDF
@@ -183,20 +183,25 @@ export function QuotationsList({ onCreate, onEdit }) {
             const doc = await generateQuotationPDF(fullQuote);
             const pdfData = doc.output('datauristring').split(',')[1];
 
-            const res = await apiCall(`/admin/quotations/${quote.id}/send-email`, {
-                method: 'POST',
-                body: JSON.stringify({
-                    email: quote.customer_snapshot?.email || quote.customer_email,
-                    pdfData: pdfData,
-                    senderKey: senderKey
+            const targets = selectedRecipients || [quote.customer_snapshot?.email || quote.customer_email].filter(Boolean);
+
+            for (const email of targets) {
+                const res = await apiCall(`/admin/quotations/${quote.id}/send-email`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        email: email,
+                        pdfData: pdfData,
+                        senderKey: senderKey,
+                        message: message
+                    })
                 })
-            })
-            if (res.success) {
-                toast.success('Quotation sent successfully')
-                queryClient.invalidateQueries(['quotations'])
-            } else {
-                toast.error(res.error || 'Failed to send quotation')
+                if (!res.success) {
+                    toast.error(res.error || `Failed to send to ${email}`)
+                }
             }
+
+            toast.success('Quotation process completed')
+            queryClient.invalidateQueries(['quotations'])
         } catch (error) {
             toast.error(error.message || 'Failed to send quotation')
         } finally {
@@ -209,9 +214,9 @@ export function QuotationsList({ onCreate, onEdit }) {
         setSenderDialogOpen(true)
     }
 
-    function handleSenderConfirm(senderKey) {
+    function handleSenderConfirm(senderKey, selectedRecipients, message) {
         if (pendingQuoteForSend) {
-            handleMarkAsSent(pendingQuoteForSend, senderKey)
+            handleMarkAsSent(pendingQuoteForSend, senderKey, selectedRecipients, message)
         }
         setPendingQuoteForSend(null)
     }
@@ -795,9 +800,7 @@ export function QuotationsList({ onCreate, onEdit }) {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
-                            Delete
-                        </AlertDialogAction>
+                        <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">Delete</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
@@ -817,7 +820,11 @@ export function QuotationsList({ onCreate, onEdit }) {
                 open={senderDialogOpen}
                 onOpenChange={setSenderDialogOpen}
                 onConfirm={handleSenderConfirm}
-                recipientEmails={pendingQuoteForSend ? [pendingQuoteForSend.customer_snapshot?.email || pendingQuoteForSend.customer_email].filter(Boolean) : []}
+                recipientEmails={pendingQuoteForSend ? [
+                    pendingQuoteForSend.customer_snapshot?.email,
+                    pendingQuoteForSend.customer_email,
+                    pendingQuoteForSend.billing_email
+                ].filter((email, index, self) => email && self.indexOf(email) === index) : []}
             />
         </div>
     )
