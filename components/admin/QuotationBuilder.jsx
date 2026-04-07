@@ -533,6 +533,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                             ...item,
                             name: item.product_name || item.name,
                             mrp: parseFloat(item.mrp) || parseFloat(item.current_mrp) || 0,
+                            counter_price: parseFloat(item.counter_price) || parseFloat(item.current_counter_price) || 0,
                             dealer_price: parseFloat(item.dealer_price) || parseFloat(item.current_dealer_price) || 0,
                             recommended_price: parseFloat(item.recommended_price) || parseFloat(item.current_recommended) || 0,
                             custom_price: item.unit_price,
@@ -637,7 +638,8 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                         discount = percentage;
                     } else {
                         // MRP: base is MRP
-                        const basePrice = parseFloat(item.mrp) || 0;
+                        const counterPrice = parseFloat(item.counter_price) || 0;
+                        const basePrice = counterPrice > 0 ? counterPrice : (parseFloat(item.mrp) || 0);
                         customPrice = basePrice * (1 - percentage / 100);
                         discount = percentage;
                     }
@@ -738,6 +740,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
         const sourceDealer = getNonZeroPrice(variant?.dealer_price, product.dealer_price);
         const sourceShop = getNonZeroPrice(variant?.shop_price, product.shop_price);
         const sourceRecommended = getNonZeroPrice(variant?.recommended_price, product.recommended_price);
+        const sourceCounter = getNonZeroPrice(variant?.counter_price, product.counter_price);
         const sourceSku = variant?.sku || product.sku;
 
         let customPrice = parseFloat(sourceShop) || parseFloat(sourceMrp);
@@ -752,7 +755,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             discount = percentage;
         } else {
             // MRP: base is MRP, SUBTRACT discount percentage
-            const basePrice = parseFloat(sourceMrp);
+            const basePrice = sourceCounter > 0 ? sourceCounter : parseFloat(sourceMrp);
             customPrice = basePrice * (1 - percentage / 100);
             // For MRP, discount is the discount percentage
             discount = percentage;
@@ -779,6 +782,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
             brand_name: product.brand_name || product.brand || '',
             image: getFirstImage(sourceImages),
             mrp: sourceMrp,
+            counter_price: sourceCounter,
             dealer_price: sourceDealer,
             recommended_price: sourceRecommended,
             discount: discount,
@@ -810,9 +814,11 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                     const base = parseFloat(newItem.dealer_price) || 0;
                     newItem.custom_price = (base * (1 + perc / 100)).toFixed(2);
                 } else {
-                    const base = parseFloat(newItem.mrp) || 0;
+                    const counterPrice = parseFloat(newItem.counter_price) || 0;
+                    const base = counterPrice > 0 ? counterPrice : (parseFloat(newItem.mrp) || 0);
                     newItem.custom_price = (base * (1 - perc / 100)).toFixed(2);
                 }
+
             }
             // Recalculate discount/markup if custom_price changes
             if (field === 'custom_price') {
@@ -821,9 +827,11 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                     const base = parseFloat(newItem.dealer_price) || 0;
                     if (base > 0) newItem.discount = (((price / base) - 1) * 100).toFixed(2);
                 } else {
-                    const base = parseFloat(newItem.mrp) || 0;
+                    const counterPrice = parseFloat(newItem.counter_price) || 0;
+                    const base = counterPrice > 0 ? counterPrice : (parseFloat(newItem.mrp) || 0);
                     if (base > 0) newItem.discount = ((base - price) / base * 100).toFixed(2);
                 }
+
             }
             return newItem;
         }));
@@ -1793,13 +1801,19 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                         />
                                     </div>
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <Popover open={filterPopoverOpen} onOpenChange={setFilterPopoverOpen}>
-                                            <PopoverTrigger asChild>
-                                                <Button variant="outline" size="sm" className="h-7 text-xs bg-white border-dashed border-gray-300 text-gray-600">
-                                                    Add filter +
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-[200px] p-0" align="start">
+                                            <Popover open={filterPopoverOpen} onOpenChange={setFilterPopoverOpen}>
+                                                <PopoverTrigger asChild>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="h-7 text-xs bg-white border-dashed border-gray-300 text-gray-600"
+                                                        onClick={() => setFilterPopoverOpen(true)}
+                                                    >
+                                                        Add filter +
+                                                    </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-[200px] p-0 z-[10001]" align="start">
+
                                                 <Command>
                                                     <CommandInput placeholder="Filter by..." />
                                                     <CommandList>
@@ -1833,7 +1847,8 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                                         <SelectTrigger className="h-5 py-0 px-1 border-none bg-transparent shadow-none text-xs font-medium focus:ring-0">
                                                             <SelectValue placeholder="Select" />
                                                         </SelectTrigger>
-                                                        <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                                                        <SelectContent className="z-[10001]">{categories.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
+
                                                     </Select>
                                                 )}
                                                 {f.type === 'sub-category' && (
@@ -1841,12 +1856,14 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                                         <SelectTrigger className="h-5 py-0 px-1 border-none bg-transparent shadow-none text-xs font-medium focus:ring-0">
                                                             <SelectValue placeholder="Select" />
                                                         </SelectTrigger>
-                                                        <SelectContent>
+                                                         <SelectContent className="z-[10001]">
                                                             {(getFilterValue('category')
-                                                                ? subCategories.filter(sc => sc.category_id === getFilterValue('category'))
+                                                                ? subCategories.filter(sc => String(sc.category_id) === String(getFilterValue('category')))
                                                                 : subCategories
-                                                            ).map(sc => <SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>)}
+                                                            ).map(sc => <SelectItem key={sc.id} value={String(sc.id)}>{sc.name}</SelectItem>)}
                                                         </SelectContent>
+
+
                                                     </Select>
                                                 )}
                                                 {f.type === 'brand' && (
@@ -1854,7 +1871,8 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                                         <SelectTrigger className="h-5 py-0 px-1 border-none bg-transparent shadow-none text-xs font-medium focus:ring-0">
                                                             <SelectValue placeholder="Select" />
                                                         </SelectTrigger>
-                                                        <SelectContent>{brands.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}</SelectContent>
+                                                        <SelectContent className="z-[10001]">{brands.map(b => <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>)}</SelectContent>
+
                                                     </Select>
                                                 )}
                                                 {f.type === 'price' && (
@@ -1900,9 +1918,11 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                                     </TableHead>
                                                     <TableHead className="bg-white text-right">Category</TableHead>
                                                     <TableHead className="bg-white text-right">MRP</TableHead>
+                                                    <TableHead className="bg-white text-right text-orange-600">Counter</TableHead>
                                                     {isSuperAdmin && (
                                                         <TableHead className="bg-white text-right text-blue-600">Dealer</TableHead>
                                                     )}
+
                                                     <TableHead className="bg-white text-right">
                                                         Rec. Price
                                                     </TableHead>
@@ -2019,11 +2039,15 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                                                 <TableCell className={cn("text-right", modalDetailedView ? "py-4" : "py-1")}>
                                                                     <div className="text-xs font-bold text-gray-900">₹{parseFloat(product.mrp_price).toLocaleString()}</div>
                                                                 </TableCell>
+                                                                <TableCell className={cn("text-right", modalDetailedView ? "py-4" : "py-1")}>
+                                                                    <div className="text-xs font-bold text-orange-600">₹{parseFloat(product.counter_price || 0).toLocaleString()}</div>
+                                                                </TableCell>
                                                                 {isSuperAdmin && (
                                                                     <TableCell className={cn("text-right", modalDetailedView ? "py-4" : "py-1")}>
                                                                         <div className="text-xs font-bold text-gray-600">{parseFloat(product.dealer_price || 0).toLocaleString()}</div>
                                                                     </TableCell>
                                                                 )}
+
                                                                 <TableCell className={cn("text-right", modalDetailedView ? "py-4" : "py-1")}>
                                                                     <div className="text-xs font-bold text-gray-700">₹{parseFloat(product.recommended_price || 0).toLocaleString()}</div>
                                                                 </TableCell>
@@ -2040,7 +2064,8 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                                                                 const basePrice = parseFloat(product.dealer_price || product.shop_price || product.mrp_price);
                                                                                 customPrice = basePrice * (1 + percentage / 100);
                                                                             } else {
-                                                                                const basePrice = parseFloat(product.mrp_price);
+                                                                                const counterPrice = parseFloat(product.counter_price) || 0;
+                                                                                const basePrice = counterPrice > 0 ? counterPrice : parseFloat(product.mrp_price);
                                                                                 customPrice = basePrice * (1 - percentage / 100);
                                                                             }
                                                                             if (!customer?.base_price_type && !custType && product.dealer_price) {
@@ -2146,6 +2171,16 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                                                                                     </div>
                                                                                                 </div>
                                                                                                 <div className="text-right">
+                                                                                                    <div className="text-[10px] text-orange-400">Counter</div>
+                                                                                                    <div className="text-xs font-semibold text-orange-600">
+                                                                                                        ₹{(() => {
+                                                                                                            const cp = parseFloat(variant.counter_price) || parseFloat(product.counter_price) || 0;
+                                                                                                            return cp.toLocaleString();
+                                                                                                        })()}
+                                                                                                    </div>
+                                                                                                </div>
+
+                                                                                                <div className="text-right">
                                                                                                     <div className="text-[10px] text-blue-500">Your Price</div>
                                                                                                     <div className="text-xs font-bold text-blue-700">
                                                                                                         ₹{(() => {
@@ -2160,13 +2195,15 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                                                                                             const vMrp = getVPrice(variant.mrp_price, product.mrp_price);
                                                                                                             const vDealer = getVPrice(variant.dealer_price, product.dealer_price);
                                                                                                             const vShop = getVPrice(variant.shop_price, product.shop_price);
+                                                                                                            const vCounter = getVPrice(variant.counter_price, product.counter_price);
 
                                                                                                             let vPrice = vShop || vMrp;
                                                                                                             if (customerTypeBase === 'dealer') {
                                                                                                                 const base = vDealer || vShop || vMrp;
                                                                                                                 vPrice = base * (1 + percentage / 100);
                                                                                                             } else {
-                                                                                                                vPrice = vMrp * (1 - percentage / 100);
+                                                                                                                const base = vCounter > 0 ? vCounter : vMrp;
+                                                                                                                vPrice = base * (1 - percentage / 100);
                                                                                                             }
 
                                                                                                             if (!customer?.base_price_type && !custType && vDealer) {
