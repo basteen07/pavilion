@@ -11,11 +11,13 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import ImageUploader from '@/components/admin/ImageUploader' // Changed to default import
 import { toast } from 'sonner'
-import { X, Plus, Loader2, Printer, QrCode, Clock } from 'lucide-react'
+import { X, Plus, Loader2, Printer, QrCode, Clock, Check, ChevronsUpDown } from 'lucide-react'
 import QRCode from 'qrcode'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import TiptapEditor from '@/components/admin/TiptapEditor'
@@ -107,6 +109,7 @@ export function ProductForm({ product, onCancel, onSuccess }) {
     const [newVideoUrl, setNewVideoUrl] = useState('')
     const [qrCodeUrl, setQrCodeUrl] = useState('')
     const [showCustomUnit, setShowCustomUnit] = useState(false)
+    const [brandOpen, setBrandOpen] = useState(false)
 
     const form = useForm({
         resolver: zodResolver(productSchema),
@@ -566,30 +569,57 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                 </Select>
                             </div>
 
-                            <div className="space-y-2">
+                            <div className="space-y-2 flex flex-col">
                                 <Label>Brand</Label>
-                                <Select
-                                    value={watch('brand_id')}
-                                    onValueChange={(val) => setValue('brand_id', val)}
-                                    disabled={!selectedSubCategoryId}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder={!selectedSubCategoryId ? "Select Sub-Category first" : "Select Brand"} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {brands.filter(b => {
-                                            const tagId = watch('tag_id')
-                                            if (!tagId) return true
-                                            const selectedTag = tags.find(t => t.id.toString() === tagId)
-                                            if (selectedTag?.brand_ids && selectedTag.brand_ids.length > 0) {
-                                                return selectedTag.brand_ids.includes(b.id.toString())
-                                            }
-                                            return true
-                                        }).map(b => (
-                                            <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <Popover open={brandOpen} onOpenChange={setBrandOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            role="combobox"
+                                            aria-expanded={brandOpen}
+                                            className="w-full justify-between font-normal bg-white"
+                                        >
+                                            {watch('brand_id')
+                                                ? brands.find((brand) => brand.id.toString() === watch('brand_id'))?.name || "Select Brand"
+                                                : "Select Brand"}
+                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-full p-0" align="start">
+                                        <Command>
+                                            <CommandInput placeholder="Search brand..." />
+                                            <CommandList>
+                                                <CommandEmpty>No brand found.</CommandEmpty>
+                                                <CommandGroup>
+                                                    {brands.filter(b => {
+                                                        const tagId = watch('tag_id')
+                                                        if (!tagId) return true
+                                                        const selectedTag = tags.find(t => t.id.toString() === tagId)
+                                                        if (selectedTag?.brand_ids && selectedTag.brand_ids.length > 0) {
+                                                            return selectedTag.brand_ids.includes(b.id.toString())
+                                                        }
+                                                        return true
+                                                    }).map(b => (
+                                                        <CommandItem
+                                                            key={b.id}
+                                                            value={b.name}
+                                                            onSelect={() => {
+                                                                setValue('brand_id', b.id.toString())
+                                                                setBrandOpen(false)
+                                                            }}
+                                                        >
+                                                            <Check
+                                                                className={`mr-2 h-4 w-4 ${watch('brand_id') === b.id.toString() ? "opacity-100" : "opacity-0"}`}
+                                                            />
+                                                            {b.name}
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
                             </div>
                         </CardContent>
                     </Card>

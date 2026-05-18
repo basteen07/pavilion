@@ -143,21 +143,28 @@ export default function ProductFilters({
         return groups;
     }, [subCategories]);
 
-    // 2. Filter Brands based on selected Categories (if any)
+    // 2. Filter Brands based on selected Categories + Sub-Categories
     const availableBrands = useMemo(() => {
-        if (selectedCategories.length === 0 || products.length === 0) return brands;
+        if (products.length === 0) return brands;
+        if (selectedCategories.length === 0 && selectedSubCats.length === 0) return brands;
 
-        // Get brands that actually have products in the selected categories
-        const activeBrandIds = new Set(
-            products
-                .filter(p => selectedCategories.includes(String(p.category_id)))
-                .map(p => String(p.brand_id))
-        );
+        let filteredProducts = products;
 
-        // We still want to show currently SELECTED brands even if they might not have products in the current cat selection
-        // to allow deselecting them. But let's prioritize the "show contained brands" request.
+        // Filter by selected categories first
+        if (selectedCategories.length > 0) {
+            filteredProducts = filteredProducts.filter(p => selectedCategories.includes(String(p.category_id)));
+        }
+
+        // Then narrow by selected sub-categories if any
+        if (selectedSubCats.length > 0) {
+            filteredProducts = filteredProducts.filter(p => selectedSubCats.includes(String(p.sub_category_id)));
+        }
+
+        const activeBrandIds = new Set(filteredProducts.map(p => String(p.brand_id)));
+
+        // Keep currently selected brands visible so user can deselect them
         return brands.filter(b => activeBrandIds.has(String(b.id)) || selectedBrands.includes(String(b.id)));
-    }, [brands, products, selectedCategories, selectedBrands]);
+    }, [brands, products, selectedCategories, selectedSubCats, selectedBrands]);
 
     const filteredBrands = availableBrands.filter(b =>
         b.name.toLowerCase().includes(brandSearch.toLowerCase())
@@ -329,8 +336,8 @@ export default function ProductFilters({
                 </div>
             )}
 
-            {/* Brands Filter */}
-            {brands.length > 0 && (
+            {/* Brands Filter - Only visible after selecting Category + Sub-Category */}
+            {brands.length > 0 && selectedCategories.length > 0 && selectedSubCats.length > 0 && (
                 <div className="space-y-4">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 border-b pb-2">Brand Selection</h3>
                     <div className="relative mb-2">

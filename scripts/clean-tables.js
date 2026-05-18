@@ -2,7 +2,7 @@ require('dotenv').config();
 const { Pool } = require('pg');
 
 async function cleanTables() {
-    console.log('--- Cleaning Products and Variants Tables ---');
+    console.log('--- Cleaning Quotations, Products and Variants Tables ---');
     const config = {
         connectionString: process.env.DATABASE_URL,
         ssl: { rejectUnauthorized: false }
@@ -12,6 +12,9 @@ async function cleanTables() {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
+
+            console.log('Truncating quotations...');
+            await client.query('TRUNCATE TABLE quotations RESTART IDENTITY CASCADE');
 
             console.log('Truncating product_variants...');
             await client.query('TRUNCATE TABLE product_variants RESTART IDENTITY CASCADE');

@@ -5,12 +5,44 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { toast } from 'sonner'
-import { FileUp, Info, AlertCircle, CheckCircle2, Download } from 'lucide-react'
+import { FileUp, Info, AlertCircle, CheckCircle2, Download, Check, ChevronsUpDown } from 'lucide-react'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import * as XLSX from 'xlsx'
 import ExcelJS from 'exceljs'
 import { apiCall } from '@/lib/api-client'
 import { Progress } from "@/components/ui/progress"
 import { useQueryClient } from '@tanstack/react-query'
+
+function GridBrandSelect({ row, availableBrands, updateGridRow }) {
+    const [open, setOpen] = useState(false)
+    return (
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <Button type="button" variant="outline" role="combobox" aria-expanded={open} className="w-full text-xs h-7 px-2 justify-between bg-transparent border-none focus:ring-1 focus:ring-red-500 shadow-none hover:bg-gray-50 text-left font-normal rounded">
+                    <span className="truncate">{row.brand ? row.brand : "Select"}</span>
+                    <ChevronsUpDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[200px] p-0" align="start">
+                <Command>
+                    <CommandInput placeholder="Search brand..." className="h-8 text-xs" />
+                    <CommandList>
+                        <CommandEmpty>No brand found.</CommandEmpty>
+                        <CommandGroup>
+                            {availableBrands.map(b => (
+                                <CommandItem key={b.id} value={b.name} onSelect={() => { updateGridRow(row._id, { brand: b.name }); setOpen(false); }}>
+                                    <Check className={`mr-2 h-3 w-3 ${row.brand === b.name ? "opacity-100" : "opacity-0"}`} />
+                                    {b.name}
+                                </CommandItem>
+                            ))}
+                        </CommandGroup>
+                    </CommandList>
+                </Command>
+            </PopoverContent>
+        </Popover>
+    )
+}
 
 export function BulkUploadDialog({ open, onOpenChange }) {
     const [file, setFile] = useState(null)
@@ -161,7 +193,7 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                 masters.categories?.[0]?.name || '',  // T (Cat)
                 '', // U (Sub)
                 '', // V (Tag)
-                '', // W (Brand)
+                masters.brands?.[0]?.name || '', // W (Brand)
                 'This is a sample description.', // X (Desc)
                 'Sample Short Desc', // Y (Short Desc)
                 '999999', // Z (HSN)
@@ -224,9 +256,16 @@ export function BulkUploadDialog({ open, onOpenChange }) {
             workbook.definedNames.add(`MasterLists!$F$2:$G$${Math.max(2, subTagMap.length + 1)}`, 'SubCategoryTagMap')
 
             // 4. Brands (Column K)
-            const brandList = (masters?.brands?.length || 0) > 0 ? masters.brands.map(b => b.name) : ['Generic']
-            masterSheet.getColumn(11).values = ['Brands', ...brandList]
-            workbook.definedNames.add(`MasterLists!$K$2:$K$${brandList.length + 1}`, 'BrandList')
+            const brandList = Array.from(
+                new Set(
+                    (masters?.brands || [])
+                        .map(b => (b?.name || '').toString().trim())
+                        .filter(Boolean)
+                )
+            ).sort((a, b) => a.localeCompare(b))
+            const finalBrandList = brandList.length > 0 ? brandList : ['Generic']
+            masterSheet.getColumn(11).values = ['Brands', ...finalBrandList]
+            workbook.definedNames.add(`MasterLists!$K$2:$K$${finalBrandList.length + 1}`, 'BrandList')
 
             // 5. Static Lists (Tax, Active, Featured)
             const taxRates = ['0', '5', '12', '18', '28']
@@ -267,44 +306,7 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                 currentCol++;
             });
 
-            // Brands by Category
-            const catBrandMapping = [];
-            (masters?.categories || []).forEach(cat => {
-                const brs = (masters?.brands || []).filter(b => b.category_id === cat.id).map(b => b.name);
-                if (brs.length > 0) {
-                    const rangeName = sanitize('br_cat_' + cat.name);
-                    masterSheet.getColumn(currentCol).values = [cat.name, ...brs];
-                    workbook.definedNames.add(`MasterLists!$${masterSheet.getColumn(currentCol).letter}$2:$${masterSheet.getColumn(currentCol).letter}$${brs.length + 1}`, rangeName);
-                    catBrandMapping.push([cat.name, rangeName]);
-                    currentCol++;
-                }
-            });
-
-            // Category -> Brand Mapping Table (New Cols)
-            const catBrMapStartCol = currentCol;
-            masterSheet.getColumn(catBrMapStartCol).values = ['Category', ...catBrandMapping.map(r => r[0])];
-            masterSheet.getColumn(catBrMapStartCol + 1).values = ['RangeName', ...catBrandMapping.map(r => r[1])];
-            workbook.definedNames.add(`MasterLists!$${masterSheet.getColumn(catBrMapStartCol).letter}$2:$${masterSheet.getColumn(catBrMapStartCol + 1).letter}$${Math.max(2, catBrandMapping.length + 1)}`, 'CategoryBrandMap');
-            currentCol += 2;
-
-            // Brands by Sub-Category
-            const subBrandMapping = [];
-            (masters?.subCategories || []).forEach(sub => {
-                const brs = (masters?.brands || []).filter(b => b.sub_category_id === sub.id).map(b => b.name);
-                if (brs.length > 0) {
-                    const rangeName = sanitize('br_sub_' + sub.name);
-                    masterSheet.getColumn(currentCol).values = [sub.name, ...brs];
-                    workbook.definedNames.add(`MasterLists!$${masterSheet.getColumn(currentCol).letter}$2:$${masterSheet.getColumn(currentCol).letter}$${brs.length + 1}`, rangeName);
-                    subBrandMapping.push([sub.name, rangeName]);
-                    currentCol++;
-                }
-            });
-            // Sub-Category -> Brand Mapping Table
-            const subBrMapStartCol = currentCol
-            masterSheet.getColumn(subBrMapStartCol).values = ['SubCategory', ...subBrandMapping.map(r => r[0])]
-            masterSheet.getColumn(subBrMapStartCol + 1).values = ['RangeName', ...subBrandMapping.map(r => r[1])]
-            workbook.definedNames.add(`MasterLists!$${masterSheet.getColumn(subBrMapStartCol).letter}$2:$${masterSheet.getColumn(subBrMapStartCol + 1).letter}$${Math.max(2, subBrandMapping.length + 1)}`, 'SubCategoryBrandMap')
-            currentCol += 2
+            // Keep brand list global in template to always show all brands
 
             // Unit List (Added to master)
             const unitList = ['1', 'pair', 'Nos', 'Kg', 'Ltr', 'Pcs']
@@ -357,11 +359,11 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                     error: 'Please select a tag from the list'
                 }
 
-                // Brand (Column W) - Cascading
+                // Brand (Column W) - Global List
                 templateSheet.getCell(`W${i}`).dataValidation = {
                     type: 'list',
                     allowBlank: true,
-                    formulae: [`=IF(U${i}<>"", IF(ISERROR(VLOOKUP(U${i}, SubCategoryBrandMap, 2, FALSE)), EmptyList, INDIRECT(VLOOKUP(U${i}, SubCategoryBrandMap, 2, FALSE))), IF(T${i}<>"", IF(ISERROR(VLOOKUP(T${i}, CategoryBrandMap, 2, FALSE)), EmptyList, INDIRECT(VLOOKUP(T${i}, CategoryBrandMap, 2, FALSE))), BrandList))`],
+                    formulae: ['=BrandList'],
                     showErrorMessage: true,
                     errorTitle: 'Invalid Brand',
                     error: 'Please select a brand from the list'
@@ -692,7 +694,7 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                                             onClick={() => downloadTemplate('xls')}
                                         >
                                             <Download className="w-4 h-4" />
-                                            Advanced Excel (.xls)
+                                            Advanced Excel (.xlsx)
                                         </Button>
                                     </div>
                                     <p className="text-[10px] text-gray-500 text-center">
@@ -764,18 +766,7 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                                                     return t.sub_category_id === subId;
                                                 }) || [];
 
-                                                const availableBrands = masters?.brands.filter(b => {
-                                                    if (!row.sub_category && !row.category) return true;
-                                                    if (row.sub_category) {
-                                                        const subId = masters.subCategories.find(sc => sc.name === row.sub_category)?.id;
-                                                        return b.sub_category_id === subId;
-                                                    }
-                                                    if (row.category) {
-                                                        const catId = masters.categories.find(cat => cat.name === row.category)?.id;
-                                                        return b.category_id === catId;
-                                                    }
-                                                    return true;
-                                                }) || [];
+                                                const availableBrands = masters?.brands || [];
 
 
 
@@ -917,16 +908,11 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                                                             </select>
                                                         </td>
                                                         <td className="p-1 border">
-                                                            <select
-                                                                className="w-full text-xs p-1 border-none bg-transparent focus:ring-1 focus:ring-red-500 rounded"
-                                                                value={row.brand}
-                                                                onChange={(e) => updateGridRow(row._id, { brand: e.target.value })}
-                                                            >
-                                                                <option value="">Select</option>
-                                                                {availableBrands.map(b => (
-                                                                    <option key={b.id} value={b.name}>{b.name}</option>
-                                                                ))}
-                                                            </select>
+                                                            <GridBrandSelect
+                                                                row={row}
+                                                                availableBrands={availableBrands}
+                                                                updateGridRow={updateGridRow}
+                                                            />
                                                         </td>
                                                         <td className="p-1 border">
                                                             <input

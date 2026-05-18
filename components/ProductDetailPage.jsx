@@ -78,6 +78,11 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
       if (item.color?.trim()) return item.color.trim()
     }
 
+    // 3. Fallback: If it is the main product and option value is not set, return 'Base' so it acts as a valid selection choice
+    if (item.is_main) {
+      return "Base"
+    }
+
     return null
   }, [])
 
@@ -86,6 +91,12 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
     if (!product) return []
     const _axes = []
     const seenLabels = new Set()
+
+    const rawVariants = Array.isArray(product.product_variants)
+      ? product.product_variants
+      : (typeof product.product_variants === 'string' && product.product_variants !== '[]'
+          ? JSON.parse(product.product_variants)
+          : []);
 
     // A. Explicit Options 1-4
     for (let i = 1; i <= 4; i++) {
@@ -100,7 +111,7 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
     // B. Legacy Size Column
     if (!seenLabels.has('size')) {
       const hasSize = (product.size && product.size.trim()) ||
-        (product.product_variants || []).some(v => v.size && v.size.trim())
+        rawVariants.some(v => v.size && v.size.trim())
       if (hasSize) {
         _axes.push({ label: 'Size', type: 'size' })
         seenLabels.add('size')
@@ -110,7 +121,7 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
     // C. Legacy Color Column
     if (!seenLabels.has('color')) {
       const hasColor = (product.color && product.color.trim()) ||
-        (product.product_variants || []).some(v => v.color && v.color.trim())
+        rawVariants.some(v => v.color && v.color.trim())
       if (hasColor) {
         _axes.push({ label: 'Color', type: 'color' })
         seenLabels.add('color')
@@ -126,7 +137,11 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
     const list = []
 
     // A. Add real variants FIRST
-    const rawVariants = product.product_variants || []
+    const rawVariants = Array.isArray(product.product_variants)
+      ? product.product_variants
+      : (typeof product.product_variants === 'string' && product.product_variants !== '[]'
+          ? JSON.parse(product.product_variants)
+          : []);
     rawVariants.forEach(v => {
       list.push({
         ...v,
@@ -157,11 +172,10 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
     return Array.from(values).sort()
   }, [allChoices, getAxisValue])
 
-  // 5. Filtered Axes for Interactivity (Color & Size only)
+  // 5. Filtered Axes for Interactivity (All Options having more than 1 value)
   const selectableAxes = useMemo(() => {
     return axes.filter(axis => {
-      const label = axis.label.toLowerCase();
-      return (label.includes('color') || label.includes('size')) && getValuesForAxis(axis).length > 1;
+      return getValuesForAxis(axis).length > 1;
     });
   }, [axes, getValuesForAxis]);
 
@@ -194,25 +208,48 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
     }
   }, [product, selectableAxes, getAxisValue])
 
-  // 8. Availability Logic
+  // 8. Dynamic Selection Helper to prevent grid locks
+  const handleSelectOption = useCallback((axisType, axisValue) => {
+    const newSelections = { ...selectedOptions, [axisType]: axisValue };
+    
+    // Find exact match
+    let match = allChoices.find(item => {
+      if (item.is_active === false) return false;
+      return selectableAxes.every(axis => {
+        const selVal = newSelections[axis.type];
+        if (!selVal) return true;
+        return getAxisValue(item, axis) === selVal;
+      });
+    });
+    
+    // If no exact match, find any choice that matches the clicked value
+    if (!match) {
+      const targetAxis = selectableAxes.find(a => a.type === axisType);
+      if (targetAxis) {
+        match = allChoices.find(item => {
+          if (item.is_active === false) return false;
+          return getAxisValue(item, targetAxis) === axisValue;
+        });
+      }
+    }
+    
+    if (match) {
+      const updated = {};
+      selectableAxes.forEach(axis => {
+        const val = getAxisValue(match, axis);
+        if (val) updated[axis.type] = val;
+      });
+      setSelectedOptions(updated);
+    }
+  }, [allChoices, selectableAxes, selectedOptions, getAxisValue]);
+
+  // 9. Availability Logic (A value is available if any active variant has it)
   const checkAvailability = useCallback((targetAxis, targetValue) => {
     return allChoices.some(item => {
-      // Treat null or undefined is_active as true (active)
       if (item.is_active === false) return false
-
-      const itemTargetVal = getAxisValue(item, targetAxis)
-      if (itemTargetVal !== targetValue) return false
-
-      return selectableAxes.every(otherAxis => {
-        if (otherAxis.type === targetAxis.type) return true
-        const selectedVal = selectedOptions[otherAxis.type]
-        if (!selectedVal) return true
-
-        const otherItemVal = getAxisValue(item, otherAxis)
-        return otherItemVal === selectedVal
-      })
+      return getAxisValue(item, targetAxis) === targetValue
     })
-  }, [allChoices, selectableAxes, selectedOptions, getAxisValue])
+  }, [allChoices, getAxisValue])
 
 
   const { data: similarProductsData } = useQuery({
@@ -545,7 +582,7 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
                                 <button
                                   key={value}
                                   disabled={!isAvailable}
-                                  onClick={() => setSelectedOptions(prev => ({ ...prev, [axis.type]: value }))}
+                                  onClick={() => handleSelectOption(axis.type, value)}
                                   className={`h-10 px-4 min-w-[3rem] rounded border text-sm font-semibold transition-all relative overflow-hidden
                                                       ${isSelected
                                       ? 'border-slate-900 bg-slate-900 text-white shadow-md'

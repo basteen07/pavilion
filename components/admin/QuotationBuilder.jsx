@@ -1801,18 +1801,18 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                         />
                                     </div>
                                     <div className="flex flex-wrap items-center gap-2">
-                                            <Popover open={filterPopoverOpen} onOpenChange={setFilterPopoverOpen}>
-                                                <PopoverTrigger asChild>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        className="h-7 text-xs bg-white border-dashed border-gray-300 text-gray-600"
-                                                        onClick={() => setFilterPopoverOpen(true)}
-                                                    >
-                                                        Add filter +
-                                                    </Button>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-[200px] p-0 z-[10001]" align="start">
+                                        <Popover open={filterPopoverOpen} onOpenChange={setFilterPopoverOpen}>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-7 text-xs bg-white border-dashed border-gray-300 text-gray-600"
+                                                    onClick={() => setFilterPopoverOpen(true)}
+                                                >
+                                                    Add filter +
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-[200px] p-0 z-[10001]" align="start">
 
                                                 <Command>
                                                     <CommandInput placeholder="Filter by..." />
@@ -1856,7 +1856,7 @@ export function QuotationBuilder({ onClose, onSuccess, id }) {
                                                         <SelectTrigger className="h-5 py-0 px-1 border-none bg-transparent shadow-none text-xs font-medium focus:ring-0">
                                                             <SelectValue placeholder="Select" />
                                                         </SelectTrigger>
-                                                         <SelectContent className="z-[10001]">
+                                                        <SelectContent className="z-[10001]">
                                                             {(getFilterValue('category')
                                                                 ? subCategories.filter(sc => String(sc.category_id) === String(getFilterValue('category')))
                                                                 : subCategories

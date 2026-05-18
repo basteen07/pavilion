@@ -253,13 +253,15 @@ export default function CategoryPage({ categorySlug, subcategorySlug, hierarchy 
 
   }, [searchParams, tags])
 
-  // Fetch contextual brands (only brands with products in selected category/subcategory)
+  // Fetch contextual brands (only brands with products in selected category/subcategory/tag)
   const { data: brands = [] } = useQuery({
-    queryKey: ['contextual-brands', currentCategory?.id, activeSubCategory?.id],
+    queryKey: ['contextual-brands', currentCategory?.id, activeSubCategory?.id, selectedTag],
     queryFn: async () => {
       const params = new URLSearchParams()
       if (currentCategory?.id) params.append('category_id', currentCategory.id)
       if (activeSubCategory?.id) params.append('sub_category_id', activeSubCategory.id)
+      if (selectedTag && selectedTag !== 'all') params.append('tag_id', selectedTag)
+      params.append('has_products', 'true')
       const result = await apiCall(`/brands?${params.toString()}`)
       return result || []
     },
