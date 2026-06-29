@@ -549,12 +549,6 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                     value={watch('tag_id')}
                                     onValueChange={(val) => {
                                         setValue('tag_id', val)
-                                        const selectedTag = tags.find(t => t.id.toString() === val)
-                                        if (selectedTag?.brand_ids && selectedTag.brand_ids.length === 1) {
-                                            setValue('brand_id', selectedTag.brand_ids[0].toString())
-                                        } else {
-                                            setValue('brand_id', '')
-                                        }
                                     }}
                                     disabled={!selectedSubCategoryId}
                                 >
@@ -592,15 +586,7 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                             <CommandList>
                                                 <CommandEmpty>No brand found.</CommandEmpty>
                                                 <CommandGroup>
-                                                    {brands.filter(b => {
-                                                        const tagId = watch('tag_id')
-                                                        if (!tagId) return true
-                                                        const selectedTag = tags.find(t => t.id.toString() === tagId)
-                                                        if (selectedTag?.brand_ids && selectedTag.brand_ids.length > 0) {
-                                                            return selectedTag.brand_ids.includes(b.id.toString())
-                                                        }
-                                                        return true
-                                                    }).map(b => (
+                                                    {brands.map(b => (
                                                         <CommandItem
                                                             key={b.id}
                                                             value={b.name}

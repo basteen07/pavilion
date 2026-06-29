@@ -1,0 +1,1156 @@
+Connected to database.
+
+Categories:
+[
+  {
+    "id": "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+    "name": "Cricket"
+  }
+]
+
+Sub-Categories:
+[
+  {
+    "id": 4,
+    "name": "Bats",
+    "category_id": "44a84765-e75b-48cb-b1b4-f0792d5ce188"
+  }
+]
+
+Tag:
+{
+  "id": "83a98539-5337-41cd-bad3-ff3a0bbf029f",
+  "name": "English Willow Cricket Bats",
+  "category_id": "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+  "sub_category_id": 4,
+  "brand_ids": [
+    "7baa3bd3-7ff2-4dcc-96d9-1b4e3e1ff517",
+    "0b60d25c-3ffe-4bf6-b72d-323877093ba9",
+    "8e28254d-ca38-4c73-afa2-93eb3dcbcfa4",
+    "94d2c90e-0962-4bb1-bbed-b5cc95a06e7f",
+    "138fc576-3558-4644-939b-cd81619d3b3c",
+    "83a2bd95-f354-45b2-b679-27c1ec3f870e",
+    "e67f0c7f-8729-4c28-8859-266bb351dbfc",
+    "46973de4-137e-4959-8519-edad917f8da3",
+    "1eec376c-4bb9-4492-ae13-79457addac82",
+    "b5aacfb4-123a-4c87-9eca-9ee66c9d44ff",
+    "70286c06-4728-4c06-892d-287b6679a769",
+    "6a8ba48c-167f-4a26-b8a1-9ed9c404255a",
+    "7a429bd7-bbec-4cf9-b6de-0cd1d98c1382",
+    "bc4fc984-99b9-4fdd-990e-1cd7bdaf3017"
+  ]
+}
+
+Tag brand_ids array:
+[
+  "7baa3bd3-7ff2-4dcc-96d9-1b4e3e1ff517",
+  "0b60d25c-3ffe-4bf6-b72d-323877093ba9",
+  "8e28254d-ca38-4c73-afa2-93eb3dcbcfa4",
+  "94d2c90e-0962-4bb1-bbed-b5cc95a06e7f",
+  "138fc576-3558-4644-939b-cd81619d3b3c",
+  "83a2bd95-f354-45b2-b679-27c1ec3f870e",
+  "e67f0c7f-8729-4c28-8859-266bb351dbfc",
+  "46973de4-137e-4959-8519-edad917f8da3",
+  "1eec376c-4bb9-4492-ae13-79457addac82",
+  "b5aacfb4-123a-4c87-9eca-9ee66c9d44ff",
+  "70286c06-4728-4c06-892d-287b6679a769",
+  "6a8ba48c-167f-4a26-b8a1-9ed9c404255a",
+  "7a429bd7-bbec-4cf9-b6de-0cd1d98c1382",
+  "bc4fc984-99b9-4fdd-990e-1cd7bdaf3017"
+]
+
+Brands referenced by tag:
+[]
+
+First 10 brands in brands table:
+[
+  {
+    "id": "57a8810b-a518-41f5-8951-0dc3169d5674",
+    "name": "729 FREINDSHIP",
+    "category_id": null,
+    "sub_category_id": null,
+    "is_active": true
+  },
+  {
+    "id": "f570252b-3f9c-455f-9aa6-f9118f3d3dd9",
+    "name": "ADIDAS",
+    "category_id": null,
+    "sub_category_id": null,
+    "is_active": true
+  },
+  {
+    "id": "48f8e927-2f89-45ba-929d-0f503f7d3c55",
+    "name": "AERO",
+    "category_id": null,
+    "sub_category_id": null,
+    "is_active": true
+  },
+  {
+    "id": "625d93d0-66a9-42c5-a2cd-fd6963173e30",
+    "name": "AIRAVAT",
+    "category_id": null,
+    "sub_category_id": null,
+    "is_active": true
+  },
+  {
+    "id": "c904bdcf-8939-4808-955f-a2a79fb82360",
+    "name": "AKKASH",
+    "category_id": null,
+    "sub_category_id": null,
+    "is_active": true
+  },
+  {
+    "id": "d43288b2-be15-4dac-9382-68d7187ee98f",
+    "name": "ALBION",
+    "category_id": null,
+    "sub_category_id": null,
+    "is_active": true
+  },
+  {
+    "id": "8164d226-1eb9-43e3-9c97-7d667da56cb6",
+    "name": "ANI",
+    "category_id": null,
+    "sub_category_id": null,
+    "is_active": true
+  },
+  {
+    "id": "efbfdabe-c273-4f81-8c37-8aca1521e05d",
+    "name": "APEX",
+    "category_id": null,
+    "sub_category_id": null,
+    "is_active": true
+  },
+  {
+    "id": "9ec107f3-8ad6-4243-aadf-99ffec318a35",
+    "name": "ASICS",
+    "category_id": null,
+    "sub_category_id": null,
+    "is_active": true
+  },
+  {
+    "id": "ed5ffbdd-725f-450e-98cb-5f5ce743094f",
+    "name": "ASK",
+    "category_id": null,
+    "sub_category_id": null,
+    "is_active": true
+  }
+]
+
+Brands matching sub_category_id = 4 or NULL:
+[
+  {
+    "id": "57a8810b-a518-41f5-8951-0dc3169d5674",
+    "name": "729 FREINDSHIP",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "f570252b-3f9c-455f-9aa6-f9118f3d3dd9",
+    "name": "ADIDAS",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "48f8e927-2f89-45ba-929d-0f503f7d3c55",
+    "name": "AERO",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "625d93d0-66a9-42c5-a2cd-fd6963173e30",
+    "name": "AIRAVAT",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "c904bdcf-8939-4808-955f-a2a79fb82360",
+    "name": "AKKASH",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "d43288b2-be15-4dac-9382-68d7187ee98f",
+    "name": "ALBION",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "8164d226-1eb9-43e3-9c97-7d667da56cb6",
+    "name": "ANI",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "efbfdabe-c273-4f81-8c37-8aca1521e05d",
+    "name": "APEX",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "9ec107f3-8ad6-4243-aadf-99ffec318a35",
+    "name": "ASICS",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "ed5ffbdd-725f-450e-98cb-5f5ce743094f",
+    "name": "ASK",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "b3cab621-e29e-416b-9ba5-cab20c415863",
+    "name": "BABOLAT",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "5a3bb859-3296-4064-bddd-417be7f16075",
+    "name": "Barely Sunny",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "15578c70-ebd3-4ec1-9cde-f21477ef79f7",
+    "name": "BAS VAMPIRE",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "faa094f6-0f29-457f-b7b3-bf1a76f72130",
+    "name": "BDM",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "ea228af9-2a14-4092-b77e-f54384164f9e",
+    "name": "Beekay Brothers",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "800ac7e4-f007-4955-b866-c3be588f04e9",
+    "name": "Black Panther",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "e46db348-11e5-4a7a-bfe7-9534eeab014c",
+    "name": "BLACKROLL",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "009d33ca-7328-43b6-8249-36e8d696c8d8",
+    "name": "BODY SCULPTURE",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "ffb849d8-cb40-44d8-9c1c-180ef81811d7",
+    "name": "BOOLS",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "f03d1145-aecc-4186-8d9c-09f8666c3c71",
+    "name": "BOWLERS",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "fd32b449-63b4-42e7-bc2c-1e370c90d3e2",
+    "name": "BOWLING MASTER",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "d8f93bbc-101c-4682-b389-a071823fcadd",
+    "name": "BUTTERFLY",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "f5bda169-e41a-4a62-a562-7064320fe4f6",
+    "name": "CENMAX",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "5da8f8b9-6e89-4678-9ce6-4ddb7c7b91da",
+    "name": "CHAMP",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "4226a563-b3fd-45c7-ae80-a28f3ec0ce11",
+    "name": "COBRA",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "1fffef4a-7979-4375-be7a-4102ed36ba20",
+    "name": "Competent",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "9cad5d66-83e6-435c-9f6a-11473616de98",
+    "name": "Coronation",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "b7d1169f-4778-4860-8dd9-73a0a94292b4",
+    "name": "COSCO",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "f47a6f26-db52-4fcd-ac98-25674c57c20e",
+    "name": "Cougar",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "dc79c25f-92df-42fd-9c63-03d2e67aeed4",
+    "name": "COX50",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "de6708e0-4c27-4b9f-a4d0-f5fb1a691410",
+    "name": "CSC",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "d0b0dd9c-9a94-4b4b-a5b4-da2b3df4a050",
+    "name": "CSK",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "d7aa10dd-c84f-494f-acd3-d3b7b4f76013",
+    "name": "DIPAK",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "ad7281ab-19fc-4854-8481-d8d5b8ff5b8a",
+    "name": "DOMESTIC",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "84467710-0160-4b6f-bd56-c7d948e5774e",
+    "name": "DONIC",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "387ea7a0-c5ab-4bd7-9497-6163ce13d437",
+    "name": "DSC",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "bf4f1a92-554e-4405-945e-ede776330e00",
+    "name": "DUNLOP",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "d232bb0e-3286-486c-9ead-12e0fa1bc1d4",
+    "name": "EM",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "cf2d687e-e775-487b-93bf-67e0fb1ed7a1",
+    "name": "Enkay",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "62d7af7d-fd6b-4709-9dca-16690af3152e",
+    "name": "EVERLAST",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "6c82d1b7-04ef-4cdb-bc6d-a7880f28cb71",
+    "name": "Everwear Industries",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "823c9407-5e78-4be5-a647-9de220c71d6d",
+    "name": "Flash",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "0daa947b-57ef-4263-941a-6980ba3da86f",
+    "name": "FORMA",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "6594e45e-f842-40f3-a04a-932027ee97f6",
+    "name": "FOX 40",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "10ebc34b-6b25-46a0-be0f-ce2ef85a00a6",
+    "name": "Franklin",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "189c0ac7-6bc5-4476-bc53-f941226ec077",
+    "name": "FREE SHARK",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "db408679-f280-455b-8fd1-25c599b80acb",
+    "name": "FREESTYLE",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "6df642a7-cfae-4b04-9b4b-663dde890be8",
+    "name": "FUSION",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "2b0b60b5-5d59-48bd-adec-23148e04880b",
+    "name": "GARWARE",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "6ffd273a-bf43-48b4-af1a-277e6d874ab3",
+    "name": "GKI",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "1800aac8-94c8-4f86-8fd1-157752986e65",
+    "name": "Global Sports Industries",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "86a72a67-1d18-440c-becf-77b9631edc8c",
+    "name": "GM",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "0d8165b3-e133-4ff7-9a13-4384bb78f861",
+    "name": "Gowin",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "3ca89aa8-c119-44b9-a694-12587f0902fc",
+    "name": "GRAY NICOLLS",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "22dbc80a-8e31-40d0-8a7a-64b6a4504682",
+    "name": "Gupta Industries",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "3cf987ab-502b-4f18-849c-e776e5710880",
+    "name": "Handicrfat India",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "1b76d60d-69e8-4d65-a643-a481d84430de",
+    "name": "HANUMAN",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "c4f34b1a-c3ac-402b-b97e-73bfc1a064ab",
+    "name": "HEAD",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "51c355f1-25e5-4b44-af5c-ad303aff95da",
+    "name": "Hercules",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "82ef8a72-5f9f-4fe8-9f5f-24745e394da3",
+    "name": "HRS",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "c1b9249b-c5c4-4b2a-bfea-4b64d602114b",
+    "name": "ICC",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "5033b755-4dd6-41ea-a534-964a3e0dcc7c",
+    "name": "IMPORTED",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "05af743c-a08f-4aec-b475-7f2d4af37c75",
+    "name": "INFINITE",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "39eaf4a5-c3ea-4add-9f40-772fcfb3f715",
+    "name": "Jazba",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "c47dec08-8f77-4d6e-95a8-44e28fcbbda7",
+    "name": "Jesco",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "5ad8aa9b-5274-4ac5-81d4-880d0986d81b",
+    "name": "JOOLA",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "1faf08cd-1180-4e52-9d6f-84ef05bace31",
+    "name": "KASON",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "8f9cefab-e09c-4f5c-a710-67abde190264",
+    "name": "KATCHET",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "2caebf63-af59-4c3a-93d2-95c75cebb4e5",
+    "name": "KAY KAY",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "3ee6be5c-c4c5-4c01-b34a-9e5fd16dcc2c",
+    "name": "KEEPTOP",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "88024546-f499-4ec1-8487-8d140e5a882b",
+    "name": "Kely",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "4194e164-ec3a-4970-84e4-0e201a056f9d",
+    "name": "KEY SUN",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "456fa09b-9d56-46b0-8ec7-8f22d03dc994",
+    "name": "KOOKABURRA",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "5a3217c6-6efc-4bb5-ab21-d833a0dbba09",
+    "name": "LEGEND",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "e1a395f3-de75-491b-9646-f87cb819230b",
+    "name": "LEHAR",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "136d0ede-d362-459d-902f-2f026a195fad",
+    "name": "LINING",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "c79773e2-8802-452f-a507-4276b78ec6fa",
+    "name": "LP SUPPORT",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "eef49eda-0baa-4902-b34d-c4b333289d6f",
+    "name": "Lycot",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "847e9948-0c05-44c1-9bd0-0d306a77702a",
+    "name": "MAJESTIC",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "56cf0421-8d48-4798-8ccd-5456dcad7860",
+    "name": "MASURI",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "d8cf310c-7c42-4ee9-983c-dc4a4a186764",
+    "name": "MIKADO",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "9f6ec3a1-c908-403c-b008-eb40ce9c430e",
+    "name": "MK",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "35454f5b-fe85-4e90-b6d1-0e8f46b820a3",
+    "name": "MOONWALKR",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "7f8c4918-903d-4595-aea7-24d254fa6729",
+    "name": "MORRANT",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "726768bd-1c39-4d19-9502-7228a5d67fa6",
+    "name": "MRF",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "21cb8788-f896-4442-a4f1-247bda904756",
+    "name": "NARAYANAN",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "09c97ad1-b53d-4f81-8450-fc8f8244881b",
+    "name": "NATURENCE HERBALS",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "e8726a0e-38ca-4871-8fff-c5545a1e5df9",
+    "name": "Navketan",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "11f83ce7-04fd-49a9-9ca0-779a4f2f5319",
+    "name": "NAWAB",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "9edcceb6-b549-48c8-a0e1-a362b3e22751",
+    "name": "Nelco",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "3497f056-ba5e-4cb6-a535-277388da3ddb",
+    "name": "NERF",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "677bd892-6e49-4f48-a391-ab096a45add5",
+    "name": "NEW BALANCE",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "17a7e126-bc5e-4308-8988-6ee21d33bfe8",
+    "name": "Newgy",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "2ff134e9-92af-4892-bd52-030a6a1e2d21",
+    "name": "NIKE",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "f7581150-3837-4654-8146-29d3c2ce3bda",
+    "name": "Nivia",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "1ec14a38-79a1-45a0-ab92-8b72697ee962",
+    "name": "NLW",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "9c4b7250-dffc-4167-a447-eb0c9dd84557",
+    "name": "OAKLEY",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "79932aaf-3b8e-48df-a0bd-1ae3e7af3a1f",
+    "name": "OMTEX",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "910d04f6-3b89-43d5-a124-205ee652a5b0",
+    "name": "PACER",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "34d16e83-fcbb-4597-a205-d2c2f3d86b14",
+    "name": "PELMA",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "d2df69ab-1da7-404b-bd4f-fa807b23c888",
+    "name": "Piccion",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "bea414b3-3733-43c8-bf3b-ee3d75dc707b",
+    "name": "Precise",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "5d3524f6-0a88-45a5-ae64-830f1887c0d4",
+    "name": "PRINCE",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "e4269bc7-8810-4808-b69b-0def3d8a7adb",
+    "name": "PROASE",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "8be66a8a-2dbd-4d17-bb22-c14b358deab8",
+    "name": "PROKENNEX",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "f1911225-4342-4312-8ca5-66bc066dca65",
+    "name": "PUMA",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "663faf17-c3b7-4fd7-8217-ae182cb12bf2",
+    "name": "RACER",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "d8897240-9e9d-4ac0-9c89-3b309781647a",
+    "name": "Rajan",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "b5970766-c8ad-49ac-842e-aea96e2f57eb",
+    "name": "RCB",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "05b7218c-c1a6-4c31-8fe1-a001bb3fe374",
+    "name": "REEBOK",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "f2c27b2c-bf33-4392-acfa-ed5ce4b2824d",
+    "name": "Remfry",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "871c8b97-8196-4340-8523-dfbc59228916",
+    "name": "RNS",
+    "category_id": "44a84765-e75b-48cb-b1b4-f0792d5ce188",
+    "sub_category_id": 4
+  },
+  {
+    "id": "cdd93ca0-ba32-488d-bbe2-a7f592cfff41",
+    "name": "ROHIT",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "87da3ae6-3522-4049-96f5-760ed71fd6ac",
+    "name": "Royal Touch",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "b84b39c0-f79a-4ff1-b4f5-2f2cda9527cf",
+    "name": "RSE",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "e3bf2c86-6ed8-499d-a7e6-6c0b72e5d0a8",
+    "name": "RSL",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "e285e7fe-5c67-42b8-8ea5-c6b3f051dfac",
+    "name": "Sega",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "e9367743-dd2f-4bfa-a533-59cd277a924d",
+    "name": "SF",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "0a5be076-2062-4e58-af4d-58ddd17af921",
+    "name": "SG",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "2763c4dc-03c5-43bd-9171-87ce180d12e5",
+    "name": "SHREY",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "113904d5-308f-43aa-b0e8-10c3d750081d",
+    "name": "SIDEARM",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "3aea0dbe-10e0-4363-a959-784eca6b8e7c",
+    "name": "SILVERS",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "30acc38c-0f58-4d9b-838b-6dca243f65d9",
+    "name": "Skechers",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "688c3758-3e91-4e32-9064-a978ec32e025",
+    "name": "SLAZENGER",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "c4470a73-2bdd-490f-887c-02d39ce65c3a",
+    "name": "SM",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "022ac169-aae8-4570-b079-ce61dcfe7ea8",
+    "name": "SPADA",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "bc44eb2c-c1bc-48d1-868e-4db82b1666c7",
+    "name": "SPALDING",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "22bd76d7-8c09-4537-a756-5949cebe59c8",
+    "name": "Specton",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "bb8fb766-5d70-4a51-83af-f2ec31a2c4a0",
+    "name": "SPEEDO",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "c9b13e33-1c87-48b0-80f9-257caff1ad1d",
+    "name": "SPORTIFF",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "946a073c-9fbf-40b1-9df4-9ac248bc4f33",
+    "name": "SS",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "8f3c8a42-0d0d-45df-93ca-c435f9c1be4b",
+    "name": "STAG",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "fe83fd5b-a010-4225-8bcb-3367e15aa227",
+    "name": "STAR IMPACT",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "8c506d3d-bb45-45df-bf6d-37fe8712e177",
+    "name": "STIGA",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "6c976f7b-fbcf-4dc8-a391-a70a49aab22a",
+    "name": "SUNDEEP",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "28bd31b3-e14f-42a7-af68-8f8eab1e34a0",
+    "name": "SUPREME",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "49cf819a-2cf8-4049-9bc2-dc19d91914e6",
+    "name": "SUPREMO",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "53060cbd-2837-4f8d-ab2f-b440056dd65f",
+    "name": "SURCO",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "d0ece5bc-fe9a-4309-8bc9-45b2192f00f5",
+    "name": "SWIFT",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "f395ce68-b5be-4dc9-83e8-cbcfc174d7bb",
+    "name": "Swinga `",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "276e83a9-71cb-4712-9083-b680c53bbfbe",
+    "name": "TELLER",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "43bfda43-028e-4977-b0db-7c5b7bb2deba",
+    "name": "THE PAVILION SPECIAL",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "5fe2c33a-21b9-46c1-8f35-48b3d9213d0a",
+    "name": "TIBHAR",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "6247e914-f6b3-48a1-8f55-41eb1c1e1a42",
+    "name": "TKS",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "cd7b44e0-af13-458c-afd9-96676d0e7ac4",
+    "name": "TOPSUN",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "b452dddf-86b1-44ca-901b-2113d13a3b01",
+    "name": "TRIUMPH",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "7d633b3c-0602-4dd5-82db-49655bfe5198",
+    "name": "TSP",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "1acfcfe2-5428-45ec-961b-3fe1bb095946",
+    "name": "Turbo",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "4221c487-a7db-499f-9c95-14309a7b16ee",
+    "name": "Tyka",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "580f5a0b-10df-48d7-bff9-a73c692d8390",
+    "name": "Tynor",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "faf72661-203f-4bbf-aa0d-1f0c28200fa6",
+    "name": "TYR",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "103e4bce-60e6-4c95-9321-ac0330baad68",
+    "name": "Unico",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "80bf0597-bfc1-45e1-87a4-1a98f0d58481",
+    "name": "UNICORN",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "017bfd55-ce2a-4777-9504-5eb61cbc341b",
+    "name": "UNIQUE",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "3fbf536c-a9cf-4b50-a0e9-cd5d109529ee",
+    "name": "USI",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "dd964eeb-4ffa-4776-a63f-efc67804d410",
+    "name": "VECTOR X",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "f46cc437-e8cc-4f0d-add5-5e04d27acde7",
+    "name": "VELOZ",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "2fd7c2df-2507-4762-9e20-114d66539239",
+    "name": "Versant",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "2618378b-9a1a-41a7-b63e-51d9fa60385e",
+    "name": "Vicky",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "feafc4a2-0fd5-4bf9-b40b-c2c9c03f042c",
+    "name": "VIJAYANTHI",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "7e234b2f-57c8-43a3-96cc-cf0203da6b49",
+    "name": "VIVA",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "6ca59a18-8ca0-4d0e-ba3f-2cc4ecbef661",
+    "name": "Vixen",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "25031b86-c4fc-4e21-9583-7788ba326a2b",
+    "name": "VIZAVI",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "36d25fbc-1be6-44d3-bdbb-ab41c4d499b7",
+    "name": "WILSON",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "49a7cfc2-ae87-424e-b66b-45cc2c5ca091",
+    "name": "WINMAC",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "7f19f5de-be72-4e5b-b636-e8575b979238",
+    "name": "WISDEN",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "a4112114-f42e-426c-8794-95f2658d3de3",
+    "name": "YASAKA",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "897f5296-53cc-4cc9-a5e8-de27a949a86e",
+    "name": "YONEX",
+    "category_id": null,
+    "sub_category_id": null
+  },
+  {
+    "id": "4c5b2adb-1be2-4a3a-ac76-3a7cf128f8ee",
+    "name": "YONKER",
+    "category_id": null,
+    "sub_category_id": null
+  }
+]
+
