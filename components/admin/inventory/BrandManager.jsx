@@ -107,18 +107,12 @@ export function BrandManager() {
         e.preventDefault()
         const formData = new FormData(e.target)
 
-        // Validate hierarchy
-        if (!selectedCategoryId || !selectedSubCategoryId) {
-            toast.error('Please select both Category and Sub-category')
-            return
-        }
-
         const data = {
             name: formData.get('name'),
             image_url: bannerUrl,
             logo_url: logoUrl,
-            category_id: selectedCategoryId,
-            sub_category_id: selectedSubCategoryId
+            category_id: selectedCategoryId || null,
+            sub_category_id: selectedSubCategoryId || null
         }
 
         if (editingBrand) {
@@ -238,11 +232,11 @@ export function BrandManager() {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <Label>Category *</Label>
+                                <Label>Category (Optional)</Label>
                                 <Select
-                                    value={selectedCategoryId}
+                                    value={selectedCategoryId || 'none'}
                                     onValueChange={(val) => {
-                                        setSelectedCategoryId(val)
+                                        setSelectedCategoryId(val === 'none' ? '' : val)
                                         setSelectedSubCategoryId('') // Reset sub-cat
                                     }}
                                 >
@@ -250,6 +244,7 @@ export function BrandManager() {
                                         <SelectValue placeholder="Select Category" />
                                     </SelectTrigger>
                                     <SelectContent>
+                                        <SelectItem value="none">None (Global Brand)</SelectItem>
                                         {categories.map(c => (
                                             <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
                                         ))}
@@ -257,16 +252,19 @@ export function BrandManager() {
                                 </Select>
                             </div>
                             <div>
-                                <Label>Sub-Category *</Label>
+                                <Label>Sub-Category (Optional)</Label>
                                 <Select
-                                    value={selectedSubCategoryId}
-                                    onValueChange={setSelectedSubCategoryId}
-                                    disabled={!selectedCategoryId}
+                                    value={selectedSubCategoryId || 'none'}
+                                    onValueChange={(val) => {
+                                        setSelectedSubCategoryId(val === 'none' ? '' : val)
+                                    }}
+                                    disabled={!selectedCategoryId || selectedCategoryId === 'none'}
                                 >
                                     <SelectTrigger className="mt-1">
                                         <SelectValue placeholder="Select Sub-Category" />
                                     </SelectTrigger>
                                     <SelectContent>
+                                        <SelectItem value="none">None (Global Brand)</SelectItem>
                                         {subCategories.map(s => (
                                             <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>
                                         ))}
