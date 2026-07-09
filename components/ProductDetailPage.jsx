@@ -536,6 +536,12 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
                   {product.name}
                 </h1>
 
+                {product.short_description && (
+                  <p className="text-sm lg:text-base text-slate-600 leading-relaxed mb-4">
+                    {product.short_description}
+                  </p>
+                )}
+
                 <div className="flex items-center gap-4 mb-6">
                   <div className="flex items-center gap-1 bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-bold">
                     <span className="text-sm">4.8</span>
