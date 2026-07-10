@@ -431,7 +431,7 @@ export function ProductForm({ product, onCancel, onSuccess }) {
 
                             <div className="space-y-2">
                                 <Label>Short Description</Label>
-                                <Input {...register('short_description')} placeholder="Brief overview for cards..." />
+                                <Textarea {...register('short_description')} className="min-h-[80px]" placeholder="Brief overview for cards..." />
                             </div>
 
                             <div className="space-y-2">

@@ -537,7 +537,7 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
                 </h1>
 
                 {product.short_description && (
-                  <p className="text-sm lg:text-base text-slate-600 leading-relaxed mb-4">
+                  <p className="text-sm lg:text-base text-slate-600 leading-relaxed mb-4 whitespace-pre-line">
                     {product.short_description}
                   </p>
                 )}
