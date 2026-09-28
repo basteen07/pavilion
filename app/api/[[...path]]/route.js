@@ -335,6 +335,14 @@ async function handleRoute(request, { params }) {
       return import('@/lib/api/products').then(async m => m.bulkUploadProducts(await request.json()));
     }
 
+    // SECURITY: Require admin auth for product export (bulk edit download)
+    if (route === '/products/export' && method === 'GET') {
+      const { user, errorResponse } = await requireAdmin(request);
+      if (errorResponse) return errorResponse;
+      const url = new URL(request.url);
+      return import('@/lib/api/products').then(m => m.exportProducts(url.searchParams));
+    }
+
     if (route === '/products/delete-all' && method === 'DELETE') {
       const user = await authenticateRequest(request);
       if (!user || user.role_name !== 'superadmin') {

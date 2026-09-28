@@ -14,6 +14,79 @@ import { apiCall } from '@/lib/api-client'
 import { Progress } from "@/components/ui/progress"
 import { useQueryClient } from '@tanstack/react-query'
 
+// Template / export layout. Column letters (A..AF) are referenced by the dropdown validations below.
+const TEMPLATE_COLUMNS = [
+    { header: 'Product Handle (Optional)', key: 'product_handle', width: 25 }, // A
+    { header: 'Product Name *', key: 'product_name', width: 40 },              // B
+    { header: 'SKU *', key: 'sku', width: 20 },                                // C
+    { header: 'Option1 Name', key: 'option1_name', width: 15 },                // D
+    { header: 'Option1 Value', key: 'option1_value', width: 15 },              // E
+    { header: 'Option2 Name', key: 'option2_name', width: 15 },                // F
+    { header: 'Option2 Value', key: 'option2_value', width: 15 },              // G
+    { header: 'Option3 Name', key: 'option3_name', width: 15 },                // H
+    { header: 'Option3 Value', key: 'option3_value', width: 15 },              // I
+    { header: 'Option4 Name', key: 'option4_name', width: 15 },                // J
+    { header: 'Option4 Value', key: 'option4_value', width: 15 },              // K
+    { header: 'Size', key: 'size', width: 10 },                                // L
+    { header: 'Color', key: 'color', width: 15 },                              // M
+    { header: 'MRP Price *', key: 'mrp_price', width: 15 },                    // N
+    { header: 'Dealer Price', key: 'dealer_price', width: 15 },                // O
+    { header: 'Counter Price', key: 'counter_price', width: 15 },              // P
+    { header: 'Recommended Price', key: 'recommended_price', width: 15 },      // Q
+    { header: 'Shop Price', key: 'shop_price', width: 15 },                    // R
+    { header: 'Collection', key: 'collection', width: 20 },                    // S
+    { header: 'Category *', key: 'category', width: 20 },                      // T
+    { header: 'Sub-Category', key: 'sub_category', width: 20 },                // U
+    { header: 'Tag', key: 'tag', width: 20 },                                  // V
+    { header: 'Brand *', key: 'brand', width: 20 },                            // W
+    { header: 'Description', key: 'description', width: 50 },                  // X
+    { header: 'Short Description', key: 'short_description', width: 30 },      // Y
+    { header: 'HSN Code', key: 'hsn_code', width: 15 },                        // Z
+    { header: 'Tax Class', key: 'tax_class', width: 15 },                      // AA
+    { header: 'Buy URL', key: 'buy_url', width: 30 },                          // AB
+    { header: 'Unit/UoM', key: 'unit', width: 10 },                            // AC
+    { header: 'Images', key: 'images', width: 40 },                            // AD
+    { header: 'Active', key: 'is_active', width: 10 },                         // AE
+    { header: 'Featured', key: 'is_featured', width: 10 }                      // AF
+]
+
+// Normalised header (lowercase, no spaces/symbols/"(optional)") -> row field.
+// Accepts the template headers, older templates and snake_case keys.
+const HEADER_ALIASES = {
+    producthandle: 'product_handle', handle: 'product_handle',
+    productname: 'product_name', name: 'product_name',
+    sku: 'sku',
+    option1name: 'option1_name', option1value: 'option1_value',
+    option2name: 'option2_name', option2value: 'option2_value',
+    option3name: 'option3_name', option3value: 'option3_value',
+    option4name: 'option4_name', option4value: 'option4_value',
+    size: 'size', color: 'color', colour: 'color',
+    mrpprice: 'mrp_price', mrp: 'mrp_price',
+    dealerprice: 'dealer_price', counterprice: 'counter_price', recommendedprice: 'recommended_price',
+    shopprice: 'shop_price', sellingprice: 'shop_price',
+    collection: 'collection', category: 'category', subcategory: 'sub_category', tag: 'tag', brand: 'brand',
+    description: 'description', shortdescription: 'short_description',
+    hsncode: 'hsn_code', hsn: 'hsn_code',
+    taxclass: 'tax_class', tax: 'tax_class', gst: 'tax_class', gstpercentage: 'tax_class',
+    buyurl: 'buy_url',
+    unituom: 'unit', unit: 'unit', uom: 'unit',
+    images: 'images', image: 'images',
+    active: 'is_active', isactive: 'is_active',
+    featured: 'is_featured', isfeatured: 'is_featured'
+}
+
+const normalizeHeader = (h) => String(h).toLowerCase().replace(/\(optional\)/g, '').replace(/[^a-z0-9]/g, '')
+
+// Must match the server's grouping so a product and its variants always travel in the same batch
+const productGroupKey = (row) => {
+    const handle = String(row.product_handle ?? '').trim()
+    if (handle) return `h:${handle}`
+    const name = String(row.product_name ?? '').trim().toLowerCase()
+    return name ? `n:${name}` : `s:${String(row.sku ?? '').trim()}`
+}
+
+const BATCH_SIZE = 500
+
 function GridBrandSelect({ row, availableBrands, updateGridRow }) {
     const [open, setOpen] = useState(false)
     return (
@@ -51,8 +124,14 @@ export function BulkUploadDialog({ open, onOpenChange }) {
     const [processedTotal, setProcessedTotal] = useState(0)
     const [results, setResults] = useState(null)
     const [masters, setMasters] = useState(null)
-    const [view, setView] = useState('upload') // 'upload' or 'grid'
+    const [view, setView] = useState('upload') // 'upload' | 'grid' | 'export'
     const [gridData, setGridData] = useState([])
+    // 'create_only': existing SKUs are skipped | 'upsert': existing SKUs get the changed values
+    const [uploadMode, setUploadMode] = useState('create_only')
+    const [exportFilters, setExportFilters] = useState({
+        collection_id: '', category_id: '', sub_category_id: '', brand_id: '', status: 'all', search: ''
+    })
+    const [exporting, setExporting] = useState(false)
     const queryClient = useQueryClient()
 
     useEffect(() => {
@@ -75,334 +154,291 @@ export function BulkUploadDialog({ open, onOpenChange }) {
             setFile(selectedFile)
             setResults(null)
         }
+        // Allow re-selecting the same (edited) file later
+        e.target.value = ''
     }
 
-    const downloadTemplate = async (format = 'xls') => {
+    // Builds the Excel workbook with dropdowns. dataRows are objects keyed by TEMPLATE_COLUMNS keys.
+    const buildWorkbook = (dataRows) => {
+        const workbook = new ExcelJS.Workbook()
+        const templateSheet = workbook.addWorksheet('Product Template')
+        const masterSheet = workbook.addWorksheet('MasterLists')
+
+        templateSheet.columns = TEMPLATE_COLUMNS
+
+        // Keep SKU and HSN as text so leading zeros / long numbers survive editing
+        templateSheet.getColumn('C').numFmt = '@'
+        templateSheet.getColumn('Z').numFmt = '@'
+
+        // Style headers
+        templateSheet.getRow(1).font = { bold: true }
+        templateSheet.getRow(1).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFE0E0E0' }
+        }
+
+        // Add Note for Variants
+        templateSheet.getCell('A1').note = {
+            texts: [
+                { font: { bold: true }, text: 'Variant Grouping:\n' },
+                { text: '1. (Recommended) Use the same "Product Handle" for variants.\n' },
+                { text: '2. (Alternative) Use the same "Product Name" (rows must be together) to group variants automatically if handle is empty.\n' },
+                { font: { bold: true }, text: 'Updating: ' },
+                { text: 'SKU identifies the product. Blank cells keep the current value.' }
+            ]
+        }
+
+        dataRows.forEach(row => templateSheet.addRow(row))
+
+        // Improved sanitization for Excel compliance
+        const sanitize = (name) => {
+            let s = name
+                .toLowerCase()
+                .replace(/[^a-z0-9]/g, '_')
+                .replace(/_+/g, '_')
+                .replace(/^_|_$/g, '') || 'unnamed';
+            // Excel names cannot start with a number
+            if (/^[0-9]/.test(s)) s = '_' + s;
+            return s;
+        }
+
+        // MasterLists Populating
+        // 1. Collections (Column A)
+        const colList = (masters?.collections?.length || 0) > 0 ? masters.collections.map(c => c.name) : ['No Collections']
+        masterSheet.getColumn(1).values = ['Collections', ...colList]
+        workbook.definedNames.add(`MasterLists!$A$2:$A$${colList.length + 1}`, 'CollectionList')
+
+        // 2. Global Lists (all items for fallback)
+        const allCats = (masters?.categories?.length || 0) > 0 ? masters.categories.map(c => c.name) : ['No Categories']
+        const allSubs = (masters?.subCategories?.length || 0) > 0 ? masters.subCategories.map(s => s.name) : ['No Sub-Categories']
+        const allTgs = (masters?.tags?.length || 0) > 0 ? masters.tags.map(t => t.name) : ['No Tags']
+
+        masterSheet.getColumn(8).values = ['AllCategories', ...allCats]
+        workbook.definedNames.add(`MasterLists!$H$2:$H$${allCats.length + 1}`, 'AllCategoryList')
+
+        masterSheet.getColumn(9).values = ['AllSubCategories', ...allSubs]
+        workbook.definedNames.add(`MasterLists!$I$2:$I$${allSubs.length + 1}`, 'AllSubCategoryList')
+
+        masterSheet.getColumn(10).values = ['AllTags', ...allTgs]
+        workbook.definedNames.add(`MasterLists!$J$2:$J$${allTgs.length + 1}`, 'AllTagList')
+
+        // 3. Mapping Tables for VLOOKUP
+        // Collection -> Category Mapping (Cols B & C)
+        const collCatMap = (masters?.collections || []).map(coll => [coll.name, sanitize('cat_' + coll.name)])
+        masterSheet.getColumn(2).values = ['Collection', ...collCatMap.map(r => r[0])]
+        masterSheet.getColumn(3).values = ['RangeName', ...collCatMap.map(r => r[1])]
+        workbook.definedNames.add(`MasterLists!$B$2:$C$${Math.max(2, collCatMap.length + 1)}`, 'CollectionCategoryMap')
+
+        // Category -> Sub-Category Mapping (Cols D & E)
+        const catSubMap = (masters?.categories || []).map(cat => [cat.name, sanitize('sub_' + cat.name)])
+        masterSheet.getColumn(4).values = ['Category', ...catSubMap.map(r => r[0])]
+        masterSheet.getColumn(5).values = ['RangeName', ...catSubMap.map(r => r[1])]
+        workbook.definedNames.add(`MasterLists!$D$2:$E$${Math.max(2, catSubMap.length + 1)}`, 'CategorySubCategoryMap')
+
+        // Sub-Category -> Tag Mapping (Cols F & G)
+        const subTagMap = (masters?.subCategories || []).map(sub => [sub.name, sanitize('tag_' + sub.name)])
+        masterSheet.getColumn(6).values = ['SubCategory', ...subTagMap.map(r => r[0])]
+        masterSheet.getColumn(7).values = ['RangeName', ...subTagMap.map(r => r[1])]
+        workbook.definedNames.add(`MasterLists!$F$2:$G$${Math.max(2, subTagMap.length + 1)}`, 'SubCategoryTagMap')
+
+        // 4. Brands (Column K)
+        const brandList = Array.from(
+            new Set(
+                (masters?.brands || [])
+                    .map(b => (b?.name || '').toString().trim())
+                    .filter(Boolean)
+            )
+        ).sort((a, b) => a.localeCompare(b))
+        const finalBrandList = brandList.length > 0 ? brandList : ['Generic']
+        masterSheet.getColumn(11).values = ['Brands', ...finalBrandList]
+        workbook.definedNames.add(`MasterLists!$K$2:$K$${finalBrandList.length + 1}`, 'BrandList')
+
+        // 5. Static Lists (Tax, Active, Featured)
+        const taxRates = ['0', '5', '12', '18', '28']
+        const bools = ['TRUE', 'FALSE']
+        masterSheet.getColumn(30).values = ['TaxRates', ...taxRates] // Col AD
+        workbook.definedNames.add(`MasterLists!$AD$2:$AD$${taxRates.length + 1}`, 'TaxRateList')
+
+        masterSheet.getColumn(31).values = ['Booleans', ...bools] // Col AE
+        workbook.definedNames.add(`MasterLists!$AE$2:$AE$${bools.length + 1}`, 'BooleanList')
+
+        // 6. Child Ranges (Start from Col M)
+        let currentCol = 13;
+
+        // Categories by Collection
+        (masters?.collections || []).forEach(coll => {
+            const cats = (masters?.categories || []).filter(c => c.parent_collection_id === coll.id).map(c => c.name);
+            const list = cats.length > 0 ? cats : ['No Categories'];
+            masterSheet.getColumn(currentCol).values = [coll.name, ...list];
+            workbook.definedNames.add(`MasterLists!$${masterSheet.getColumn(currentCol).letter}$2:$${masterSheet.getColumn(currentCol).letter}$${list.length + 1}`, sanitize('cat_' + coll.name));
+            currentCol++;
+        });
+
+        // Sub-Categories by Category
+        (masters?.categories || []).forEach(cat => {
+            const subs = (masters?.subCategories || []).filter(s => s.category_id === cat.id).map(s => s.name);
+            const list = subs.length > 0 ? subs : ['No Sub-Categories'];
+            masterSheet.getColumn(currentCol).values = [cat.name, ...list];
+            workbook.definedNames.add(`MasterLists!$${masterSheet.getColumn(currentCol).letter}$2:$${masterSheet.getColumn(currentCol).letter}$${list.length + 1}`, sanitize('sub_' + cat.name));
+            currentCol++;
+        });
+
+        // Tags by Sub-Category
+        (masters?.subCategories || []).forEach(sub => {
+            const tgs = (masters?.tags || []).filter(t => t.sub_category_id === sub.id).map(t => t.name);
+            const list = tgs.length > 0 ? tgs : ['No Tags'];
+            masterSheet.getColumn(currentCol).values = [sub.name, ...list];
+            workbook.definedNames.add(`MasterLists!$${masterSheet.getColumn(currentCol).letter}$2:$${masterSheet.getColumn(currentCol).letter}$${list.length + 1}`, sanitize('tag_' + sub.name));
+            currentCol++;
+        });
+
+        // Keep brand list global in template to always show all brands
+
+        // Unit List (Added to master)
+        const unitList = ['1', 'pair', 'Nos', 'Kg', 'Ltr', 'Pcs']
+        masterSheet.getColumn(32).values = ['Units', ...unitList] // Col AF
+        workbook.definedNames.add(`MasterLists!$AF$2:$AF$${unitList.length + 1}`, 'UnitList')
+
+        // Empty List (for failed lookups)
+        masterSheet.getCell('AG2').value = '- No Matches -'
+        workbook.definedNames.add('MasterLists!$AG$2:$AG$2', 'EmptyList')
+
+        // Apply Data Validation to the data rows plus 100 empty rows
+        const lastRow = dataRows.length + 101
+        for (let i = 2; i <= lastRow; i++) {
+            // Collection (Column S)
+            templateSheet.getCell(`S${i}`).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: ['=CollectionList'],
+                showErrorMessage: true,
+                errorTitle: 'Invalid Collection',
+                error: 'Please select a collection from the list'
+            }
+
+            // Category (Column T) - Cascading
+            templateSheet.getCell(`T${i}`).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: [`=IF(S${i}="", AllCategoryList, IF(ISERROR(VLOOKUP(S${i}, CollectionCategoryMap, 2, FALSE)), EmptyList, INDIRECT(VLOOKUP(S${i}, CollectionCategoryMap, 2, FALSE))))`],
+                showErrorMessage: true,
+                errorTitle: 'Invalid Category',
+                error: 'Please select a category from the list'
+            }
+
+            // Sub-Category (Column U) - Cascading
+            templateSheet.getCell(`U${i}`).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: [`=IF(T${i}="", AllSubCategoryList, IF(ISERROR(VLOOKUP(T${i}, CategorySubCategoryMap, 2, FALSE)), EmptyList, INDIRECT(VLOOKUP(T${i}, CategorySubCategoryMap, 2, FALSE))))`],
+                showErrorMessage: true,
+                errorTitle: 'Invalid Sub-Category',
+                error: 'Please select a sub-category from the list'
+            }
+
+            // Tag (Column V) - Cascading
+            templateSheet.getCell(`V${i}`).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: [`=IF(U${i}="", AllTagList, IF(ISERROR(VLOOKUP(U${i}, SubCategoryTagMap, 2, FALSE)), EmptyList, INDIRECT(VLOOKUP(U${i}, SubCategoryTagMap, 2, FALSE))))`],
+                showErrorMessage: true,
+                errorTitle: 'Invalid Tag',
+                error: 'Please select a tag from the list'
+            }
+
+            // Brand (Column W) - Global List
+            templateSheet.getCell(`W${i}`).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: ['=BrandList'],
+                showErrorMessage: true,
+                errorTitle: 'Invalid Brand',
+                error: 'Please select a brand from the list'
+            }
+
+            // Tax (Column AA)
+            templateSheet.getCell(`AA${i}`).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: ['=TaxRateList'],
+                showErrorMessage: true,
+                errorTitle: 'Invalid Tax',
+                error: 'Please select a tax rate'
+            }
+
+            // Unit (Column AC)
+            templateSheet.getCell(`AC${i}`).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: ['=UnitList'],
+                showErrorMessage: true,
+                errorTitle: 'Invalid Unit',
+                error: 'Please select a unit from the list'
+            }
+
+            // Active / Featured (Columns AE, AF)
+            for (const col of ['AE', 'AF']) {
+                templateSheet.getCell(`${col}${i}`).dataValidation = {
+                    type: 'list',
+                    allowBlank: true,
+                    formulae: ['=BooleanList'],
+                    showErrorMessage: true,
+                    errorTitle: 'Invalid Value',
+                    error: 'Please select TRUE or FALSE'
+                }
+            }
+        }
+
+        // Hide master sheet
+        masterSheet.state = 'hidden'
+        return workbook
+    }
+
+    const saveWorkbook = async (workbook, fileName) => {
+        const buffer = await workbook.xlsx.writeBuffer()
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+        const url = window.URL.createObjectURL(blob)
+        const anchor = document.createElement('a')
+        anchor.href = url
+        anchor.download = fileName
+        anchor.click()
+        window.URL.revokeObjectURL(url)
+    }
+
+    const downloadTemplate = async () => {
+        if (!masters) {
+            toast.error('Master data not loaded yet. Please wait...')
+            return
+        }
         try {
-            if (format === 'csv') {
-                // Keep CSV simple with XLSX
-                const templateData = [{
-                    'Product Handle': 'example-product-1',
-                    'Product Name *': 'Example Product Name',
-                    'SKU *': 'SKU-001',
-                    'Option1 Name': 'Size',
-                    'Option1 Value': 'M',
-                    'MRP Price *': 999,
-                    'Dealer Price': 800,
-                    'Collection': masters?.collections?.[0]?.name || '',
-                    'Category': masters?.categories?.[0]?.name || '',
-                    'Sub-Category': masters?.subCategories?.[0]?.name || '',
-                    'Tag': masters?.tags?.[0]?.name || '',
-                    'Brand': masters?.brands?.[0]?.name || '',
-                    'Unit/UoM': 'Nos',
-                    'Description': 'Full description'
-                }]
-                const worksheet = XLSX.utils.json_to_sheet(templateData)
-                const workbook = XLSX.utils.book_new()
-                XLSX.utils.book_append_sheet(workbook, worksheet, 'Product Template')
-                XLSX.writeFile(workbook, 'pavilion_product_template.csv', { bookType: 'csv' })
-                toast.success('CSV Template downloaded!')
-                return
+            const sampleRow = {
+                product_handle: 'sample-product-1',
+                product_name: 'Sample Product T-Shirt',
+                sku: 'SKU-SAMPLE-001',
+                option1_name: 'Size',
+                option1_value: 'L',
+                option2_name: 'Color',
+                option2_value: 'Blue',
+                size: 'L',
+                color: 'Blue',
+                mrp_price: 1500,
+                dealer_price: 1000,
+                counter_price: 0,
+                recommended_price: 0,
+                shop_price: 0,
+                collection: masters.collections?.[0]?.name || '',
+                category: masters.categories?.[0]?.name || '',
+                brand: masters.brands?.[0]?.name || '',
+                description: 'This is a sample description.',
+                short_description: 'Sample Short Desc',
+                hsn_code: '999999',
+                tax_class: '18',
+                unit: '1',
+                is_active: 'TRUE',
+                is_featured: 'TRUE'
             }
-
-            if (!masters) {
-                toast.error('Master data not loaded yet. Please wait...')
-                return
-            }
-
-            // Advanced Excel with ExcelJS
-            const workbook = new ExcelJS.Workbook()
-            const templateSheet = workbook.addWorksheet('Product Template')
-            const masterSheet = workbook.addWorksheet('MasterLists')
-
-            // Define Columns
-            const columns = [
-                { header: 'Product Handle (Optional)', key: 'handle', width: 25 },
-                { header: 'Product Name *', key: 'name', width: 40 },
-                { header: 'SKU *', key: 'sku', width: 20 },
-                { header: 'Option1 Name', key: 'opt1n', width: 15 },
-                { header: 'Option1 Value', key: 'opt1v', width: 15 },
-                { header: 'Option2 Name', key: 'opt2n', width: 15 },
-                { header: 'Option2 Value', key: 'opt2v', width: 15 },
-                { header: 'Option3 Name', key: 'opt3n', width: 15 },
-                { header: 'Option3 Value', key: 'opt3v', width: 15 },
-                { header: 'Option4 Name', key: 'opt4n', width: 15 },
-                { header: 'Option4 Value', key: 'opt4v', width: 15 },
-                { header: 'Size', key: 'size', width: 10 },
-                { header: 'Color', key: 'color', width: 15 },
-                { header: 'MRP Price *', key: 'mrp', width: 15 },
-                { header: 'Dealer Price', key: 'dealer', width: 15 },
-                { header: 'Counter Price', key: 'counter', width: 15 },
-                { header: 'Recommended Price', key: 'rec', width: 15 },
-                { header: 'Shop Price', key: 'shop', width: 15 },
-                { header: 'Collection', key: 'coll', width: 20 },
-                { header: 'Category *', key: 'cat', width: 20 },
-                { header: 'Sub-Category', key: 'sub', width: 20 },
-                { header: 'Tag', key: 'tag', width: 20 },
-                { header: 'Brand *', key: 'brand', width: 20 },
-                { header: 'Description', key: 'desc', width: 50 },
-                { header: 'Short Description', key: 'short_desc', width: 30 },
-                { header: 'HSN Code', key: 'hsn', width: 15 },
-                { header: 'Tax Class', key: 'tax', width: 15 },
-                { header: 'Buy URL', key: 'url', width: 30 },
-                { header: 'Unit/UoM', key: 'unit', width: 10 },
-                { header: 'Images', key: 'imgs', width: 40 }
-            ]
-
-            // Apply columns and headers
-            templateSheet.columns = columns
-
-            // Style headers
-            templateSheet.getRow(1).font = { bold: true }
-            templateSheet.getRow(1).fill = {
-                type: 'pattern',
-                pattern: 'solid',
-                fgColor: { argb: 'FFE0E0E0' }
-            }
-
-            // Add Note for Variants
-            templateSheet.getCell('A1').note = {
-                texts: [
-                    { font: { bold: true }, text: 'Variant Grouping:\n' },
-                    { text: '1. (Recommended) Use the same "Product Handle" for variants.\n' },
-                    { text: '2. (Alternative) Use the same "Product Name" (rows must be together) to group variants automatically if handle is empty.' }
-                ]
-            }
-
-            // ADD SAMPLE ROW (Aligned with 28 columns)
-            const sampleRow = [
-                'sample-product-1', // A (Handle)
-                'Sample Product T-Shirt', // B (Name)
-                'SKU-SAMPLE-001', // C (SKU)
-                'Size', // D (Opt1 Name)
-                'L', // E (Opt1 Val)
-                'Color', // F (Opt2 Name)
-                'Blue', // G (Opt2 Val)
-                '', // H (Opt3 Name)
-                '', // I (Opt3 Val)
-                '', // J (Opt4 Name)
-                '', // K (Opt4 Val)
-                'L', // L (Size)
-                'Blue', // M (Color)
-                1500, // N (MRP)
-                1000, // O (Dealer)
-                0, // P (Counter)
-                0, // Q (Rec)
-                0, // R (Shop)
-                masters.collections?.[0]?.name || '', // S (Coll)
-                masters.categories?.[0]?.name || '',  // T (Cat)
-                '', // U (Sub)
-                '', // V (Tag)
-                masters.brands?.[0]?.name || '', // W (Brand)
-                'This is a sample description.', // X (Desc)
-                'Sample Short Desc', // Y (Short Desc)
-                '999999', // Z (HSN)
-                '18', // AA (Tax Class)
-                '', // AB (Buy URL)
-                '1', // AC (Unit)
-                '' // AD (Images)
-            ]
-            templateSheet.addRow(sampleRow)
-
-            // Improved sanitization for Excel compliance
-            const sanitize = (name) => {
-                let s = name
-                    .toLowerCase()
-                    .replace(/[^a-z0-9]/g, '_')
-                    .replace(/_+/g, '_')
-                    .replace(/^_|_$/g, '') || 'unnamed';
-                // Excel names cannot start with a number
-                if (/^[0-9]/.test(s)) s = '_' + s;
-                return s;
-            }
-
-            // MasterLists Populating
-            // 1. Collections (Column A)
-            const colList = (masters?.collections?.length || 0) > 0 ? masters.collections.map(c => c.name) : ['No Collections']
-            masterSheet.getColumn(1).values = ['Collections', ...colList]
-            workbook.definedNames.add(`MasterLists!$A$2:$A$${colList.length + 1}`, 'CollectionList')
-
-            // 2. Global Lists (all items for fallback)
-            const allCats = (masters?.categories?.length || 0) > 0 ? masters.categories.map(c => c.name) : ['No Categories']
-            const allSubs = (masters?.subCategories?.length || 0) > 0 ? masters.subCategories.map(s => s.name) : ['No Sub-Categories']
-            const allTgs = (masters?.tags?.length || 0) > 0 ? masters.tags.map(t => t.name) : ['No Tags']
-
-            masterSheet.getColumn(8).values = ['AllCategories', ...allCats]
-            workbook.definedNames.add(`MasterLists!$H$2:$H$${allCats.length + 1}`, 'AllCategoryList')
-
-            masterSheet.getColumn(9).values = ['AllSubCategories', ...allSubs]
-            workbook.definedNames.add(`MasterLists!$I$2:$I$${allSubs.length + 1}`, 'AllSubCategoryList')
-
-            masterSheet.getColumn(10).values = ['AllTags', ...allTgs]
-            workbook.definedNames.add(`MasterLists!$J$2:$J$${allTgs.length + 1}`, 'AllTagList')
-
-            // 3. Mapping Tables for VLOOKUP
-            // Collection -> Category Mapping (Cols B & C)
-            const collCatMap = (masters?.collections || []).map(coll => [coll.name, sanitize('cat_' + coll.name)])
-            masterSheet.getColumn(2).values = ['Collection', ...collCatMap.map(r => r[0])]
-            masterSheet.getColumn(3).values = ['RangeName', ...collCatMap.map(r => r[1])]
-            workbook.definedNames.add(`MasterLists!$B$2:$C$${Math.max(2, collCatMap.length + 1)}`, 'CollectionCategoryMap')
-
-            // Category -> Sub-Category Mapping (Cols D & E)
-            const catSubMap = (masters?.categories || []).map(cat => [cat.name, sanitize('sub_' + cat.name)])
-            masterSheet.getColumn(4).values = ['Category', ...catSubMap.map(r => r[0])]
-            masterSheet.getColumn(5).values = ['RangeName', ...catSubMap.map(r => r[1])]
-            workbook.definedNames.add(`MasterLists!$D$2:$E$${Math.max(2, catSubMap.length + 1)}`, 'CategorySubCategoryMap')
-
-            // Sub-Category -> Tag Mapping (Cols F & G)
-            const subTagMap = (masters?.subCategories || []).map(sub => [sub.name, sanitize('tag_' + sub.name)])
-            masterSheet.getColumn(6).values = ['SubCategory', ...subTagMap.map(r => r[0])]
-            masterSheet.getColumn(7).values = ['RangeName', ...subTagMap.map(r => r[1])]
-            workbook.definedNames.add(`MasterLists!$F$2:$G$${Math.max(2, subTagMap.length + 1)}`, 'SubCategoryTagMap')
-
-            // 4. Brands (Column K)
-            const brandList = Array.from(
-                new Set(
-                    (masters?.brands || [])
-                        .map(b => (b?.name || '').toString().trim())
-                        .filter(Boolean)
-                )
-            ).sort((a, b) => a.localeCompare(b))
-            const finalBrandList = brandList.length > 0 ? brandList : ['Generic']
-            masterSheet.getColumn(11).values = ['Brands', ...finalBrandList]
-            workbook.definedNames.add(`MasterLists!$K$2:$K$${finalBrandList.length + 1}`, 'BrandList')
-
-            // 5. Static Lists (Tax, Active, Featured)
-            const taxRates = ['0', '5', '12', '18', '28']
-            const bools = ['TRUE', 'FALSE']
-            masterSheet.getColumn(30).values = ['TaxRates', ...taxRates] // Col AD
-            workbook.definedNames.add(`MasterLists!$AD$2:$AD$${taxRates.length + 1}`, 'TaxRateList')
-
-            masterSheet.getColumn(31).values = ['Booleans', ...bools] // Col AE
-            workbook.definedNames.add(`MasterLists!$AE$2:$AE$${bools.length + 1}`, 'BooleanList')
-
-            // 6. Child Ranges (Start from Col M)
-            let currentCol = 13;
-
-            // Categories by Collection
-            (masters?.collections || []).forEach(coll => {
-                const cats = (masters?.categories || []).filter(c => c.parent_collection_id === coll.id).map(c => c.name);
-                const list = cats.length > 0 ? cats : ['No Categories'];
-                masterSheet.getColumn(currentCol).values = [coll.name, ...list];
-                workbook.definedNames.add(`MasterLists!$${masterSheet.getColumn(currentCol).letter}$2:$${masterSheet.getColumn(currentCol).letter}$${list.length + 1}`, sanitize('cat_' + coll.name));
-                currentCol++;
-            });
-
-            // Sub-Categories by Category
-            (masters?.categories || []).forEach(cat => {
-                const subs = (masters?.subCategories || []).filter(s => s.category_id === cat.id).map(s => s.name);
-                const list = subs.length > 0 ? subs : ['No Sub-Categories'];
-                masterSheet.getColumn(currentCol).values = [cat.name, ...list];
-                workbook.definedNames.add(`MasterLists!$${masterSheet.getColumn(currentCol).letter}$2:$${masterSheet.getColumn(currentCol).letter}$${list.length + 1}`, sanitize('sub_' + cat.name));
-                currentCol++;
-            });
-
-            // Tags by Sub-Category
-            (masters?.subCategories || []).forEach(sub => {
-                const tgs = (masters?.tags || []).filter(t => t.sub_category_id === sub.id).map(t => t.name);
-                const list = tgs.length > 0 ? tgs : ['No Tags'];
-                masterSheet.getColumn(currentCol).values = [sub.name, ...list];
-                workbook.definedNames.add(`MasterLists!$${masterSheet.getColumn(currentCol).letter}$2:$${masterSheet.getColumn(currentCol).letter}$${list.length + 1}`, sanitize('tag_' + sub.name));
-                currentCol++;
-            });
-
-            // Keep brand list global in template to always show all brands
-
-            // Unit List (Added to master)
-            const unitList = ['1', 'pair', 'Nos', 'Kg', 'Ltr', 'Pcs']
-            masterSheet.getColumn(32).values = ['Units', ...unitList] // Col AF
-            workbook.definedNames.add(`MasterLists!$AF$2:$AF$${unitList.length + 1}`, 'UnitList')
-
-            // Empty List (for failed lookups)
-            masterSheet.getCell('AG2').value = '- No Matches -'
-            workbook.definedNames.add('MasterLists!$AG$2:$AG$2', 'EmptyList')
-
-            // Apply Data Validation to 100 rows
-            for (let i = 2; i <= 101; i++) {
-                // Collection (Column S)
-                templateSheet.getCell(`S${i}`).dataValidation = {
-                    type: 'list',
-                    allowBlank: true,
-                    formulae: ['=CollectionList'],
-                    showErrorMessage: true,
-                    errorTitle: 'Invalid Collection',
-                    error: 'Please select a collection from the list'
-                }
-
-                // Category (Column T) - Cascading
-                templateSheet.getCell(`T${i}`).dataValidation = {
-                    type: 'list',
-                    allowBlank: true,
-                    formulae: [`=IF(S${i}="", AllCategoryList, IF(ISERROR(VLOOKUP(S${i}, CollectionCategoryMap, 2, FALSE)), EmptyList, INDIRECT(VLOOKUP(S${i}, CollectionCategoryMap, 2, FALSE))))`],
-                    showErrorMessage: true,
-                    errorTitle: 'Invalid Category',
-                    error: 'Please select a category from the list'
-                }
-
-                // Sub-Category (Column U) - Cascading
-                templateSheet.getCell(`U${i}`).dataValidation = {
-                    type: 'list',
-                    allowBlank: true,
-                    formulae: [`=IF(T${i}="", AllSubCategoryList, IF(ISERROR(VLOOKUP(T${i}, CategorySubCategoryMap, 2, FALSE)), EmptyList, INDIRECT(VLOOKUP(T${i}, CategorySubCategoryMap, 2, FALSE))))`],
-                    showErrorMessage: true,
-                    errorTitle: 'Invalid Sub-Category',
-                    error: 'Please select a sub-category from the list'
-                }
-
-                // Tag (Column V) - Cascading
-                templateSheet.getCell(`V${i}`).dataValidation = {
-                    type: 'list',
-                    allowBlank: true,
-                    formulae: [`=IF(U${i}="", AllTagList, IF(ISERROR(VLOOKUP(U${i}, SubCategoryTagMap, 2, FALSE)), EmptyList, INDIRECT(VLOOKUP(U${i}, SubCategoryTagMap, 2, FALSE))))`],
-                    showErrorMessage: true,
-                    errorTitle: 'Invalid Tag',
-                    error: 'Please select a tag from the list'
-                }
-
-                // Brand (Column W) - Global List
-                templateSheet.getCell(`W${i}`).dataValidation = {
-                    type: 'list',
-                    allowBlank: true,
-                    formulae: ['=BrandList'],
-                    showErrorMessage: true,
-                    errorTitle: 'Invalid Brand',
-                    error: 'Please select a brand from the list'
-                }
-
-                // Tax (Column AA)
-                templateSheet.getCell(`AA${i}`).dataValidation = {
-                    type: 'list',
-                    allowBlank: true,
-                    formulae: ['=TaxRateList'],
-                    showErrorMessage: true,
-                    errorTitle: 'Invalid Tax',
-                    error: 'Please select a tax rate'
-                }
-
-                // Unit (Column AC)
-                templateSheet.getCell(`AC${i}`).dataValidation = {
-                    type: 'list',
-                    allowBlank: true,
-                    formulae: ['=UnitList'],
-                    showErrorMessage: true,
-                    errorTitle: 'Invalid Unit',
-                    error: 'Please select a unit from the list'
-                }
-            }
-
-            // Hide master sheet
-            masterSheet.state = 'hidden'
-
-            // Write File
-            const buffer = await workbook.xlsx.writeBuffer()
-            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-            const url = window.URL.createObjectURL(blob)
-            const anchor = document.createElement('a')
-            anchor.href = url
-            anchor.download = 'pavilion_advanced_template.xlsx'
-            anchor.click()
-            window.URL.revokeObjectURL(url)
-
+            await saveWorkbook(buildWorkbook([sampleRow]), 'pavilion_advanced_template.xlsx')
             toast.success('Advanced Template downloaded with dropdowns!')
         } catch (error) {
             console.error('Template download error:', error)
@@ -410,55 +446,110 @@ export function BulkUploadDialog({ open, onOpenChange }) {
         }
     }
 
-    const handleGridSubmit = async () => {
-        if (gridData.length === 0) return;
-        setUploading(true);
-        setUploadProgress(0);
-        setProcessedTotal(0);
+    const downloadExport = async () => {
+        if (!masters) {
+            toast.error('Master data not loaded yet. Please wait...')
+            return
+        }
+        setExporting(true)
+        try {
+            const params = new URLSearchParams()
+            Object.entries(exportFilters).forEach(([k, v]) => { if (v && v !== 'all') params.append(k, v) })
+            const data = await apiCall(`/products/export?${params}`)
+            if (!data.rows?.length) {
+                toast.error('No products match these filters')
+                return
+            }
+            const date = new Date().toISOString().slice(0, 10)
+            await saveWorkbook(buildWorkbook(data.rows), `pavilion_products_${date}.xlsx`)
+            toast.success(`Exported ${data.products} products (${data.rows.length} SKUs)`)
+        } catch (error) {
+            console.error('Export error:', error)
+            toast.error(error.message || 'Failed to export products')
+        } finally {
+            setExporting(false)
+        }
+    }
 
-        let aggregateResults = {
+    // Sends rows in batches (a product and its variants are never split) and aggregates the results
+    const submitRows = async (rows) => {
+        setUploading(true)
+        setUploadProgress(0)
+        setProcessedTotal(0)
+
+        const groups = new Map()
+        rows.forEach(row => {
+            const k = productGroupKey(row)
+            if (!groups.has(k)) groups.set(k, [])
+            groups.get(k).push(row)
+        })
+        const batches = []
+        let current = []
+        for (const groupRows of groups.values()) {
+            if (current.length > 0 && current.length + groupRows.length > BATCH_SIZE) {
+                batches.push(current)
+                current = []
+            }
+            current.push(...groupRows)
+        }
+        if (current.length > 0) batches.push(current)
+
+        const totals = {
+            mode: uploadMode,
             created: 0,
             updated: 0,
             variants_created: 0,
             variants_updated: 0,
+            unchanged: 0,
             skipped: 0,
-            errors: []
-        };
-
-        const BATCH_SIZE = 500;
-        const totalRows = gridData.length;
+            errors: [],
+            warnings: []
+        }
+        let processed = 0
 
         try {
-            for (let i = 0; i < totalRows; i += BATCH_SIZE) {
-                const batch = gridData.slice(i, i + BATCH_SIZE);
-                const response = await apiCall('/products/bulk', {
-                    method: 'POST',
-                    body: JSON.stringify(batch)
-                });
-
-                aggregateResults.created += (response.created || 0);
-                aggregateResults.updated += (response.updated || 0);
-                aggregateResults.variants_created += (response.variants_created || 0);
-                aggregateResults.variants_updated += (response.variants_updated || 0);
-                aggregateResults.skipped += (response.skipped || 0);
-                if (response.errors) {
-                    aggregateResults.errors.push(...response.errors);
+            for (const batch of batches) {
+                try {
+                    const response = await apiCall('/products/bulk', {
+                        method: 'POST',
+                        body: JSON.stringify({ rows: batch, mode: uploadMode })
+                    })
+                    for (const k of ['created', 'updated', 'variants_created', 'variants_updated', 'unchanged', 'skipped']) {
+                        totals[k] += response[k] || 0
+                    }
+                    totals.errors.push(...(response.errors || []))
+                    totals.warnings.push(...(response.warnings || []))
+                } catch (err) {
+                    const rowNos = batch.map(r => r._row).filter(Boolean)
+                    const range = rowNos.length ? ` (rows ${Math.min(...rowNos)}-${Math.max(...rowNos)})` : ''
+                    totals.errors.push(`Batch failed${range}: ${err.message}`)
                 }
-
-                const processed = Math.min(i + BATCH_SIZE, totalRows);
-                setProcessedTotal(processed);
-                setUploadProgress(Math.round((processed / totalRows) * 100));
+                processed += batch.length
+                setProcessedTotal(processed)
+                setUploadProgress(Math.round((processed / rows.length) * 100))
             }
 
-            setResults(aggregateResults);
-            queryClient.invalidateQueries(['products']);
-            toast.success('Grid data processed successfully!');
-        } catch (error) {
-            console.error('Grid submit error:', error);
-            toast.error('Failed to submit grid data');
+            setResults(totals)
+            queryClient.invalidateQueries(['products'])
+
+            const changed = totals.created + totals.updated + totals.variants_created + totals.variants_updated
+            if (totals.errors.length === 0) {
+                toast.success(`Done: ${totals.created + totals.variants_created} added, ${totals.updated + totals.variants_updated} updated`)
+            } else if (changed > 0) {
+                toast.warning('Processed with some errors - see details')
+            } else if (totals.skipped > 0 || totals.unchanged > 0) {
+                toast.warning('No changes saved - see details')
+            } else {
+                toast.error('Failed to process any products')
+            }
         } finally {
-            setUploading(false);
+            setUploading(false)
         }
+    }
+
+    const handleGridSubmit = async () => {
+        if (gridData.length === 0) return;
+        await submitRows(gridData.map((row, index) => ({ ...row, _row: index + 1 })));
     }
 
     const addGridRow = () => {
@@ -518,115 +609,31 @@ export function BulkUploadDialog({ open, onOpenChange }) {
 
         setUploading(true)
         try {
-            const reader = new FileReader()
-            reader.onload = async (e) => {
-                try {
-                    const data = new Uint8Array(e.target.result)
-                    const workbook = XLSX.read(data, { type: 'array' })
-                    const sheetName = workbook.SheetNames[0]
-                    const worksheet = workbook.Sheets[sheetName]
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet)
+            const buffer = await file.arrayBuffer()
+            const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' })
+            const sheetName = workbook.SheetNames.includes('Product Template') ? 'Product Template' : workbook.SheetNames[0]
+            const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName])
 
-                    if (jsonData.length === 0) {
-                        toast.error('Excel file is empty')
-                        setUploading(false)
-                        return
-                    }
-
-                    // Map user-friendly headers to internal keys
-                    const mappedData = jsonData.map(row => ({
-                        product_handle: row['Product Handle'] || row.product_handle,
-                        product_name: row['Product Name *'] || row['Product Name'] || row.product_name,
-                        name: row['Product Name *'] || row['Product Name'] || row.name,
-                        sku: row['SKU *'] || row['SKU'] || row.sku,
-                        option1_name: row['Option1 Name'] || row.option1_name,
-                        option1_value: row['Option1 Value'] || row.option1_value,
-                        option2_name: row['Option2 Name'] || row.option2_name,
-                        option2_value: row['Option2 Value'] || row.option2_value,
-                        option3_name: row['Option3 Name'] || row.option3_name,
-                        option3_value: row['Option3 Value'] || row.option3_value,
-                        option4_name: row['Option4 Name'] || row.option4_name,
-                        option4_value: row['Option4 Value'] || row.option4_value,
-                        size: row['Size'] || row.size,
-                        color: row['Color'] || row.color,
-                        mrp_price: row['MRP Price *'] || row['MRP Price'] || row.mrp_price,
-                        dealer_price: row['Dealer Price'] || row.dealer_price,
-                        counter_price: row['Counter Price'] || row.counter_price,
-                        recommended_price: row['Recommended Price'] || row.recommended_price,
-                        shop_price: row['Shop Price'] || row['Selling Price'] || row.shop_price || row.selling_price,
-                        category: row['Category *'] || row['Category'] || row.category,
-                        sub_category: row['Sub-Category'] || row.sub_category,
-                        tag: row['Tag'] || row.tag,
-                        brand: row['Brand *'] || row['Brand'] || row.brand,
-                        collection: row['Collection'] || row.collection,
-                        unit: row['Unit/UoM'] || row['Unit'] || row.unit || row.uom,
-                        description: row['Description'] || row.description,
-                        short_description: row['Short Description'] || row.short_description,
-                        hsn_code: row['HSN Code'] || row.hsn_code,
-                        tax_class: row['Tax Class'] || row.tax_class,
-                        buy_url: row['Buy URL'] || row.buy_url,
-                        is_featured: true,
-                        is_active: true,
-                        images: row['Images'] || row.images
-                    }))
-
-                    const totalRows = mappedData.length;
-                    setUploadProgress(0);
-                    setProcessedTotal(0);
-
-                    let aggregateResults = {
-                        created: 0,
-                        updated: 0,
-                        variants_created: 0,
-                        variants_updated: 0,
-                        skipped: 0,
-                        errors: []
-                    };
-
-                    const BATCH_SIZE = 500;
-
-                    for (let i = 0; i < totalRows; i += BATCH_SIZE) {
-                        const batch = mappedData.slice(i, i + BATCH_SIZE);
-                        const response = await apiCall('/products/bulk', {
-                            method: 'POST',
-                            body: JSON.stringify(batch)
-                        });
-
-                        aggregateResults.created += (response.created || 0);
-                        aggregateResults.updated += (response.updated || 0);
-                        aggregateResults.variants_created += (response.variants_created || 0);
-                        aggregateResults.variants_updated += (response.variants_updated || 0);
-                        aggregateResults.skipped += (response.skipped || 0);
-                        if (response.errors) {
-                            aggregateResults.errors.push(...response.errors);
-                        }
-
-                        const processed = Math.min(i + BATCH_SIZE, totalRows);
-                        setProcessedTotal(processed);
-                        setUploadProgress(Math.round((processed / totalRows) * 100));
-                    }
-
-                    setResults(aggregateResults);
-                    queryClient.invalidateQueries(['products']);
-
-                    const totalProducts = (aggregateResults.created || 0) + (aggregateResults.updated || 0);
-                    const totalVariants = (aggregateResults.variants_created || 0) + (aggregateResults.variants_updated || 0);
-                    if (aggregateResults.errors.length === 0) {
-                        toast.success(`Successfully processed ${totalProducts} products and ${totalVariants} variants`)
-                    } else if (totalProducts > 0 || totalVariants > 0) {
-                        toast.warning(`Processed with some errors. Products: ${totalProducts}, Variants: ${totalVariants}`)
-                    } else {
-                        toast.error('Failed to process any products')
-                    }
-                } catch (err) {
-                    toast.error('Error parsing Excel file')
-                } finally {
-                    setUploading(false)
+            // Map headers to row fields; keep the Excel row number for error messages
+            const mappedData = jsonData.map(raw => {
+                const row = { _row: (raw.__rowNum__ ?? 0) + 1 }
+                for (const [header, value] of Object.entries(raw)) {
+                    const field = HEADER_ALIASES[normalizeHeader(header)]
+                    if (field && row[field] === undefined) row[field] = value
                 }
+                return row
+            }).filter(row => Object.keys(row).length > 1)
+
+            if (mappedData.length === 0) {
+                toast.error('Excel file is empty')
+                setUploading(false)
+                return
             }
-            reader.readAsArrayBuffer(file)
-        } catch (error) {
-            toast.error('Upload failed')
+
+            await submitRows(mappedData)
+        } catch (err) {
+            console.error('Upload error:', err)
+            toast.error('Error parsing Excel file')
             setUploading(false)
         }
     }
@@ -650,6 +657,12 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                             >
                                 Advanced Grid Entry
                             </button>
+                            <button
+                                className={`px-3 py-1 text-xs rounded-md transition-all ${view === 'export' ? 'bg-white shadow-sm font-semibold' : 'text-gray-500 hover:text-gray-700'}`}
+                                onClick={() => { setView('export'); setResults(null); }}
+                            >
+                                Export / Update
+                            </button>
                         </div>
                     </div>
                 </DialogHeader>
@@ -659,13 +672,124 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                         <Info className="h-4 w-4 text-blue-600" />
                         <AlertTitle className="text-blue-800">Instructions</AlertTitle>
                         <AlertDescription className="text-blue-700 text-xs">
-                            <p><strong>Auto Variant Grouping!</strong> Same Product Name rows are grouped. Duplicate SKUs are skipped for safety.</p>
-                            <p className="mt-1">Group variants by Name or Handle. Highly scalable batch processing.</p>
+                            <p><strong>SKU is the unique key.</strong> Existing products are never deleted. Duplicate SKUs in the file are skipped.</p>
+                            <p className="mt-1">Variants are grouped by Product Handle (or by Product Name when the handle is empty).</p>
+                            <p className="mt-1">To edit existing products: use <strong>Export / Update</strong> to download them, change the values, then upload with <strong>Add new + update existing</strong>. Blank cells keep the current value.</p>
                         </AlertDescription>
                     </Alert>
 
+                    {!results && view !== 'export' && (
+                        <div className="space-y-1">
+                            <p className="text-xs font-semibold text-gray-700">If a SKU already exists:</p>
+                            <div className="grid grid-cols-2 gap-2">
+                                {[
+                                    { value: 'create_only', title: 'Add new only', hint: 'Existing SKUs are skipped' },
+                                    { value: 'upsert', title: 'Add new + update existing', hint: 'Only changed values are updated' }
+                                ].map(option => (
+                                    <button
+                                        key={option.value}
+                                        type="button"
+                                        disabled={uploading}
+                                        onClick={() => setUploadMode(option.value)}
+                                        className={`text-left p-2 rounded-lg border transition-all ${uploadMode === option.value ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-gray-300'}`}
+                                    >
+                                        <p className="text-xs font-semibold text-gray-900">{option.title}</p>
+                                        <p className="text-[10px] text-gray-500">{option.hint}</p>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {!results ? (
-                        view === 'upload' ? (
+                        view === 'export' ? (
+                            <div className="space-y-3">
+                                <p className="text-xs text-gray-600">
+                                    Download existing products (one row per SKU) in the upload format. Edit the values in Excel,
+                                    then upload the file in <strong>File Upload</strong> with <strong>Add new + update existing</strong>.
+                                </p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <label className="text-[10px] font-semibold text-gray-600 uppercase space-y-1">
+                                        <span>Collection</span>
+                                        <select
+                                            className="w-full text-xs p-2 border rounded-md bg-white normal-case font-normal"
+                                            value={exportFilters.collection_id}
+                                            onChange={(e) => setExportFilters(f => ({ ...f, collection_id: e.target.value, category_id: '', sub_category_id: '' }))}
+                                        >
+                                            <option value="">All Collections</option>
+                                            {(masters?.collections || []).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                        </select>
+                                    </label>
+                                    <label className="text-[10px] font-semibold text-gray-600 uppercase space-y-1">
+                                        <span>Category</span>
+                                        <select
+                                            className="w-full text-xs p-2 border rounded-md bg-white normal-case font-normal"
+                                            value={exportFilters.category_id}
+                                            onChange={(e) => setExportFilters(f => ({ ...f, category_id: e.target.value, sub_category_id: '' }))}
+                                        >
+                                            <option value="">All Categories</option>
+                                            {(masters?.categories || [])
+                                                .filter(c => !exportFilters.collection_id || c.parent_collection_id === exportFilters.collection_id)
+                                                .map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                        </select>
+                                    </label>
+                                    <label className="text-[10px] font-semibold text-gray-600 uppercase space-y-1">
+                                        <span>Sub-Category</span>
+                                        <select
+                                            className="w-full text-xs p-2 border rounded-md bg-white normal-case font-normal"
+                                            value={exportFilters.sub_category_id}
+                                            onChange={(e) => setExportFilters(f => ({ ...f, sub_category_id: e.target.value }))}
+                                            disabled={!exportFilters.category_id}
+                                        >
+                                            <option value="">All Sub-Categories</option>
+                                            {(masters?.subCategories || [])
+                                                .filter(s => s.category_id === exportFilters.category_id)
+                                                .map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                        </select>
+                                    </label>
+                                    <label className="text-[10px] font-semibold text-gray-600 uppercase space-y-1">
+                                        <span>Brand</span>
+                                        <select
+                                            className="w-full text-xs p-2 border rounded-md bg-white normal-case font-normal"
+                                            value={exportFilters.brand_id}
+                                            onChange={(e) => setExportFilters(f => ({ ...f, brand_id: e.target.value }))}
+                                        >
+                                            <option value="">All Brands</option>
+                                            {(masters?.brands || []).map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                                        </select>
+                                    </label>
+                                    <label className="text-[10px] font-semibold text-gray-600 uppercase space-y-1">
+                                        <span>Status</span>
+                                        <select
+                                            className="w-full text-xs p-2 border rounded-md bg-white normal-case font-normal"
+                                            value={exportFilters.status}
+                                            onChange={(e) => setExportFilters(f => ({ ...f, status: e.target.value }))}
+                                        >
+                                            <option value="all">Active + Inactive</option>
+                                            <option value="active">Active only</option>
+                                            <option value="inactive">Inactive only</option>
+                                        </select>
+                                    </label>
+                                    <label className="text-[10px] font-semibold text-gray-600 uppercase space-y-1">
+                                        <span>Search (name / SKU)</span>
+                                        <input
+                                            className="w-full text-xs p-2 border rounded-md bg-white normal-case font-normal"
+                                            value={exportFilters.search}
+                                            onChange={(e) => setExportFilters(f => ({ ...f, search: e.target.value }))}
+                                            placeholder="Optional"
+                                        />
+                                    </label>
+                                </div>
+                                <Button
+                                    className="w-full bg-red-600 flex items-center gap-2"
+                                    disabled={exporting || !masters}
+                                    onClick={downloadExport}
+                                >
+                                    <Download className="w-4 h-4" />
+                                    {exporting ? 'Preparing file...' : 'Download Products (.xlsx)'}
+                                </Button>
+                            </div>
+                        ) : view === 'upload' ? (
                             <div className="space-y-4">
                                 <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center hover:border-red-300 transition-colors">
                                     <input
@@ -691,7 +815,7 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                                         <Button
                                             variant="outline"
                                             className="flex-1 flex items-center gap-2"
-                                            onClick={() => downloadTemplate('xls')}
+                                            onClick={downloadTemplate}
                                         >
                                             <Download className="w-4 h-4" />
                                             Advanced Excel (.xlsx)
@@ -964,11 +1088,31 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                                     <p className="text-xl font-bold text-cyan-700">{results.variants_updated || 0}</p>
                                     <p className="text-[10px] text-cyan-600 uppercase font-semibold">Updated Variants</p>
                                 </div>
-                                <div className="bg-amber-50 p-3 rounded-lg border border-amber-100 text-center col-span-2">
+                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 text-center">
+                                    <p className="text-xl font-bold text-gray-700">{results.unchanged || 0}</p>
+                                    <p className="text-[10px] text-gray-600 uppercase font-semibold">Unchanged</p>
+                                </div>
+                                <div className="bg-amber-50 p-3 rounded-lg border border-amber-100 text-center">
                                     <p className="text-xl font-bold text-amber-700">{results.skipped || 0}</p>
-                                    <p className="text-[10px] text-amber-600 uppercase font-semibold">Skipped (Duplicate SKU)</p>
+                                    <p className="text-[10px] text-amber-600 uppercase font-semibold">
+                                        {results.mode === 'upsert' ? 'Skipped (Duplicate in file)' : 'Skipped (SKU exists)'}
+                                    </p>
                                 </div>
                             </div>
+
+                            {results.warnings?.length > 0 && (
+                                <div className="bg-amber-50 p-4 rounded-lg border border-amber-100 max-h-[160px] overflow-auto">
+                                    <div className="flex items-center gap-2 text-amber-700 mb-2">
+                                        <Info className="w-4 h-4" />
+                                        <p className="text-sm font-semibold">Warnings ({results.warnings.length})</p>
+                                    </div>
+                                    <ul className="text-xs text-amber-700 space-y-1 list-disc pl-4">
+                                        {results.warnings.slice(0, 200).map((warning, idx) => (
+                                            <li key={idx}>{warning}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
 
                             {results.errors.length > 0 && (
                                 <div className="bg-red-50 p-4 rounded-lg border border-red-100 max-h-[200px] overflow-auto">
@@ -1002,7 +1146,7 @@ export function BulkUploadDialog({ open, onOpenChange }) {
                     <Button variant="ghost" onClick={() => onOpenChange(false)}>
                         {results ? 'Close' : 'Cancel'}
                     </Button>
-                    {!results && (
+                    {!results && view !== 'export' && (
                         <Button
                             className="bg-red-600"
                             disabled={view === 'upload' ? (!file || uploading) : (gridData.length === 0 || uploading)}
