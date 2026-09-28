@@ -79,7 +79,7 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
     }
 
     // 3. Fallback: If it is the main product and option value is not set, return 'Base' so it acts as a valid selection choice
-    if (item.is_main) {
+    if (item.is_main && !axis.fromVariants) {
       return "Base"
     }
 
@@ -98,12 +98,15 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
           ? JSON.parse(product.product_variants)
           : []);
 
-    // A. Explicit Options 1-4
+    // A. Explicit Options 1-4 (from the product, or from its variants when the product row has no value for it)
     for (let i = 1; i <= 4; i++) {
-      const name = product[`option${i}_name`]
+      const variantName = rawVariants.find(v => v[`option${i}_name`]?.trim() && v[`option${i}_value`]?.trim())?.[`option${i}_name`]
+      const name = product[`option${i}_name`]?.trim() ? product[`option${i}_name`] : variantName
       if (name && name.trim()) {
         const label = name.trim()
-        _axes.push({ label, type: `option${i}`, index: i })
+        // Variant-only axis: the main product doesn't have this option, so it is not offered as a "Base" choice
+        const fromVariants = !product[`option${i}_name`]?.trim()
+        _axes.push({ label, type: `option${i}`, index: i, fromVariants })
         seenLabels.add(label.toLowerCase())
       }
     }
@@ -199,14 +202,19 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
   // 7. Selections Initialization
   useEffect(() => {
     if (product && selectableAxes.length > 0 && Object.keys(selectedOptions).length === 0) {
+      // Start from the main product; if it lacks a value on some axis, start from the first variant that has one
+      const hasAll = (item) => selectableAxes.every(axis => getAxisValue(item, axis))
+      const start = hasAll(product)
+        ? product
+        : allChoices.find(item => item.is_active !== false && hasAll(item)) || product
       const initial = {}
       selectableAxes.forEach(axis => {
-        const val = getAxisValue(product, axis)
+        const val = getAxisValue(start, axis)
         if (val) initial[axis.type] = val
       })
       setSelectedOptions(initial)
     }
-  }, [product, selectableAxes, getAxisValue])
+  }, [product, selectableAxes, allChoices, getAxisValue])
 
   // 8. Dynamic Selection Helper to prevent grid locks
   const handleSelectOption = useCallback((axisType, axisValue) => {
