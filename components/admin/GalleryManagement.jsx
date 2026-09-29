@@ -230,6 +230,7 @@ export default function GalleryManagement() {
                                             value={newItemImage}
                                             onChange={setNewItemImage}
                                             label="Upload to Album"
+                                            folder="gallery"
                                         />
                                     </div>
                                 </div>
@@ -366,6 +367,7 @@ export default function GalleryManagement() {
                                 value={formData.cover_image}
                                 onChange={(val) => setFormData({ ...formData, cover_image: val })}
                                 label="Album Cover"
+                                folder="gallery"
                             />
                         </div>
 

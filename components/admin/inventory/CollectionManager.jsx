@@ -214,6 +214,7 @@ export function CollectionManager() {
                                 value={formData.image_desktop}
                                 onChange={(val) => setFormData({ ...formData, image_desktop: val })}
                                 label="Desktop Image"
+                                folder="collections"
                             />
                             <p className="text-xs text-gray-500">Recommended: 1920x400px</p>
                         </div>
@@ -224,6 +225,7 @@ export function CollectionManager() {
                                 value={formData.image_mobile}
                                 onChange={(val) => setFormData({ ...formData, image_mobile: val })}
                                 label="Mobile Image"
+                                folder="collections"
                             />
                             <p className="text-xs text-gray-500">Recommended: 800x600px</p>
                         </div>

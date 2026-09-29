@@ -907,6 +907,7 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                             <ImageUploader
                                                 value={watch(`variants.${index}.images`) || []}
                                                 onChange={(urls) => setValue(`variants.${index}.images`, urls)}
+                                                folder="product-variants"
                                                 maxFiles={5}
                                             />
                                         </div>
@@ -926,6 +927,7 @@ export function ProductForm({ product, onCancel, onSuccess }) {
                                 <ImageUploader
                                     value={currentImages}
                                     onChange={(newImages) => setValue('images', newImages)}
+                                    folder="products"
                                     maxFiles={10}
                                 />
                             </div>

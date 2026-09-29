@@ -377,6 +377,7 @@ export default function BannersManagement() {
                   <ImageUploader
                     value={formData.desktop_image_url}
                     onChange={(val) => setFormData({ ...formData, desktop_image_url: val })}
+                    folder="banners"
                   />
                 </div>
                 <div>
@@ -384,6 +385,7 @@ export default function BannersManagement() {
                   <ImageUploader
                     value={formData.mobile_image_url}
                     onChange={(val) => setFormData({ ...formData, mobile_image_url: val })}
+                    folder="banners"
                   />
                 </div>
               </div>

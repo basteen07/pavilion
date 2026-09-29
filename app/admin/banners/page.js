@@ -226,12 +226,14 @@ function BannerDialog({ open, onOpenChange, banner, onSuccess }) {
 
                     <ImageUploader
                         label="Desktop Image (Landscape)"
+                        folder="banners"
                         value={formData.desktop_image_url}
                         onChange={val => setFormData({ ...formData, desktop_image_url: val })}
                     />
 
                     <ImageUploader
                         label="Mobile Image (Portrait - Optional)"
+                        folder="banners"
                         value={formData.mobile_image_url}
                         onChange={val => setFormData({ ...formData, mobile_image_url: val })}
                     />

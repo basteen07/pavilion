@@ -276,11 +276,11 @@ export function BrandManager() {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <Label className="mb-2 block">Brand Banner</Label>
-                                <ImageUploader value={bannerUrl} onChange={setBannerUrl} />
+                                <ImageUploader value={bannerUrl} onChange={setBannerUrl} folder="brands" />
                             </div>
                             <div>
                                 <Label className="mb-2 block">Brand Logo</Label>
-                                <ImageUploader value={logoUrl} onChange={setLogoUrl} />
+                                <ImageUploader value={logoUrl} onChange={setLogoUrl} folder="brands" />
                             </div>
                         </div>
 

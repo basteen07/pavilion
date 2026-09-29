@@ -4,8 +4,9 @@ import { useState, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Image as ImageIcon, Upload, X, Loader2, FileUp, Plus, Type } from 'lucide-react'
+import { Image as ImageIcon, Upload, X, Loader2, FileUp, Plus, Type, ChevronLeft, ChevronRight, Images } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import MediaLibraryPicker from '@/components/admin/media/MediaLibraryPicker'
 import {
     Dialog,
     DialogContent,
@@ -16,11 +17,15 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog"
 
-export default function ImageUploader({ value, onChange, label = "Image URL", maxFiles = 1 }) {
+// folder: Image Library folder uploads are filed into (see SYSTEM_FOLDERS in lib/api/media.js)
+export default function ImageUploader({ value, onChange, label = "Image URL", maxFiles = 1, folder = 'general' }) {
     // Determine mode based on maxFiles
     const isMulti = maxFiles > 1
     const [isUploading, setIsUploading] = useState(false)
     const [isDragging, setIsDragging] = useState(false)
+    const [dragIndex, setDragIndex] = useState(null) // image being dragged to a new position
+    const [overIndex, setOverIndex] = useState(null)
+    const [pickerOpen, setPickerOpen] = useState(false)
     const [altTextDialogOpen, setAltTextDialogOpen] = useState(false)
     const [currentEditingIndex, setCurrentEditingIndex] = useState(null)
     const [tempAltText, setTempAltText] = useState('')
@@ -104,6 +109,7 @@ export default function ImageUploader({ value, onChange, label = "Image URL", ma
             await Promise.all(validFiles.map(async (file) => {
                 const formData = new FormData()
                 formData.append('file', file)
+                formData.append('folder', folder)
 
                 try {
                     const token = localStorage.getItem('token');
@@ -165,7 +171,11 @@ export default function ImageUploader({ value, onChange, label = "Image URL", ma
         }
     }
 
+    // Dropping files uploads them; dragging an existing image only reorders
+    const isFileDrag = (e) => Array.from(e.dataTransfer?.types || []).includes('Files')
+
     const handleDragOver = (e) => {
+        if (!isFileDrag(e)) return
         e.preventDefault()
         setIsDragging(true)
     }
@@ -176,10 +186,34 @@ export default function ImageUploader({ value, onChange, label = "Image URL", ma
     }
 
     const handleDrop = (e) => {
+        if (!isFileDrag(e)) return
         e.preventDefault()
         setIsDragging(false)
         const files = Array.from(e.dataTransfer.files || [])
         if (files.length > 0) handleUpload(files)
+    }
+
+    const moveImage = (from, to) => {
+        if (from === to || to < 0 || to >= values.length) return
+        const newValues = [...values]
+        const [moved] = newValues.splice(from, 1)
+        newValues.splice(to, 0, moved)
+        updateParent(newValues)
+    }
+
+    const endReorder = () => {
+        setDragIndex(null)
+        setOverIndex(null)
+    }
+
+    const handlePickFromLibrary = (items) => {
+        const picked = items.map(item => ({ url: item.url, alt: item.alt || '', id: item.id || null }))
+        if (picked.length === 0) return
+        if (isMulti) {
+            updateParent([...values, ...picked].slice(0, maxFiles))
+        } else {
+            updateParent([picked[0]])
+        }
     }
 
     const openAltTextDialog = (index) => {
@@ -217,18 +251,57 @@ export default function ImageUploader({ value, onChange, label = "Image URL", ma
                     {values.length > 0 ? (
                         <div className={`grid gap-4 ${isMulti ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4' : 'grid-cols-1'}`}>
                             {values.map((img, index) => (
-                                <div key={index + (img.url || '')} className="relative group aspect-square flex flex-col">
-                                    <div className="relative flex-1 overflow-hidden rounded-lg border bg-white">
+                                <div
+                                    key={index + (img.url || '')}
+                                    className={`relative group aspect-square flex flex-col ${isMulti && values.length > 1 ? 'cursor-grab active:cursor-grabbing' : ''} ${dragIndex === index ? 'opacity-40' : ''}`}
+                                    draggable={isMulti && values.length > 1}
+                                    onDragStart={(e) => {
+                                        setDragIndex(index)
+                                        e.dataTransfer.effectAllowed = 'move'
+                                        e.dataTransfer.setData('text/plain', String(index))
+                                    }}
+                                    onDragOver={(e) => {
+                                        if (dragIndex === null) return
+                                        e.preventDefault()
+                                        e.stopPropagation()
+                                        if (overIndex !== index) setOverIndex(index)
+                                    }}
+                                    onDrop={(e) => {
+                                        if (dragIndex === null) return
+                                        e.preventDefault()
+                                        e.stopPropagation()
+                                        moveImage(dragIndex, index)
+                                        endReorder()
+                                    }}
+                                    onDragEnd={endReorder}
+                                >
+                                    <div className={`relative flex-1 overflow-hidden rounded-lg border bg-white ${overIndex === index && dragIndex !== index ? 'ring-2 ring-blue-500 ring-offset-2' : ''}`}>
                                         <img
                                             src={img.url}
                                             alt={img.alt || `Preview ${index + 1}`}
-                                            className="w-full h-full object-cover"
+                                            className="w-full h-full object-cover pointer-events-none"
                                             onError={(e) => {
                                                 e.target.src = 'https://placehold.co/100?text=Invalid+URL'
                                             }}
                                         />
+                                        {/* Position badge: first image is the main product image */}
+                                        {isMulti && (
+                                            <div className={`absolute top-1 left-1 text-[10px] font-bold px-1.5 py-0.5 rounded ${index === 0 ? 'bg-red-600 text-white' : 'bg-white/90 text-gray-700'}`}>
+                                                {index === 0 ? 'Main' : index + 1}
+                                            </div>
+                                        )}
                                         {/* Overlay Actions */}
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                            {isMulti && index > 0 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => moveImage(index, index - 1)}
+                                                    className="p-1.5 bg-white text-gray-700 rounded-full hover:bg-gray-100"
+                                                    title="Move left"
+                                                >
+                                                    <ChevronLeft className="w-4 h-4" />
+                                                </button>
+                                            )}
                                             <button
                                                 type="button"
                                                 onClick={() => openAltTextDialog(index)}
@@ -245,6 +318,16 @@ export default function ImageUploader({ value, onChange, label = "Image URL", ma
                                             >
                                                 <X className="w-4 h-4" />
                                             </button>
+                                            {isMulti && index < values.length - 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => moveImage(index, index + 1)}
+                                                    className="p-1.5 bg-white text-gray-700 rounded-full hover:bg-gray-100"
+                                                    title="Move right"
+                                                >
+                                                    <ChevronRight className="w-4 h-4" />
+                                                </button>
+                                            )}
                                         </div>
                                         {/* Alt Text Badge */}
                                         {!img.alt && (
@@ -328,11 +411,30 @@ export default function ImageUploader({ value, onChange, label = "Image URL", ma
                                     {values.length > 0 ? 'Replace' : 'Upload Image'}
                                 </Button>
                             )}
+
+                            {(!isMulti || values.length < maxFiles) && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setPickerOpen(true)}
+                                    disabled={isUploading}
+                                    className="w-full sm:w-auto bg-white"
+                                >
+                                    <Images className="w-4 h-4 mr-2" />
+                                    Choose from Library
+                                </Button>
+                            )}
                         </div>
 
                         <div className="text-center">
                             <p className="text-xs text-muted-foreground">
                                 {isMulti ? `Drag & drop up to ${maxFiles} images` : 'Drag and drop or upload'}
+                                {isMulti && values.length > 1 && (
+                                    <>
+                                        <br />
+                                        <span className="font-medium text-gray-600">Drag an image (or use the arrows) to change its position. The first image is the main image.</span>
+                                    </>
+                                )}
                                 <br />
                                 <span className="italic opacity-70">Supports JPG, PNG, WebP. Max 5MB.</span>
                             </p>
@@ -340,6 +442,14 @@ export default function ImageUploader({ value, onChange, label = "Image URL", ma
                     </div>
                 </div>
             </div>
+
+            <MediaLibraryPicker
+                open={pickerOpen}
+                onOpenChange={setPickerOpen}
+                initialFolder={folder}
+                maxSelect={isMulti ? Math.max(maxFiles - values.length, 0) : 1}
+                onPick={handlePickFromLibrary}
+            />
 
             {/* Alt Text Dialog */}
             <Dialog open={altTextDialogOpen} onOpenChange={setAltTextDialogOpen}>

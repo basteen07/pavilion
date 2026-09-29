@@ -9,6 +9,7 @@ import {
     HelpCircle,
     Building2,
     Image as ImageIcon,
+    Images,
     LayoutList,
     ChevronUp,
     User2,
@@ -166,6 +167,11 @@ const data = {
         },
     ],
     cms: [
+        {
+            title: "Image Library",
+            url: "/admin/image-library",
+            icon: Images,
+        },
         {
             title: "Banners",
             url: "/admin/banners",

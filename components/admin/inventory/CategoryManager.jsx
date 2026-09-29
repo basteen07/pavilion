@@ -313,7 +313,7 @@ export function CategoryManager() {
 
                         <div>
                             <Label className="mb-2 block">Category Image</Label>
-                            <ImageUploader value={categoryImage} onChange={setCategoryImage} />
+                            <ImageUploader value={categoryImage} onChange={setCategoryImage} folder="categories" />
                         </div>
                         <DialogFooter>
                             <Button type="submit" className="bg-red-600">Save</Button>
@@ -340,7 +340,7 @@ export function CategoryManager() {
                         </div>
                         <div>
                             <Label className="mb-2 block">Sub-Category Image</Label>
-                            <ImageUploader value={subCategoryImage} onChange={setSubCategoryImage} />
+                            <ImageUploader value={subCategoryImage} onChange={setSubCategoryImage} folder="categories" />
                         </div>
                         <DialogFooter>
                             <Button type="submit" className="bg-red-600">Save</Button>

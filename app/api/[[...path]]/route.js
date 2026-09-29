@@ -335,6 +335,34 @@ async function handleRoute(request, { params }) {
       return import('@/lib/api/products').then(async m => m.bulkUploadProducts(await request.json()));
     }
 
+    // ============ IMAGE LIBRARY (admin only) ============
+    if (route === '/media' || route.startsWith('/media/')) {
+      const { user, errorResponse } = await requireAdmin(request);
+      if (errorResponse) return errorResponse;
+      const media = await import('@/lib/api/media');
+      if (route === '/media' && method === 'GET') return media.listMedia(new URL(request.url).searchParams);
+      if (route === '/media/folders' && method === 'GET') return media.listFolders();
+      if (route === '/media/folders' && method === 'POST') return media.createFolder(await request.json());
+      if (path[1] === 'folders' && path[2] && method === 'PUT') return media.renameFolder(path[2], await request.json());
+      if (path[1] === 'folders' && path[2] && method === 'DELETE') return media.deleteFolder(path[2]);
+      if (route === '/media/move' && method === 'POST') return media.moveMedia(await request.json());
+      if (route === '/media/sync' && method === 'POST') return media.syncFromBlob();
+      if (path.length === 2 && method === 'DELETE') {
+        const response = await media.deleteMedia(path[1]);
+        if (response.status === 200) {
+          const { item } = await response.clone().json();
+          await logActivity({
+            admin_id: user.id,
+            event_type: 'media_deleted',
+            description: `${user.name || user.email} deleted image ${item?.file_name || item?.url} from the Image Library`,
+            metadata: { url: item?.url, folder: item?.folder }
+          });
+        }
+        return response;
+      }
+      return handleCORS(NextResponse.json({ error: 'Not found' }, { status: 404 }));
+    }
+
     // SECURITY: Require admin auth for product export (bulk edit download)
     if (route === '/products/export' && method === 'GET') {
       const { user, errorResponse } = await requireAdmin(request);

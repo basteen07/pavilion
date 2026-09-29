@@ -152,6 +152,7 @@ export default function TiptapEditor({ value, onChange, className }) {
                             value={uploadedImage}
                             onChange={setUploadedImage}
                             label="Upload Image"
+                            folder="pages"
                         />
                     </div>
                     <DialogFooter>

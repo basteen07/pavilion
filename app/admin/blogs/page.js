@@ -339,6 +339,7 @@ function BlogEditor({ blog, onCancel, onSave }) {
                                 label=""
                                 value={formData.image_url}
                                 onChange={(val) => setFormData({ ...formData, image_url: val })}
+                                folder="blogs"
                             />
                         </CardContent>
                     </Card>

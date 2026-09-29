@@ -41,6 +41,7 @@ export default function RichEditor({ value, onChange, className }) {
             for (const file of files) {
                 const formData = new FormData();
                 formData.append('file', file);
+                formData.append('folder', 'pages');
 
                 try {
                     const token = localStorage.getItem('token');
