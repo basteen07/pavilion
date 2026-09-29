@@ -640,7 +640,7 @@ export function BulkUploadDialog({ open, onOpenChange }) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className={view === 'grid' && !results ? "sm:max-w-[1200px]" : "sm:max-w-[500px]"}>
+            <DialogContent className={`max-h-[90vh] overflow-y-auto ${view === 'grid' && !results ? "sm:max-w-[1200px]" : "sm:max-w-[500px]"}`}>
                 <DialogHeader>
                     <div className="flex items-center justify-between">
                         <DialogTitle>Bulk Product Upload</DialogTitle>

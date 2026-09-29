@@ -346,7 +346,7 @@ async function handleRoute(request, { params }) {
       if (path[1] === 'folders' && path[2] && method === 'PUT') return media.renameFolder(path[2], await request.json());
       if (path[1] === 'folders' && path[2] && method === 'DELETE') return media.deleteFolder(path[2]);
       if (route === '/media/move' && method === 'POST') return media.moveMedia(await request.json());
-      if (route === '/media/sync' && method === 'POST') return media.syncFromBlob();
+      if (route === '/media/sync' && method === 'POST') return media.importExisting();
       if (path.length === 2 && method === 'DELETE') {
         const response = await media.deleteMedia(path[1]);
         if (response.status === 200) {

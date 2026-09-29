@@ -275,9 +275,12 @@ export default function MediaBrowser({ mode = 'manage', initialFolder = '', maxS
         setBusy(true)
         try {
             const res = await apiCall('/media/sync', { method: 'POST' })
-            toast.success(res.imported
-                ? `Imported ${res.imported} older image${res.imported === 1 ? '' : 's'}`
-                : 'All uploaded images are already in the library')
+            const parts = []
+            if (res.imported) parts.push(`imported ${res.imported} older image${res.imported === 1 ? '' : 's'}`)
+            if (res.refiled) parts.push(`sorted ${res.refiled} into folders`)
+            toast.success(parts.length
+                ? parts.join(', ').replace(/^./, c => c.toUpperCase())
+                : 'All existing images are already in the library')
             await refresh()
         } catch (err) {
             toast.error(err.message)
