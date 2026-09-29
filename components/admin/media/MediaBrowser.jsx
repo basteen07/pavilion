@@ -549,8 +549,8 @@ export default function MediaBrowser({ mode = 'manage', initialFolder = '', maxS
                     <AlertDialogHeader>
                         <AlertDialogTitle>Delete {confirmDelete?.length === 1 ? 'this image' : `${confirmDelete?.length} images`}?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            The file is permanently removed from storage. Images that are still used by a product, banner,
-                            blog or page are not deleted - you will be told where they are used.
+                            Uploaded files are permanently removed from storage. Images that are still used by a product, banner,
+                            category, blog or page are not deleted - you will be told where they are used.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
