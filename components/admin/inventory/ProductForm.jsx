@@ -22,6 +22,17 @@ import QRCode from 'qrcode'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import TiptapEditor from '@/components/admin/TiptapEditor'
 
+// Empty database columns arrive as null - treat them as blank instead of failing validation
+const optionalText = z.string().nullish().transform(v => v ?? '')
+const imageList = z.array(z.union([
+    z.string(),
+    z.object({
+        url: z.string(),
+        alt: z.string().nullish().transform(v => v ?? ''),
+        id: z.any().optional().default(null)
+    })
+])).nullish().transform(v => v ?? [])
+
 // Validation Schema
 const productSchema = z.object({
     name: z.string().min(3, 'Name is required'),
@@ -46,14 +57,7 @@ const productSchema = z.object({
     is_discontinued: z.boolean().default(false),
     is_quote_hidden: z.boolean().default(false),
     unit: z.string().default('1'),
-    images: z.array(z.union([
-        z.string(),
-        z.object({
-            url: z.string(),
-            alt: z.string().optional().default(''),
-            id: z.any().optional().default(null)
-        })
-    ])).default([]),
+    images: imageList,
     videos: z.array(z.union([
         z.string(),
         z.object({
@@ -63,44 +67,37 @@ const productSchema = z.object({
         })
     ])).default([]),
     // Base Attributes (Optional)
-    size: z.string().optional(),
-    color: z.string().optional(),
-    option1_name: z.string().optional(),
-    option1_value: z.string().optional(),
-    option2_name: z.string().optional(),
-    option2_value: z.string().optional(),
-    option3_name: z.string().optional(),
-    option3_value: z.string().optional(),
-    option4_name: z.string().optional(),
-    option4_value: z.string().optional(),
+    size: optionalText,
+    color: optionalText,
+    option1_name: optionalText,
+    option1_value: optionalText,
+    option2_name: optionalText,
+    option2_value: optionalText,
+    option3_name: optionalText,
+    option3_value: optionalText,
+    option4_name: optionalText,
+    option4_value: optionalText,
     variants: z.array(z.object({
-        id: z.string().optional(),
+        id: z.string().nullish(),
         sku: z.string().min(1, 'Variant SKU is required'),
-        size: z.string().optional().default(''),
-        color: z.string().optional().default(''),
-        option1_name: z.string().optional().default(''),
-        option1_value: z.string().optional().default(''),
-        option2_name: z.string().optional().default(''),
-        option2_value: z.string().optional().default(''),
-        option3_name: z.string().optional().default(''),
-        option3_value: z.string().optional().default(''),
-        option4_name: z.string().optional().default(''),
-        option4_value: z.string().optional().default(''),
+        size: optionalText,
+        color: optionalText,
+        option1_name: optionalText,
+        option1_value: optionalText,
+        option2_name: optionalText,
+        option2_value: optionalText,
+        option3_name: optionalText,
+        option3_value: optionalText,
+        option4_name: optionalText,
+        option4_value: optionalText,
         mrp_price: z.coerce.number().min(0).default(0),
         dealer_price: z.coerce.number().min(0).default(0),
         counter_price: z.coerce.number().min(0).default(0),
         recommended_price: z.coerce.number().min(0).default(0),
         shop_price: z.coerce.number().min(0).default(0),
         inventory: z.coerce.number().min(0).default(0),
-        is_default: z.boolean().default(false),
-        images: z.array(z.union([
-            z.string(),
-            z.object({
-                url: z.string(),
-                alt: z.string().optional().default(''),
-                id: z.any().optional().default(null)
-            })
-        ])).default([])
+        is_default: z.boolean().nullish().transform(v => !!v),
+        images: imageList
     })).default([])
 })
 
@@ -296,7 +293,21 @@ export function ProductForm({ product, onCancel, onSuccess }) {
             })
         }
 
-        toast.error('Please check the form for errors. Required fields might be missing.')
+        // Name the fields that actually failed, e.g. "SKU is required (Variant 2)"
+        const problems = []
+        for (const [field, err] of Object.entries(errors)) {
+            if (field === 'variants' && Array.isArray(err)) {
+                err.forEach((vErr, idx) => {
+                    if (!vErr) return
+                    for (const [vField, e] of Object.entries(vErr)) {
+                        problems.push(`Variant ${idx + 1} - ${e?.message || vField}`)
+                    }
+                })
+            } else {
+                problems.push(err?.message || field)
+            }
+        }
+        toast.error(`Please fix: ${problems.slice(0, 4).join('; ')}${problems.length > 4 ? ` (+${problems.length - 4} more)` : ''}`)
     }
 
     return (

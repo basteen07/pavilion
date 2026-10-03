@@ -1,5 +1,6 @@
 import ProductDetailPage from '@/components/ProductDetailPage'
 import { getProductBySlug } from '@/lib/api/products'
+import { permanentRedirect } from 'next/navigation'
 
 
 export async function generateMetadata({ params }) {
@@ -43,6 +44,13 @@ export default async function Page({ params }) {
     // For now, sticking to passing data to component to maintain existing behavior 
     // but with initial data.
     const initialProduct = (product && !product.error) ? product : null
+
+    // Old links (previous slug, different capitals) go to the product-name URL
+    let requested = params.slug
+    try { requested = decodeURIComponent(params.slug) } catch { /* keep raw */ }
+    if (initialProduct?.slug && initialProduct.slug !== requested) {
+        permanentRedirect(`/product/${encodeURIComponent(initialProduct.slug)}`)
+    }
 
     return <ProductDetailPage productSlug={params.slug} initialProduct={initialProduct} />
 }

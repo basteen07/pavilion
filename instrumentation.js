@@ -13,5 +13,13 @@ export async function register() {
             // Non-fatal — app works without indexes, just slower
             console.warn('⚠ Could not create performance indexes:', err.message);
         }
+        try {
+            // Product URLs use the product name (spaces -> hyphens); converts existing products once
+            const { convertAllProductSlugs } = await import('@/lib/product-slug');
+            const changed = await convertAllProductSlugs();
+            if (changed) console.log(`✓ Product URLs updated to use product names (${changed} products)`);
+        } catch (err) {
+            console.warn('⚠ Could not update product URL slugs:', err.message);
+        }
     }
 }

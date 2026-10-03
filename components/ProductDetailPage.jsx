@@ -53,6 +53,27 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
 
   // --- CORPORATE GRADE UNIFIED VARIANT LOGIC (Mixed Schema Support) ---
 
+  // Axis identification helpers
+  const isColorAxis = useCallback((axis) => {
+    if (!axis) return false
+    const label = (axis.label || '').toLowerCase()
+    const type = (axis.type || '').toLowerCase()
+    return type === 'color' || /colou?r/.test(label)
+  }, [])
+
+  const isSizeAxis = useCallback((axis) => {
+    if (!axis) return false
+    const label = (axis.label || '').toLowerCase()
+    const type = (axis.type || '').toLowerCase()
+    return type === 'size' || label.includes('size')
+  }, [])
+
+  const getAxisPriority = useCallback((axis) => {
+    if (isColorAxis(axis)) return 1
+    if (isSizeAxis(axis)) return 2
+    return 3
+  }, [isColorAxis, isSizeAxis])
+
   // 1. Helper: Get normalized value for an axis (Greedy / Fallback aware)
   const getAxisValue = useCallback((item, axis) => {
     if (!item) return null
@@ -74,7 +95,7 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
     if (label.includes('size') || label.includes('type')) {
       if (item.size?.trim()) return item.size.trim()
     }
-    if (label.includes('color')) {
+    if (label.includes('color') || label.includes('colour')) {
       if (item.color?.trim()) return item.color.trim()
     }
 
@@ -86,7 +107,7 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
     return null
   }, [])
 
-  // 2. Determine All Defined Axes (Inclusive Discovery)
+  // 2. Determine All Defined Axes (Inclusive Discovery with Color & Size First)
   const axes = useMemo(() => {
     if (!product) return []
     const _axes = []
@@ -122,7 +143,7 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
     }
 
     // C. Legacy Color Column
-    if (!seenLabels.has('color')) {
+    if (!seenLabels.has('color') && !seenLabels.has('colour')) {
       const hasColor = (product.color && product.color.trim()) ||
         rawVariants.some(v => v.color && v.color.trim())
       if (hasColor) {
@@ -131,8 +152,9 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
       }
     }
 
-    return _axes
-  }, [product])
+    // Priority sort: Color first, Size second, remaining options next (maintaining relative order)
+    return _axes.sort((a, b) => getAxisPriority(a) - getAxisPriority(b))
+  }, [product, getAxisPriority])
 
   // 3. Normalize All Possible "Selectable Targets" (Prioritize Variants)
   const allChoices = useMemo(() => {
@@ -170,17 +192,24 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
     const values = new Set()
     allChoices.forEach(item => {
       const val = getAxisValue(item, axis)
-      if (val && val.trim()) values.add(val.trim())
+      if (val && val.trim() && val.trim() !== 'Base') values.add(val.trim())
     })
     return Array.from(values).sort()
   }, [allChoices, getAxisValue])
 
-  // 5. Filtered Axes for Interactivity (All Options having more than 1 value)
+  // 5. Filtered Axes for Interactivity (Show Color & Size if present, plus any multi-value options)
   const selectableAxes = useMemo(() => {
     return axes.filter(axis => {
-      return getValuesForAxis(axis).length > 1;
-    });
-  }, [axes, getValuesForAxis]);
+      const vals = getValuesForAxis(axis)
+      if (vals.length === 0) return false
+      // If Color or Size is present, always show it
+      if (isColorAxis(axis) || isSizeAxis(axis)) {
+        return vals.length >= 1
+      }
+      // For other attributes/options, show if multi-value / selectable
+      return vals.length > 1
+    })
+  }, [axes, getValuesForAxis, isColorAxis, isSizeAxis])
 
   // 6. Resolve Selected Target based on active selections
   const selectedChoice = useMemo(() => {
@@ -203,18 +232,26 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
   useEffect(() => {
     if (product && selectableAxes.length > 0 && Object.keys(selectedOptions).length === 0) {
       // Start from the main product; if it lacks a value on some axis, start from the first variant that has one
-      const hasAll = (item) => selectableAxes.every(axis => getAxisValue(item, axis))
+      const hasAll = (item) => selectableAxes.every(axis => {
+        const v = getAxisValue(item, axis)
+        return v && v !== 'Base'
+      })
       const start = hasAll(product)
         ? product
-        : allChoices.find(item => item.is_active !== false && hasAll(item)) || product
+        : allChoices.find(item => item.is_active !== false && hasAll(item)) || allChoices[0] || product
       const initial = {}
       selectableAxes.forEach(axis => {
         const val = getAxisValue(start, axis)
-        if (val) initial[axis.type] = val
+        if (val && val !== 'Base') {
+          initial[axis.type] = val
+        } else {
+          const vals = getValuesForAxis(axis)
+          if (vals.length > 0) initial[axis.type] = vals[0]
+        }
       })
       setSelectedOptions(initial)
     }
-  }, [product, selectableAxes, allChoices, getAxisValue])
+  }, [product, selectableAxes, allChoices, getAxisValue, getValuesForAxis])
 
   // 8. Dynamic Selection Helper to prevent grid locks
   const handleSelectOption = useCallback((axisType, axisValue) => {
@@ -245,9 +282,11 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
       const updated = {};
       selectableAxes.forEach(axis => {
         const val = getAxisValue(match, axis);
-        if (val) updated[axis.type] = val;
+        if (val && val !== 'Base') updated[axis.type] = val;
       });
       setSelectedOptions(updated);
+    } else {
+      setSelectedOptions(newSelections);
     }
   }, [allChoices, selectableAxes, selectedOptions, getAxisValue]);
 
@@ -492,7 +531,7 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
                           // 1. Add Logical Size/Color from the selected Choice
                           axes.forEach(axis => {
                             const val = getAxisValue(selectedChoice, axis)
-                            if (val && !seen.has(axis.label.toLowerCase())) {
+                            if (val && val !== 'Base' && !seen.has(axis.label.toLowerCase())) {
                               specs.push({ label: axis.label, value: val })
                               seen.add(axis.label.toLowerCase())
                             }
@@ -503,7 +542,7 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
                           for (let i = 1; i <= 4; i++) {
                             const name = selectedChoice[`option${i}_name`] || product[`option${i}_name`]
                             const val = selectedChoice[`option${i}_value`]
-                            if (name && name.trim() && val && val.trim()) {
+                            if (name && name.trim() && val && val.trim() && val.trim() !== 'Base') {
                               const label = name.trim()
                               if (!seen.has(label.toLowerCase())) {
                                 specs.push({ label, value: val.trim() })
@@ -511,6 +550,17 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
                               }
                             }
                           }
+
+                          // Sort specs: Color first (1), Size second (2), remaining after (3)
+                          specs.sort((a, b) => {
+                            const getSpecPriority = (item) => {
+                              const l = (item.label || '').toLowerCase();
+                              if (l.includes('color') || l.includes('colour')) return 1;
+                              if (l.includes('size')) return 2;
+                              return 3;
+                            };
+                            return getSpecPriority(a) - getSpecPriority(b);
+                          });
 
                           return specs.map((spec, idx) => (
                             <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
@@ -539,7 +589,7 @@ export default function ProductDetailPage({ productSlug, initialProduct }) {
             <div className="lg:w-[40%] xl:w-[35%] relative order-first lg:order-last">
               <div className="sticky top-24 pt-2">
 
-                <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-2 leading-tight font-serif">
+                <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-2 leading-tight font-sans tracking-tight">
                   {product.brand_name && <span className="block text-sm font-bold text-slate-500 mb-2 uppercase tracking-widest">{product.brand_name}</span>}
                   {product.name}
                 </h1>
